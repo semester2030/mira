@@ -46,6 +46,7 @@ assert.equal(isProductOrCatalogAsk('ابي نفس هذا المنتج'), true);
 assert.equal(isProductOrCatalogAsk('طيب رشّحي لي واحد من ميرا بأقل من ١٠٠ ريال'), true);
 assert.equal(isProductOrCatalogAsk('أعطني مرطب للبشرة من ميرا'), true);
 assert.equal(isProductOrCatalogAsk('أعطني الرابط'), true);
+assert.equal(isProductOrCatalogAsk('عطيني الرابط'), true);
 console.log('pass product_ask_detect');
 
 {

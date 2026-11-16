@@ -31,8 +31,18 @@ import '../../../outfit_analysis/data/datasources/outfit_analysis_api_data_sourc
 import '../../../outfit_analysis/domain/helpers/outfit_consultation_mapper.dart';
 import '../../../outfit_analysis/domain/helpers/outfit_local_image_index.dart';
 import '../../domain/entities/advisor_response.dart';
+import '../../domain/entities/consultant_discovery_offer.dart';
+import '../../domain/services/mira_advisor_memory_store.dart';
+import '../widgets/consultant_offer_cards.dart';
+import '../../../marketplace/data/catalog_record_scope.dart';
 import '../../domain/services/fashion_advisor_route_decision.dart';
 import '../../../face_analysis_experience/advisor_context/advisor_context.dart';
+
+const _homeStarterQuestions = [
+  'وش في بالك اليوم؟',
+  'أبي ترطيب لطيف لروتيني',
+  'عندي مناسبة وأحتاج إطلالة',
+];
 
 const _skinStarterQuestions = [
   'لماذا درجة ترطيبي كذا؟',
@@ -94,10 +104,18 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       }
       if (_followUps.isEmpty) {
         final outfit = args?.outfitAnalysis != null || args?.outfitAnalysisId != null;
+        final home = args == null ||
+            (args.skinReport == null &&
+                args.outfitAnalysis == null &&
+                (args.outfitAnalysisId == null || args.outfitAnalysisId!.isEmpty) &&
+                args.faceContext == null &&
+                args.recolorAttemptId == null);
         setState(() {
           _followUps = outfit
               ? OutfitConsultationMapper.outfitStarterQuestions
-              : _skinStarterQuestions;
+              : home
+                  ? _homeStarterQuestions
+                  : _skinStarterQuestions;
         });
       }
     });
@@ -619,6 +637,24 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     });
   }
 
+
+  Future<bool> _tryOpenRememberedOffer(String text) async {
+    final asksLink = RegExp(r'الرابط|رابط').hasMatch(text);
+    if (!asksLink) return false;
+    final last = await MiraAdvisorMemoryStore.lastOffer();
+    if (last == null) return false;
+    if (!mounted) return false;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CatalogRecordScope.page(
+          kind: last.kind,
+          id: last.id,
+        ),
+      ),
+    );
+    return true;
+  }
+
   Future<void> _send(String text, {DialogueOutbound? retry}) async {
     final trimmed = (retry?.text ?? text).trim();
     if ((trimmed.isEmpty && _drafts.isEmpty && retry == null) || _loading) return;
@@ -628,6 +664,11 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         const SnackBar(content: Text('سجّلي الدخول لاستخدام مستشار ميرا الذكي')),
       );
       return;
+    }
+
+    // «عطيني الرابط» opens the last recommended catalog offer when we have its id.
+    if (retry == null && await _tryOpenRememberedOffer(trimmed)) {
+      // Still send the turn so the transcript stays honest; offer is already opened.
     }
 
     setState(() => _loading = true);
@@ -775,6 +816,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
 
     if (!mounted) return;
     final assistant = turn.assistantMessage;
+    final discoveryOffers = [
+      for (final raw in assistant.discoveryOffers)
+        ConsultantDiscoveryOffer.fromJson(raw),
+    ].where((o) => o.id.isNotEmpty).toList();
+    final side = assistant.discoverySideOffer == null
+        ? null
+        : ConsultantDiscoveryOffer.fromJson(assistant.discoverySideOffer!);
+    if (discoveryOffers.isNotEmpty) {
+      final first = discoveryOffers.first;
+      await MiraAdvisorMemoryStore.rememberLastOffer(id: first.id, kind: first.kind);
+    } else if (side != null && side.id.isNotEmpty) {
+      await MiraAdvisorMemoryStore.rememberLastOffer(id: side.id, kind: side.kind);
+    }
     setState(() {
       _messages[streamIndex] = AdvisorMessage(
         id: assistant.id,
@@ -791,6 +845,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               ),
             )
             .toList(),
+        discoveryOffers: discoveryOffers,
+        discoverySideOffer: side,
       );
       _snapshotId = turn.session.activeSnapshotId ?? _snapshotId;
       _followUps = assistant.suggestedQuestionsAr;
@@ -820,17 +876,17 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       return 'محادثة مفتوحة عن الإطلالات والألوان والعناية. اسألي ميرا مباشرة.';
     }
     if (_openDialogue) {
-      return 'محادثة مفتوحة عن الجمال والعناية والمكياج والشعر والإطلالات. الصور للمناقشة ولا تغيّر تقرير البشرة.';
+      return 'وش في بالك اليوم؟ اكتبي سؤالك بطريقتك، أو أرسلي صورة وأبحث لك داخل ميرا.';
     }
     return switch (_focus) {
       _ConsultationFocus.atelier =>
         'إجابات مُؤَسَّسة على تجربة Atelier وQEL — تلوين قماش فقط',
       _ConsultationFocus.outfit =>
-        'إجابات مُؤَسَّسة على تحليل إطلالتك — أسلوب · مناسبة · إكسسوارات',
+        'بخصوص هذه الإطلالة — أسلوب · مناسبة · إكسسوارات',
       _ConsultationFocus.face =>
         'ميرا تشرح نتائج ملامحك من الأدلة المتاحة — بدون إعادة تحليل',
       _ConsultationFocus.skin =>
-        'إجابات مُؤَسَّسة على تقرير بشرتكِ — لا إعادة تحليل للصورة',
+        'بخصوص تقرير بشرتك — إجابات من التقرير المعروض فقط، بدون إعادة تحليل',
     };
   }
 
@@ -1115,6 +1171,15 @@ class _Bubble extends StatelessWidget {
                     .map((f) => (label: f.labelAr, value: f.valueAr))
                     .toList(),
               ),
+            if (!isUser &&
+                (message.discoveryOffers.isNotEmpty ||
+                    message.discoverySideOffer != null)) ...[
+              const SizedBox(height: 10),
+              ConsultantOfferCards(
+                offers: message.discoveryOffers,
+                sideOffer: message.discoverySideOffer,
+              ),
+            ],
           ],
         ),
       ),

@@ -41,6 +41,8 @@ class ConsultationMessage {
   final List<String> attachmentIds;
   final String? clientMessageId;
   final List<String> suggestedQuestionsAr;
+  final List<Map<String, dynamic>> discoveryOffers;
+  final Map<String, dynamic>? discoverySideOffer;
 
   const ConsultationMessage({
     required this.id,
@@ -54,6 +56,8 @@ class ConsultationMessage {
     this.attachmentIds = const [],
     this.clientMessageId,
     this.suggestedQuestionsAr = const [],
+    this.discoveryOffers = const [],
+    this.discoverySideOffer,
   });
 
   factory ConsultationMessage.fromJson(Map<String, dynamic> json) {
@@ -88,6 +92,20 @@ class ConsultationMessage {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      discoveryOffers: () {
+        final offersRaw =
+            json['discoveryOffers'] ?? payloadMap['discoveryOffers'];
+        if (offersRaw is! List) return const <Map<String, dynamic>>[];
+        return offersRaw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }(),
+      discoverySideOffer: () {
+        final sideRaw =
+            json['discoverySideOffer'] ?? payloadMap['discoverySideOffer'];
+        return sideRaw is Map ? Map<String, dynamic>.from(sideRaw) : null;
+      }(),
     );
   }
 
