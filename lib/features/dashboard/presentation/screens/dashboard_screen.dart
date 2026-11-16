@@ -14,9 +14,9 @@ import '../../../../shared/widgets/mirra_logo.dart';
 import '../../../../shared/widgets/analysis_launch_card.dart';
 import '../../../../core/profile/user_level.dart';
 import '../../../profile/domain/entities/profile_entity.dart';
-import '../../../skin_analysis/presentation/widgets/face_frame_overlay.dart';
 import '../../../marketplace/presentation/widgets/mira_world_orbit_discover.dart';
 import '../widgets/ask_mira_home_entry.dart';
+import '../widgets/home_analysis_static_badge.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -292,7 +292,9 @@ class _DashboardAnalysisCardsState extends State<_DashboardAnalysisCards> {
             subtitle: widget.showGuestBanner
                 ? 'تجربة فورية — سجّلي لحفظ النتائج'
                 : 'تحليل شخصي خاص — آمن وسري',
-            trailing: const FaceFrameOverlay(width: 100, height: 130, compact: true),
+            trailing: const HomeAnalysisStaticBadge(
+              assetPath: HomeAnalysisStaticBadge.skinAsset,
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -308,10 +310,8 @@ class _DashboardAnalysisCardsState extends State<_DashboardAnalysisCards> {
           child: AnalysisLaunchCardCopy(
             title: 'حلّلي إطلالتك',
             subtitle: 'سريع عدة مرات يومياً — أو ذكي مرتبط ببشرتك',
-            trailing: Icon(
-              Icons.checkroom_rounded,
-              size: 48,
-              color: AppColors.onPrimary.withValues(alpha: 0.9),
+            trailing: const HomeAnalysisStaticBadge(
+              assetPath: HomeAnalysisStaticBadge.outfitAsset,
             ),
           ),
         ),

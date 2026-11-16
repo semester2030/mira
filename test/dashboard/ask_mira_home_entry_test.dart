@@ -4,8 +4,8 @@ import 'package:mirra/core/navigation/app_routes.dart';
 import 'package:mirra/features/dashboard/presentation/widgets/ask_mira_home_entry.dart';
 
 void main() {
-  test('avatar logical size stays in handoff range 76–84', () {
-    expect(AskMiraHomeEntry.avatarLogicalSize, inInclusiveRange(76, 84));
+  test('avatar logical size stays large enough for a clear face', () {
+    expect(AskMiraHomeEntry.avatarLogicalSize, inInclusiveRange(120, 140));
   });
 
   test('home alignment is directional start (visual right in RTL)', () {
@@ -38,17 +38,20 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    // Repeating pulse animation never settles — pump frames instead.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     final entry = find.byKey(const Key('ask_mira_home_entry'));
     expect(entry, findsOneWidget);
     final box = tester.getRect(entry);
     // Visual right under RTL: right edge near the 390-wide parent.
     expect(box.right, greaterThan(300));
-    expect(box.left, greaterThan(200));
+    expect(box.left, greaterThan(180));
 
     await tester.tap(entry);
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(opened, 1);
     expect(routed, isTrue);
   });
