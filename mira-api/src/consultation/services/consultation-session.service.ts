@@ -168,6 +168,23 @@ export class ConsultationSessionService {
         : undefined;
     const statedGoalAr = dto.statedGoalAr ?? priorGoal;
 
+    const meta =
+      session.metadataJson && typeof session.metadataJson === 'object' && !Array.isArray(session.metadataJson)
+        ? ({ ...(session.metadataJson as Record<string, unknown>) } as Record<string, unknown>)
+        : {};
+    const appliedOps = Array.isArray(meta.appliedPreferenceOpIds)
+      ? (meta.appliedPreferenceOpIds as string[])
+      : [];
+    const opId = dto.clientPreferenceOpId?.trim() || '';
+    const alreadyApplied = opId.length > 0 && appliedOps.includes(opId);
+
+    // Idempotent: same clientPreferenceOpId does not rebuild the snapshot again.
+    if (alreadyApplied) {
+      const dtoOut = this.toDto(session, undefined);
+      dtoOut.appliedPreferenceOpId = opId;
+      return dtoOut;
+    }
+
     const grounding = await this.grounding.build({
       userId,
       skinAnalysisId,
@@ -184,6 +201,11 @@ export class ConsultationSessionService {
       (await this.prisma.consultationContextSnapshot.count({ where: { sessionId } })) + 1;
     const snapshotId = await this.snapshots.createVersion(sessionId, version, grounding);
 
+    if (opId) {
+      appliedOps.push(opId);
+      meta.appliedPreferenceOpIds = appliedOps.slice(-50);
+    }
+
     const updated = await this.prisma.consultationSession.update({
       where: { id: sessionId },
       data: {
@@ -191,10 +213,17 @@ export class ConsultationSessionService {
         occasionId: occasionId ?? session.occasionId,
         titleAr: sessionTitle(grounding.snapshot),
         updatedAt: new Date(),
+        ...(opId
+          ? {
+              metadataJson: meta as import('@prisma/client').Prisma.InputJsonValue,
+            }
+          : {}),
       },
     });
 
-    return this.toDto(updated, grounding.snapshot);
+    const dtoOut = this.toDto(updated, grounding.snapshot);
+    if (opId) dtoOut.appliedPreferenceOpId = opId;
+    return dtoOut;
   }
 
   async getForUser(userId: string, sessionId: string) {

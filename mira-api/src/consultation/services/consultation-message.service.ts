@@ -251,6 +251,55 @@ export class ConsultationMessageService {
     return updated.count === 1;
   }
 
+  /**
+   * Save a user + assistant pair once without LLM (e.g. link ask + clarify).
+   * Idempotent on clientMessageId.
+   */
+  async recordTranscriptTurn(input: {
+    sessionId: string;
+    userContentAr: string;
+    assistantContentAr: string;
+    clientMessageId: string;
+  }) {
+    const claimed = await this.claimUser({
+      sessionId: input.sessionId,
+      contentAr: input.userContentAr,
+      clientMessageId: input.clientMessageId,
+    });
+    if (claimed.status === 'complete' && claimed.assistant) {
+      return { user: claimed.user, assistant: claimed.assistant, created: false as const };
+    }
+    const attemptToken = claimed.attemptToken;
+    if (!attemptToken) {
+      throw new ConflictException({
+        code: 'MCE_TRANSCRIPT_NO_LEASE',
+        message: 'تعذر حفظ سطر المحادثة.',
+      });
+    }
+    const assistant = await this.persistAssistant(
+      input.sessionId,
+      input.assistantContentAr,
+      {
+        answerAr: input.assistantContentAr,
+        confidence: 'high',
+        intent: 'transcript',
+        citedFactIds: [],
+        suggestedQuestionsAr: [],
+        blocked: false,
+        disclaimerAr: '',
+        replySource: 'transcript',
+      },
+      {
+        latencyMs: 0,
+        blocked: false,
+        replyToMessageId: claimed.user.id,
+        attemptToken,
+      },
+    );
+    await this.markOwned(claimed.user.id, attemptToken, 'complete');
+    return { user: claimed.user, assistant, created: true as const };
+  }
+
   async persistAssistant(
     sessionId: string,
     contentAr: string,

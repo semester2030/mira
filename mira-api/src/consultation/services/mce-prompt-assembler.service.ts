@@ -228,7 +228,16 @@ export class MceResponseValidatorService {
     raw: MceAssistantPayloadV1,
     factRegistry: MceFactEntry[],
     userMessage?: string,
-    opts?: { discoveryEnabled?: boolean },
+    opts?: {
+      discoveryEnabled?: boolean;
+      publishedOffers?: Array<{
+        id?: string;
+        titleAr: string;
+        kind?: string;
+        priceSar?: number | null;
+        inStock?: boolean | null;
+      }>;
+    },
   ): MceAssistantPayloadV1 {
     const allowed = new Set(factRegistry.map((f) => f.id));
     const cited = (raw.citedFactIds ?? []).filter((id) => allowed.has(id));
@@ -241,10 +250,8 @@ export class MceResponseValidatorService {
 
     const guarded = guardCommercialTurn(String(raw.answerAr ?? ''), factRegistry, userMessage);
     guarded.text = retainTrustedSkinNumbers(guarded.text, factRegistry);
-    // When catalog discovery is off, never let LLM invent Mira-attributed SKUs.
-    if (!opts?.discoveryEnabled) {
-      guarded.text = stripInventedMiraCatalogClaims(guarded.text);
-    }
+    // discoveryEnabled alone does not authorize invented SKUs — only published catalog rows do.
+    guarded.text = stripInventedMiraCatalogClaims(guarded.text, opts?.publishedOffers ?? []);
     const questions = (Array.isArray(raw.suggestedQuestionsAr) ? raw.suggestedQuestionsAr : [])
       .map(String)
       .filter((question) => !isCommercialClaim(question) && !hasUntrustedAmount(question))

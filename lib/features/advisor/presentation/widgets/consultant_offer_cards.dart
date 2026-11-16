@@ -46,12 +46,25 @@ class _OfferTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actionLabel = offer.actionLabelAr ??
-        switch (offer.action) {
-          'book' => 'احجزي',
-          'buy' => 'اطلبي',
-          _ => 'عرض التفاصيل',
-        };
+    // OOS / withdrawn / unverifiable never show buy/book CTAs.
+    final forceDetails = offer.inStock == false ||
+        offer.liveStatus == 'withdrawn' ||
+        offer.liveStatus == 'unverifiable' ||
+        offer.action == 'view';
+    final actionLabel = forceDetails
+        ? (offer.liveStatus == 'withdrawn'
+            ? 'غير متاح'
+            : offer.liveStatus == 'unverifiable'
+                ? 'تعذّر التحقق'
+                : (offer.actionLabelAr == 'اطلبي' || offer.actionLabelAr == 'احجزي'
+                    ? 'عرض التفاصيل'
+                    : (offer.actionLabelAr ?? 'عرض التفاصيل')))
+        : (offer.actionLabelAr ??
+            switch (offer.action) {
+              'book' => 'احجزي',
+              'buy' => 'اطلبي',
+              _ => 'عرض التفاصيل',
+            });
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(12),
@@ -90,13 +103,12 @@ class _OfferTile extends StatelessWidget {
                       textDirection: TextDirection.rtl,
                       style: AppTypography.bodyMedium.copyWith(height: 1.35),
                     ),
-                    if (offer.priceLabelAr != null && offer.priceLabelAr!.isNotEmpty)
-                      Text(
-                        offer.priceLabelAr!,
-                        style: AppTypography.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                    Text(
+                      offer.catalogPriceLabelAr,
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textSecondary,
                       ),
+                    ),
                     if (offer.inStock == false)
                       Text(
                         'غير متوفر حالياً',

@@ -6,6 +6,7 @@ class ConsultationSession {
   final String? activeSnapshotId;
   final int turnCount;
   final List<String> suggestedStartersAr;
+  final String? appliedPreferenceOpId;
 
   const ConsultationSession({
     required this.id,
@@ -13,6 +14,7 @@ class ConsultationSession {
     this.activeSnapshotId,
     this.turnCount = 0,
     this.suggestedStartersAr = const [],
+    this.appliedPreferenceOpId,
   });
 
   factory ConsultationSession.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class ConsultationSession {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      appliedPreferenceOpId: json['appliedPreferenceOpId'] as String?,
     );
   }
 }

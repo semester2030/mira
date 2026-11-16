@@ -16,6 +16,7 @@ class ConsultantDiscoveryOffer {
     this.partnerId,
     this.branchId,
     this.inStock,
+    this.liveStatus,
   });
 
   final String kind; // product | service
@@ -27,6 +28,21 @@ class ConsultantDiscoveryOffer {
   final double? priceSar;
   final String? priceLabelAr;
   final String? lane;
+  /// published | withdrawn | unknown — from live catalog refresh.
+  final String? liveStatus;
+
+  /// Always from the published row — never invent or round away hallalas.
+  String get catalogPriceLabelAr {
+    final labeled = priceLabelAr?.trim();
+    if (labeled != null && labeled.isNotEmpty) return labeled;
+    final sar = priceSar;
+    if (sar == null) return 'غير مذكور';
+    final halalas = (sar * 100).round();
+    final riyals = halalas ~/ 100;
+    final frac = halalas.abs() % 100;
+    final body = frac == 0 ? '$riyals' : '$riyals.${frac.toString().padLeft(2, '0')}';
+    return '$body ريال';
+  }
   final String? category;
   final String? subcategory;
   final String? partnerId;
@@ -55,6 +71,7 @@ class ConsultantDiscoveryOffer {
       partnerId: json['partnerId'] as String?,
       branchId: json['branchId'] as String?,
       inStock: json['inStock'] as bool?,
+      liveStatus: json['liveStatus'] as String?,
     );
   }
 }

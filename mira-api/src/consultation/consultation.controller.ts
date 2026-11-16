@@ -23,6 +23,7 @@ import { UsersService } from '../users/users.service';
 import { CreateConsultationSessionDto } from './dto/create-session.dto';
 import { SendConsultationMessageDto } from './dto/send-message.dto';
 import { UpdateConsultationContextDto } from './dto/update-session-context.dto';
+import { RecordTranscriptTurnDto } from './dto/record-transcript-turn.dto';
 import { ConsultationOrchestratorService } from './services/consultation-orchestrator.service';
 import { ConsultationMessageService } from './services/consultation-message.service';
 import { ConsultationSessionService } from './services/consultation-session.service';
@@ -104,6 +105,16 @@ export class ConsultationController {
     @Body() dto: UpdateConsultationContextDto,
   ) {
     return this.orchestrator.bindContext(user, sessionId, dto);
+  }
+
+  /** Persist link-ask / clarify (or similar) without invoking the LLM. */
+  @Post('sessions/:id/messages/transcript')
+  recordTranscriptTurn(
+    @CurrentUser() user: RequestUser,
+    @Param('id') sessionId: string,
+    @Body() dto: RecordTranscriptTurnDto,
+  ) {
+    return this.orchestrator.recordTranscriptTurn(user, sessionId, dto);
   }
 
   @Delete('sessions/:id')

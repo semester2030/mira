@@ -38,7 +38,18 @@ import {
   guardScopeAnswer,
   historyForBeautyTurn,
   isProductOrCatalogAsk,
+  type PublishedCatalogOffer,
 } from './consultation-scope';
+import {
+  ConsultantDiscoveryService,
+  type ConsultantOfferCard,
+  type ConsultantTurnResult,
+} from '../../consultant-discovery/consultant-discovery.service';
+import type { SessionDiscoveryContext } from '../../consultant-discovery/intent';
+import {
+  extractAttachmentCatalogCues,
+  type AttachmentCatalogCues,
+} from '../../consultant-discovery/attachment-catalog-cues';
 
 @Injectable()
 export class ConsultationOrchestratorService {
@@ -58,6 +69,7 @@ export class ConsultationOrchestratorService {
     @Inject(McePromptAssemblerService) private readonly promptAssembler: McePromptAssemblerService,
     @Inject(MceResponseValidatorService) private readonly validator: MceResponseValidatorService,
     @Inject(MceLlmService) private readonly llm: MceLlmService,
+    @Inject(ConsultantDiscoveryService) private readonly discovery: ConsultantDiscoveryService,
     @Inject(ConsultationDialogueService) private readonly dialogue?: ConsultationDialogueService,
   ) {}
 
@@ -97,6 +109,26 @@ export class ConsultationOrchestratorService {
       planTier,
       prefs?.birthYear ?? null,
     );
+  }
+
+  async recordTranscriptTurn(
+    authUser: RequestUser,
+    sessionId: string,
+    dto: { userContentAr: string; assistantContentAr: string; clientMessageId: string },
+  ) {
+    const user = await this.users.findOrCreateFromFirebase(authUser);
+    await this.sessions.getForUser(user.id, sessionId);
+    const saved = await this.messages.recordTranscriptTurn({
+      sessionId,
+      userContentAr: dto.userContentAr,
+      assistantContentAr: dto.assistantContentAr,
+      clientMessageId: dto.clientMessageId,
+    });
+    return {
+      userMessage: this.messages.toDto(saved.user),
+      assistantMessage: this.messages.toDto(saved.assistant),
+      created: saved.created,
+    };
   }
 
   async deleteSession(authUser: RequestUser, sessionId: string): Promise<{ deleted: boolean }> {
@@ -334,6 +366,88 @@ export class ConsultationOrchestratorService {
       if (!scope.allow) localReply = scope.replyAr;
     }
 
+    let discoveryTurn: ConsultantTurnResult | null = null;
+    let discoveryPayload: MceAssistantPayloadV1 | null = null;
+    let discoverySessionPatch: SessionDiscoveryContext | null | undefined = undefined;
+
+    // Real partner catalog via MarketplaceService.browse — never RC5 fixtures here.
+    if (!localReply && !mod.blocked && this.discovery.enabled()) {
+      const meta =
+        session.metadataJson && typeof session.metadataJson === 'object'
+          ? (session.metadataJson as Record<string, unknown>)
+          : {};
+      const priorDiscovery =
+        (meta.discoveryContext as SessionDiscoveryContext | undefined) ?? null;
+      const attachmentCount = dto.attachmentIds?.length ?? 0;
+      const attachmentCues = await this.extractCuesFromCurrentAttachment(
+        imageDataUrls,
+        attachmentCount,
+      );
+      const imageKind =
+        attachmentCues?.imageKind && attachmentCues.imageKind !== 'none'
+          ? (attachmentCues.imageKind as 'face' | 'outfit' | 'unknown')
+          : this.inferImageKind(loaded.snapshot, attachmentCount, dto.message.trim());
+      // Prefer cues from image bytes; message text is fallback only (never filename-as-product).
+      const attachmentHintAr =
+        this.hintFromCues(attachmentCues) ||
+        this.attachmentSearchHint(dto.message.trim(), attachmentCount);
+      discoveryTurn = await this.discovery.turn({
+        message: dto.message.trim(),
+        hasFaceImage: imageKind === 'face',
+        imageKind,
+        session: priorDiscovery,
+        attachmentCount,
+        attachmentHintAr: attachmentHintAr || undefined,
+        attachmentCues,
+      });
+      if (discoveryTurn.enabled && this.discovery.shouldHandleAsDiscovery(discoveryTurn.intent)) {
+        const replyParts = [
+          discoveryTurn.intent.replyAr,
+          discoveryTurn.intent.askAr,
+          discoveryTurn.searchFailed ? discoveryTurn.searchErrorAr : null,
+        ].filter((s): s is string => !!s && s.trim().length > 0);
+        localReply = replyParts.join('\n');
+        discoverySessionPatch = discoveryTurn.sessionPatch;
+        const followUps = this.discoveryFollowUps(discoveryTurn);
+        const last = discoverySessionPatch?.lastOffers ?? [];
+        const anyWithdrawn = last.some((o) => o.liveStatus === 'withdrawn');
+        // After withdraw, push liveness so the client refuses buy/book on ordinals.
+        const livenessCards =
+          !discoveryTurn.offers.length && anyWithdrawn
+            ? last.map((o) => ({
+                id: o.id,
+                kind: o.kind,
+                titleAr: o.titleAr,
+                priceSar: o.priceSar,
+                partnerId: o.partnerId ?? null,
+                inStock: o.liveStatus === 'withdrawn' ? false : o.inStock,
+                liveStatus: o.liveStatus ?? 'unknown',
+                action: 'view' as const,
+                actionLabelAr: o.liveStatus === 'withdrawn' ? 'غير متاح' : 'عرض التفاصيل',
+                openPath: `/marketplace/catalog/${o.kind}/${encodeURIComponent(o.id)}`,
+              }))
+            : null;
+        discoveryPayload = {
+          answerAr: localReply,
+          confidence: 'high',
+          intent: discoveryTurn.intent.kind,
+          citedFactIds: [],
+          suggestedQuestionsAr: followUps,
+          blocked: false,
+          disclaimerAr: '',
+          replySource: 'discovery',
+          discoveryOffers: (discoveryTurn.offers.length
+            ? discoveryTurn.offers
+            : livenessCards ?? []) as unknown as Array<Record<string, unknown>>,
+          discoverySideOffer: discoveryTurn.sideOffer
+            ? (discoveryTurn.sideOffer as unknown as Record<string, unknown>)
+            : null,
+          searchFailed: discoveryTurn.searchFailed,
+          searchErrorAr: discoveryTurn.searchErrorAr ?? undefined,
+        };
+      }
+    }
+
     // Catalog discovery OFF: never invent Mira products via LLM — honest unavailable copy.
     if (!localReply && !mod.blocked && isProductOrCatalogAsk(dto.message.trim()) && !this.discoveryEnabled()) {
       localReply = buildDegradedAdvisorReply(dto.message.trim(), loaded.factRegistry);
@@ -378,15 +492,199 @@ export class ConsultationOrchestratorService {
       llmMessages,
       detectedIntent,
       localReply,
+      discoveryTurn,
+      discoveryPayload,
+      discoverySessionPatch,
     };
   }
 
   private discoveryEnabled(): boolean {
-    return (
-      String(this.config.get('MIRA_CONSULTANT_DISCOVERY_V1', 'false'))
-        .trim()
-        .toLowerCase() === 'true'
+    return this.discovery.enabled();
+  }
+
+  /** Map marketplace browse cards → grounding rows (id/price/stock from partner catalog). */
+  private offersFromDiscoveryTurn(turn: ConsultantTurnResult | null): PublishedCatalogOffer[] {
+    if (!turn?.offers?.length) return [];
+    const side = turn.sideOffer ? [turn.sideOffer] : [];
+    return [...turn.offers, ...side].map((o) => this.publishedFromCard(o));
+  }
+
+  private publishedFromCard(o: ConsultantOfferCard): PublishedCatalogOffer {
+    return {
+      id: o.id,
+      titleAr: o.titleAr,
+      kind: o.kind,
+      priceSar: o.priceSar,
+      inStock: o.inStock,
+    };
+  }
+
+  private attachDiscoveryCards(
+    payload: MceAssistantPayloadV1,
+    turn: ConsultantTurnResult | null,
+  ): MceAssistantPayloadV1 {
+    if (!turn) {
+      // Keep any liveness cards already placed on the payload (do not wipe).
+      return {
+        ...payload,
+        discoveryOffers: Array.isArray(payload.discoveryOffers) ? payload.discoveryOffers : [],
+        discoverySideOffer: payload.discoverySideOffer ?? null,
+        searchFailed: payload.searchFailed ?? false,
+      };
+    }
+    const fromTurn = turn.offers.map((o) => ({ ...o }));
+    const prior =
+      Array.isArray(payload.discoveryOffers) && payload.discoveryOffers.length
+        ? payload.discoveryOffers
+        : [];
+    // Prefer fresh turn cards; if turn has none, preserve prior liveness/status cards.
+    const discoveryOffers = fromTurn.length ? fromTurn : prior;
+    return {
+      ...payload,
+      discoveryOffers,
+      discoverySideOffer: turn.sideOffer
+        ? { ...turn.sideOffer }
+        : fromTurn.length
+          ? null
+          : (payload.discoverySideOffer ?? null),
+      searchFailed: turn.searchFailed,
+      searchErrorAr: turn.searchErrorAr ?? undefined,
+      replySource:
+        payload.replySource ??
+        (fromTurn.length || turn.searchFailed || turn.noMatch || prior.length
+          ? 'discovery'
+          : payload.replySource),
+    };
+  }
+
+  private validateOpts(publishedOffers: PublishedCatalogOffer[] = []) {
+    return {
+      discoveryEnabled: this.discoveryEnabled(),
+      publishedOffers,
+    };
+  }
+
+  /**
+   * Classify the *current* attachment from the user message — never force «face»
+   * merely because the session has a prior skin report.
+   */
+  private inferImageKind(
+    snapshot: MceContextSnapshotV1,
+    attachmentCount: number,
+    message: string,
+  ): 'face' | 'outfit' | 'unknown' {
+    if (attachmentCount <= 0) return 'unknown';
+    const n = message
+      .toLowerCase()
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ة/g, 'ه');
+    if (/تسريح|قصه|قصّه|شعر|هايلايت|صبغه|لون شعر|مين تسوي|صالون/.test(n)) {
+      return 'outfit';
+    }
+    if (
+      /منتج|عبوه|عبوة|مرطب|واقي|شامبو|سيروم|كريم|علبه|علبة|براند|ماركه|علامه|نفس هذا|مثل هذا|زي هذا|ابي نفس|ابغى نفس/.test(
+        n,
+      )
+    ) {
+      return 'unknown'; // product-capable; not face
+    }
+    if (/وجهي|بشرتي|هالصوره لوجهي|صورة وجه|صوره وجه|تحليل بشر/.test(n)) {
+      return 'face';
+    }
+    // Prior skin/outfit reports must not override a new unlabeled product photo.
+    if (snapshot.outfitAnalysisId && /اطلال|لبس|فستان|لون/.test(n)) return 'outfit';
+    return 'unknown';
+  }
+
+  /** Message-only fallback — never treat a bare Latin token as proven product identity. */
+  private attachmentSearchHint(message: string, attachmentCount: number): string {
+    if (attachmentCount <= 0) return '';
+    const named = message.match(
+      /(?:اسمه|اسمها|ماركة|ماركه|علامة|علامه|براند)\s+([^\n.؟!?]{2,40})/i,
     );
+    return named?.[1]?.trim() ?? '';
+  }
+
+  private hintFromCues(cues: AttachmentCatalogCues | null): string {
+    if (!cues || cues.source === 'none') return '';
+    return [cues.productNameAr, cues.brandAr, cues.sizeAr, cues.hairstyleAr]
+      .map((s) => (s ?? '').trim())
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  private async extractCuesFromCurrentAttachment(
+    imageDataUrls: string[],
+    attachmentCount: number,
+  ): Promise<AttachmentCatalogCues | null> {
+    if (attachmentCount <= 0 || !imageDataUrls.length) return null;
+    const dataUrl = imageDataUrls[0];
+    const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!m) return null;
+    const bytes = Buffer.from(m[2], 'base64');
+    const visionComplete = this.llm.isConfigured()
+      ? async (args: { system: string; userText: string; imageDataUrl: string }) => {
+          const result = await this.llm.complete([
+            { role: 'system', content: args.system },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: args.userText },
+                { type: 'image_url', image_url: { url: args.imageDataUrl, detail: 'auto' } },
+              ],
+            },
+          ]);
+          return result.payload.answerAr || JSON.stringify(result.payload);
+        }
+      : null;
+    // Production path: vision only — never MIRA_CUE / JPEG COM as product identity.
+    return extractAttachmentCatalogCues({
+      bytes,
+      dataUrl,
+      visionComplete,
+      allowEmbeddedTestCues: false,
+    });
+  }
+
+  private discoveryFollowUps(turn: ConsultantTurnResult): string[] {
+    const ask = turn.intent.askAr?.trim();
+    const out: string[] = [];
+    if (ask) out.push(ask);
+    const kind = turn.intent.kind;
+    const blockers = turn.intent.blockers ?? [];
+    // Advice / clarify: never push buy/link chips — keep free-text field available.
+    if (kind === 'clarify' || blockers.includes('bare_advice_clarify')) {
+      out.push('عن بشرتي');
+      out.push('عن شعري');
+      out.push('أبي منتج معيّن');
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (kind === 'advice_only' && blockers.includes('skin_explain_not_catalog')) {
+      out.push('اربطيها بتقرير بشرتي');
+      out.push('نصيحة عامة فقط');
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (blockers.includes('home_hair_service') || blockers.includes('venue_artist_service')) {
+      if (!turn.intent.city) out.push('في الرياض');
+      out.push('تبين مختصة فردية أو صالون يقدم زيارات؟');
+      out.push('مختصة فردية');
+      out.push(
+        blockers.includes('venue_artist_service')
+          ? 'صالون يثبت الحضور للقاعة'
+          : 'صالون يقدم زيارات',
+      );
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (turn.offers.length >= 2) {
+      out.push('قارني الأول بالثاني');
+      out.push('أيهم أنسب لي؟');
+      out.push('عطيني رابط الثاني');
+    } else if (turn.offers.length === 1) {
+      out.push('عطيني الرابط');
+      if (turn.offers[0].action === 'book') out.push('أبي أحجز');
+    }
+    if (turn.noMatch) out.push('أبي بديل مشابه منشور');
+    return [...new Set(out)].slice(0, 4);
   }
 
   private async openTurn(
@@ -470,6 +768,7 @@ export class ConsultationOrchestratorService {
     chunks: AsyncIterable<string>,
     factRegistry: MceFactEntry[],
     userMessage?: string,
+    publishedOffers: PublishedCatalogOffer[] = [],
   ): Promise<MceAssistantPayloadV1> {
     let accumulated = '';
     for await (const chunk of chunks) accumulated += chunk;
@@ -487,9 +786,12 @@ export class ConsultationOrchestratorService {
         disclaimerAr: '',
       };
     }
-    const validated = this.validator.validate(parsed, factRegistry, userMessage, {
-      discoveryEnabled: this.discoveryEnabled(),
-    });
+    const validated = this.validator.validate(
+      parsed,
+      factRegistry,
+      userMessage,
+      this.validateOpts(publishedOffers),
+    );
     return { ...validated, replySource: validated.replySource ?? 'llm' };
   }
 
@@ -503,38 +805,54 @@ export class ConsultationOrchestratorService {
       signal?: AbortSignal;
       userRow: { contentAr: string };
       localReply?: string | null;
+      discoveryTurn?: ConsultantTurnResult | null;
+      discoveryPayload?: MceAssistantPayloadV1 | null;
     },
     streamFactory?: () => AsyncIterable<string>,
   ): Promise<MceAssistantPayloadV1> {
+    const discoveryTurn = ctx.discoveryTurn ?? null;
+    const publishedOffers = this.offersFromDiscoveryTurn(discoveryTurn);
+
+    // Discovery already claimed this turn with marketplace browse results.
+    if (ctx.discoveryPayload) {
+      const grounded = this.validator.validate(
+        ctx.discoveryPayload,
+        ctx.factRegistry,
+        ctx.userRow.contentAr,
+        this.validateOpts(publishedOffers),
+      );
+      return this.attachDiscoveryCards(
+        { ...guardScopeAnswer(grounded, ctx.userRow.contentAr), replySource: 'discovery' },
+        discoveryTurn,
+      );
+    }
+
     if (ctx.localReply) {
       const catalogBlocked =
         isProductOrCatalogAsk(ctx.userRow.contentAr) && !this.discoveryEnabled();
       const replySource = catalogBlocked || !this.llm.isConfigured() ? 'degraded' : 'dialogue';
-      return guardScopeAnswer(
-        this.validator.validate(
-          {
-            answerAr: ctx.localReply,
-            confidence: 'high',
-            intent: catalogBlocked ? 'product' : 'general',
-            citedFactIds: [],
-            suggestedQuestionsAr: [],
-            blocked: false,
-            disclaimerAr: '',
-            replySource,
-          },
-          ctx.factRegistry,
-          ctx.userRow.contentAr,
-          { discoveryEnabled: this.discoveryEnabled() },
-        ),
+      const validated = this.validator.validate(
+        {
+          answerAr: ctx.localReply,
+          confidence: 'high',
+          intent: catalogBlocked ? 'product' : 'general',
+          citedFactIds: [],
+          suggestedQuestionsAr: [],
+          blocked: false,
+          disclaimerAr: '',
+          replySource,
+        },
+        ctx.factRegistry,
         ctx.userRow.contentAr,
+        this.validateOpts(publishedOffers),
       );
+      return this.attachDiscoveryCards(guardScopeAnswer(validated, ctx.userRow.contentAr), discoveryTurn);
     }
     if (ctx.mod.blocked && ctx.mod.safeReply) {
       return this.validator.blockedPayload(
         `${ctx.mod.safeReply}\n\n${this.moderation.disclaimer()}`,
       );
     }
-    // FK-10: quarantine free-form fashion prescriptions when Advisor integration is on.
     const commercialAsk = isDirectCommercialQuestion(ctx.userRow.contentAr);
     const fashionQ = evaluateMceFashionQuarantine(ctx.userRow.contentAr, (k, d) => {
       const v = this.config.get<string>(k);
@@ -546,14 +864,26 @@ export class ConsultationOrchestratorService {
       );
     }
     if (isDirectCommercialQuestion(ctx.userRow.contentAr)) {
-      return this.serverCommercialPayload(ctx.userRow.contentAr, ctx.factRegistry);
-    }
-    if (ctx.cached) {
-      return guardScopeAnswer(
-        this.validator.validate(ctx.cached, ctx.factRegistry, ctx.userRow.contentAr, { discoveryEnabled: this.discoveryEnabled() }),
-        ctx.userRow.contentAr,
+      return this.attachDiscoveryCards(
+        this.serverCommercialPayload(ctx.userRow.contentAr, ctx.factRegistry, publishedOffers),
+        discoveryTurn,
       );
     }
+    if (ctx.cached) {
+      return this.attachDiscoveryCards(
+        guardScopeAnswer(
+          this.validator.validate(
+            ctx.cached,
+            ctx.factRegistry,
+            ctx.userRow.contentAr,
+            this.validateOpts(publishedOffers),
+          ),
+          ctx.userRow.contentAr,
+        ),
+        discoveryTurn,
+      );
+    }
+
     if (!this.llm.isConfigured() || !ctx.llmMessages) {
       throw new ServiceUnavailableException({
         code: 'MCE_LLM_NOT_CONFIGURED',
@@ -561,32 +891,40 @@ export class ConsultationOrchestratorService {
       });
     }
     const payload = streamFactory
-      ? await this.collectValidatedStream(streamFactory(), ctx.factRegistry, ctx.userRow.contentAr)
+      ? await this.collectValidatedStream(
+          streamFactory(),
+          ctx.factRegistry,
+          ctx.userRow.contentAr,
+          publishedOffers,
+        )
       : this.validator.validate(
           (await this.llm.complete(ctx.llmMessages, { signal: ctx.signal })).payload,
           ctx.factRegistry,
           ctx.userRow.contentAr,
-          { discoveryEnabled: this.discoveryEnabled() },
+          this.validateOpts(publishedOffers),
         );
+
     const scoped = guardScopeAnswer(
       { ...payload, replySource: payload.replySource ?? 'llm' },
       ctx.userRow.contentAr,
     );
-    if (ctx.faqKey) await this.costGuard.setFaqCache(ctx.faqKey, scoped);
-    return scoped;
+    const withCards = this.attachDiscoveryCards(scoped, discoveryTurn);
+    if (ctx.faqKey) await this.costGuard.setFaqCache(ctx.faqKey, withCards);
+    return withCards;
   }
 
   private async finalizeTurn(
     ctx: {
       started: number;
       user: { id: string };
-      session: { id: string; turnCount: number; rollingSummaryAr: string | null };
+      session: { id: string; turnCount: number; rollingSummaryAr: string | null; metadataJson?: unknown };
       snapshot: MceContextSnapshotV1;
       factRegistry: MceFactEntry[];
       snapshotId: string;
       userRow: { id: string; contentAr: string; role: string; blocked: boolean; createdAt: Date };
       detectedIntent?: MceConsultationIntent;
       attemptToken?: string | null;
+      discoverySessionPatch?: SessionDiscoveryContext | null;
     },
     assistantPayload: MceAssistantPayloadV1,
   ): Promise<ConsultationTurnResponseDto> {
@@ -627,12 +965,21 @@ export class ConsultationOrchestratorService {
       if (this.compaction.shouldCompact(newTurnCount)) {
         rollingSummaryAr = await this.compaction.compact(ctx.session.id, rollingSummaryAr);
       }
+      const prevMeta =
+        ctx.session.metadataJson && typeof ctx.session.metadataJson === 'object'
+          ? (ctx.session.metadataJson as Record<string, unknown>)
+          : {};
+      const nextMeta =
+        ctx.discoverySessionPatch != null
+          ? { ...prevMeta, discoveryContext: ctx.discoverySessionPatch }
+          : prevMeta;
       await this.prisma.consultationSession.update({
         where: { id: ctx.session.id },
         data: {
           turnCount: { increment: 1 },
           rollingSummaryAr,
           updatedAt: new Date(),
+          metadataJson: nextMeta as import('@prisma/client').Prisma.InputJsonValue,
         },
       });
       await this.users.writeAuditLog({
@@ -701,7 +1048,11 @@ export class ConsultationOrchestratorService {
       .map((f) => ({ id: f.id, labelAr: f.labelAr, valueAr: f.valueAr }));
   }
 
-  private serverCommercialPayload(message: string, facts: MceFactEntry[]): MceAssistantPayloadV1 {
+  private serverCommercialPayload(
+    message: string,
+    facts: MceFactEntry[],
+    publishedOffers: PublishedCatalogOffer[] = [],
+  ): MceAssistantPayloadV1 {
     return this.validator.validate(
       {
         answerAr: serverCommercialTurnReply(facts, message),
@@ -715,7 +1066,7 @@ export class ConsultationOrchestratorService {
       },
       facts,
       message,
-      { discoveryEnabled: this.discoveryEnabled() },
+      this.validateOpts(publishedOffers),
     );
   }
 
@@ -779,7 +1130,19 @@ export class ConsultationOrchestratorService {
       userMessage: message.trim(),
     });
     const llmResult = await this.llm.complete(llmMessages);
-    const payload = this.validator.validate(llmResult.payload, grounding.factRegistry, message.trim(), { discoveryEnabled: this.discoveryEnabled() });
+    const discoveryTurn = this.discovery.enabled()
+      ? await this.discovery.turn({ message: message.trim() })
+      : null;
+    const published = this.offersFromDiscoveryTurn(discoveryTurn);
+    const payload = this.attachDiscoveryCards(
+      this.validator.validate(
+        llmResult.payload,
+        grounding.factRegistry,
+        message.trim(),
+        this.validateOpts(published),
+      ),
+      discoveryTurn,
+    );
 
     await this.users.writeAuditLog({
       userId: user.id,
