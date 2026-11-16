@@ -625,6 +625,12 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     if (index < 0 || index >= _slides.length) return;
     if (port is AssetVideoPort) {
       final current = _videoPath(_slides[index]);
+      // Disk prefetch for neighbors is cheap and survives warm-controller swaps.
+      final nextPath = index + 1 < _slides.length ? _videoPath(_slides[index + 1]) : null;
+      final prevPath = index - 1 >= 0 ? _videoPath(_slides[index - 1]) : null;
+      // Visible clip fill wins; neighbors are deferred while it is downloading.
+      if (nextPath != null) port.prefetchDisk(nextPath, lowPriority: true);
+      if (prevPath != null) port.prefetchDisk(prevPath, lowPriority: true);
       // Protect the warm slot that still holds the current page's controller.
       // attach() must claim it first; warming next would dispose it → cold path.
       if (deferIfCurrentWarm &&
@@ -634,12 +640,10 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         return;
       }
       // Prefer next once current is active (or was never warming).
-      final next = index + 1 < _slides.length ? _videoPath(_slides[index + 1]) : null;
-      if (next != null) {
-        port.warm(next);
-      } else {
-        final prev = index - 1 >= 0 ? _videoPath(_slides[index - 1]) : null;
-        if (prev != null) port.warm(prev);
+      if (nextPath != null) {
+        port.warm(nextPath);
+      } else if (prevPath != null) {
+        port.warm(prevPath);
       }
     }
     if (!mounted) return;

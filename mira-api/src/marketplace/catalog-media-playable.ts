@@ -11,6 +11,8 @@ export const PROVEN_BROKEN_CATALOG_MEDIA_IDS: ReadonlySet<string> = new Set([
   '97e4706e-77a3-48f3-aa20-1c4be244ba01',
   '0daf602c-98b2-46d5-9148-182b9780b868',
   '0eb8d0e0-3991-4a2a-a435-81642baa7b79',
+  // Live Range probe 2026-11-16: 2267-byte stub; mid-range 416; black frame on device.
+  '94d514e3-99bf-4c5f-b517-fe4178aacb0f',
   'a9a871ca-df82-482e-b4b8-3ab7eab7e412',
   'ff222451-9e16-4a84-8f1f-974adf34f7ee',
   '38f83110-07ae-450e-9299-04ed12bf61f1',
