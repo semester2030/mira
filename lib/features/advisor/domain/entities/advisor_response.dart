@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../../consultation/domain/dialogue_history.dart';
+import '../../../../core/json/json_as_string.dart';
 
 class AdvisorMessage {
   final String text;
@@ -99,7 +100,7 @@ class AdvisorResponse {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      confidence: json['confidence'] as String? ?? 'medium',
+      confidence: JsonAsString.confidenceLabel(json['confidence']),
       intent: json['intent'] as String? ?? 'general',
       blocked: json['blocked'] as bool? ?? false,
       disclaimerAr: json['disclaimerAr'] as String?,

@@ -861,19 +861,25 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   }
 
   String _arabicSendError(Object error) {
+    // Keep the raw Dart/type error in logs; never surface it to the user.
+    // ignore: avoid_print
+    print('mira_advisor_send_error: $error');
     final text = error.toString().replaceFirst('Exception: ', '').trim();
     if (text.isEmpty) {
       return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.';
     }
-    // Prefer the server/stream message — do not hide "محرك الاستشارة غير متاح".
     if (error is ConsultationStreamException) return text;
+    if (RegExp(r"type '.*' is not a subtype of type").hasMatch(text) ||
+        text.contains('is not a subtype of type')) {
+      return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.';
+    }
     if (text.contains('أعيدي') ||
         text.contains('تعذر') ||
         text.contains('غير متاح') ||
         text.contains('انقطع')) {
       return text;
     }
-    return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.\n$text';
+    return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.';
   }
 
   void _scrollToEnd() {

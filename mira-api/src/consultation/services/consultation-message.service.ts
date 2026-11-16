@@ -304,17 +304,51 @@ export class ConsultationMessageService {
     blocked: boolean;
     createdAt: Date;
   }): ConsultationMessageResponseDto {
-    const payload = row.payloadJson as { attachmentIds?: string[]; clientMessageId?: string; suggestedQuestionsAr?: string[] } | null;
+    const payload = row.payloadJson as
+      | (MceAssistantPayloadV1 & {
+          attachmentIds?: string[];
+          clientMessageId?: string;
+          suggestedQuestionsAr?: string[];
+        })
+      | null;
+    const confidence = this.normalizeConfidenceLabel(payload?.confidence);
     return {
       id: row.id,
       role: row.role,
       contentAr: row.contentAr,
-      payload: row.payloadJson as MceAssistantPayloadV1 | undefined,
+      payload: row.payloadJson
+        ? ({
+            ...(row.payloadJson as object),
+            ...(confidence ? { confidence } : {}),
+          } as MceAssistantPayloadV1)
+        : undefined,
       attachmentIds: Array.isArray(payload?.attachmentIds) ? payload.attachmentIds : [],
       clientMessageId: typeof payload?.clientMessageId === 'string' ? payload.clientMessageId : undefined,
-      suggestedQuestionsAr: Array.isArray(payload?.suggestedQuestionsAr) ? payload.suggestedQuestionsAr : [],
+      suggestedQuestionsAr: Array.isArray(payload?.suggestedQuestionsAr)
+        ? payload.suggestedQuestionsAr
+        : [],
+      confidence,
+      intent: typeof payload?.intent === 'string' ? payload.intent : undefined,
       blocked: row.blocked,
       createdAt: row.createdAt.toISOString(),
     };
+  }
+
+  /** Wire contract: confidence must be a string label, never a JSON number. */
+  private normalizeConfidenceLabel(raw: unknown): string | undefined {
+    if (raw == null) return undefined;
+    if (raw === 'high' || raw === 'medium' || raw === 'low') return raw;
+    if (typeof raw === 'string') {
+      const v = raw.trim().toLowerCase();
+      if (v === 'high' || v === 'medium' || v === 'low') return v;
+      return v || undefined;
+    }
+    if (typeof raw === 'number' && Number.isFinite(raw)) {
+      const score = raw <= 1 ? raw : Math.min(1, Math.max(0, raw / 100));
+      if (score >= 0.75) return 'high';
+      if (score >= 0.45) return 'medium';
+      return 'low';
+    }
+    return undefined;
   }
 }
