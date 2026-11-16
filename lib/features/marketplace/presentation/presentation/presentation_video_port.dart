@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:video_player/video_player.dart';
 
@@ -135,6 +136,11 @@ class AssetVideoPort extends PresentationVideoPort {
   Future<void>? _warmFuture;
   VideoPlayerController? _parked;
   String? _parkedPath;
+  /// Extra initialized decoders for recently left clips (by mediaId), max 2.
+  /// Survives beyond the single [_parked] slot so return-after-N is still local.
+  final Map<String, VideoPlayerController> _preparedByMediaId = {};
+  final List<String> _preparedOrder = [];
+  static const int _maxPrepared = 2;
   int _generation = 0;
   bool _released = false;
   String? _lastOfferId;
@@ -293,10 +299,57 @@ class AssetVideoPort extends PresentationVideoPort {
     } catch (_) {}
   }
 
-  /// Parks the clip just left for a fast swipe-back. On memory-constrained
-  /// surfaces (iOS Simulator + 1080p) keeping active+warm+parked alive leaves
-  /// the next attach stuck isBuffering forever — dispose instead when a warm
-  /// slot is already held.
+  String? _mediaIdOf(String? path) {
+    if (path == null || path.isEmpty) return null;
+    return DiscoverVideoDiskCache.mediaIdFromUrl(path);
+  }
+
+  bool _sameMedia(String? a, String? b) {
+    if (a == null || b == null || a.isEmpty || b.isEmpty) return false;
+    if (a == b) return true;
+    final idA = _mediaIdOf(a);
+    final idB = _mediaIdOf(b);
+    return idA != null && idA == idB;
+  }
+
+  Future<void> _stashPrepared(String? path, VideoPlayerController controller) async {
+    final id = _mediaIdOf(path);
+    if (id == null || !controller.value.isInitialized || controller.value.hasError) {
+      await _silence(controller);
+      await controller.dispose();
+      return;
+    }
+    await _silence(controller);
+    final existing = _preparedByMediaId[id];
+    if (existing != null && existing != controller) {
+      await existing.dispose();
+    }
+    _preparedByMediaId[id] = controller;
+    _preparedOrder.remove(id);
+    _preparedOrder.add(id);
+    while (_preparedOrder.length > _maxPrepared) {
+      final evictId = _preparedOrder.removeAt(0);
+      final evict = _preparedByMediaId.remove(evictId);
+      if (evict != null && evict != controller) {
+        await evict.dispose();
+      }
+    }
+  }
+
+  VideoPlayerController? _takePrepared(String assetPath) {
+    final id = _mediaIdOf(assetPath);
+    if (id == null) return null;
+    final c = _preparedByMediaId.remove(id);
+    _preparedOrder.remove(id);
+    return c;
+  }
+
+  /// Parks the clip just left for a fast swipe-back.
+  ///
+  /// Always keep one parked decoder for the previous mediaId — even while a
+  /// warm next exists. Disposing on warm (old behaviour) forced a cold
+  /// initialize (~2–3s) on immediate swipe-back despite bytes already on disk.
+  /// Prior parked moves into a small prepared pool (max 2) instead of dispose.
   Future<void> _parkLeaving(VideoPlayerController leaving, String? path) async {
     if (path == null || path.isEmpty || !leaving.value.isInitialized) {
       await _silence(leaving);
@@ -304,16 +357,12 @@ class AssetVideoPort extends PresentationVideoPort {
       return;
     }
     await _silence(leaving);
-    // Prefer freeing the decoder for the upcoming warm/active clip.
-    if (_warm != null) {
-      await leaving.dispose();
-      return;
-    }
     final old = _parked;
+    final oldPath = _parkedPath;
     _parked = leaving;
     _parkedPath = path;
     if (old != null && old != leaving) {
-      await old.dispose();
+      await _stashPrepared(oldPath, old);
     }
   }
 
@@ -349,7 +398,9 @@ class AssetVideoPort extends PresentationVideoPort {
     VideoPlayerController? claimed;
     var claimedReady = false;
     var claimSource = 'cold';
-    if (_warmPath == assetPath) {
+    final wantId = _mediaIdOf(assetPath);
+    lastAttachPhases['mediaIdHash'] = wantId?.hashCode;
+    if (_sameMedia(_warmPath, assetPath)) {
       final pending = _warmFuture;
       var warmOk = true;
       if (pending != null) {
@@ -385,15 +436,35 @@ class AssetVideoPort extends PresentationVideoPort {
         claimSource = 'warm';
         lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
       }
-    } else if (_parkedPath == assetPath && _parked != null) {
+    } else if (_sameMedia(_parkedPath, assetPath) && _parked != null) {
       claimed = _parked;
       _parked = null;
       _parkedPath = null;
       claimedReady = claimed?.value.isInitialized ?? false;
       claimSource = 'parked';
       lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+    } else {
+      final prepared = _takePrepared(assetPath);
+      if (prepared != null) {
+        claimed = prepared;
+        claimedReady = prepared.value.isInitialized && !prepared.value.hasError;
+        claimSource = claimedReady ? 'prepared' : 'cold';
+        if (!claimedReady) {
+          try {
+            await prepared.dispose();
+          } catch (_) {}
+          claimed = null;
+        } else {
+          lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+        }
+      }
     }
-    lastAttachPhases['source'] = claimSource == 'cold' ? 0 : (claimSource == 'warm' ? 1 : 2);
+    lastAttachPhases['source'] = switch (claimSource) {
+      'warm' => 1,
+      'parked' => 2,
+      'prepared' => 3,
+      _ => 0,
+    };
     if (token != _generation || _released) {
       if (claimed != null && claimed != _controller && claimed != _warm && claimed != _parked) {
         await claimed.dispose();
@@ -419,14 +490,28 @@ class AssetVideoPort extends PresentationVideoPort {
     } else {
       // Prefer complete disk file (rewind after many swipes) without blocking the
       // first-ever play on a full download — network plays while bytes land.
+      lastAttachPhases['resolveStart'] = _msSince(settleStarted);
       controller = await _openResolved(
         assetPath,
         waitForDisk: false,
         phases: lastAttachPhases,
       );
+      lastAttachPhases['resolveDone'] = _msSince(settleStarted);
     }
     _controller = controller;
     _activePath = assetPath;
+    _recordDiag({
+      'event': 'attach_open',
+      'claimSource': claimSource,
+      'mediaId': wantId,
+      'cacheSource': lastAttachPhases['cacheSource'],
+      'cacheBytes': lastAttachPhases['cacheBytes'],
+      'resolveMs': lastAttachPhases['resolveDone'] == null ||
+              lastAttachPhases['resolveStart'] == null
+          ? null
+          : (lastAttachPhases['resolveDone']! - lastAttachPhases['resolveStart']!),
+      'ms': _msSince(settleStarted),
+    });
     controller.addListener(() => _onController(controller, token));
     try {
       if (!controller.value.isInitialized) {
@@ -450,9 +535,14 @@ class AssetVideoPort extends PresentationVideoPort {
         }
         lastAttachPhases['initDone'] = _msSince(settleStarted);
         lastAttachPhases['firstByteProxy'] = lastAttachPhases['initDone'];
-        // Still count as warm/parked source if we reused the preparing controller.
+        // Still count as warm/parked/prepared source if we reused the controller.
         if (claimSource != 'cold') {
-          lastAttachPhases['source'] = claimSource == 'warm' ? 1 : 2;
+          lastAttachPhases['source'] = switch (claimSource) {
+            'warm' => 1,
+            'parked' => 2,
+            'prepared' => 3,
+            _ => 0,
+          };
         }
       } else {
         // Already warm/parked — init was paid earlier; still stamp for comparison.
@@ -530,6 +620,7 @@ class AssetVideoPort extends PresentationVideoPort {
     // warm/play can return before AVPlayer advances position on iOS.
     final playStartedAt = DateTime.now().toUtc();
     final deadline = playStartedAt.add(const Duration(seconds: 5));
+    var seekNudged = false;
     var kicked = false;
     var sampleN = 0;
     while (DateTime.now().toUtc().isBefore(deadline)) {
@@ -545,6 +636,35 @@ class AssetVideoPort extends PresentationVideoPort {
       }
       sampleN += 1;
       final sincePlay = DateTime.now().toUtc().difference(playStartedAt);
+      // Parked/warm/prepared reclaim only: a tiny seek past the floor unlocks a
+      // decoded frame without tearing down the controller. Skip on cold opens so
+      // a true stall still surfaces as first_frame_timeout.
+      final reusedDecoder = (lastAttachPhases['source'] ?? 0) > 0;
+      if (!seekNudged &&
+          reusedDecoder &&
+          sincePlay.inMilliseconds >= 120 &&
+          v.position <= _progressFloor &&
+          v.isInitialized &&
+          v.size.width > 0) {
+        seekNudged = true;
+        lastAttachPhases['seekNudgeMs'] = _msSince(settleStarted);
+        try {
+          final nudge = _progressFloor + const Duration(milliseconds: 32);
+          final dur = v.duration;
+          final target = (dur > Duration.zero && nudge >= dur)
+              ? Duration.zero
+              : nudge;
+          await controller.seekTo(target);
+          if (token != _generation || _released || _controller != controller) return;
+          await controller.play();
+          if (token != _generation || _released || _controller != controller) return;
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+          if (token != _generation || _released || _controller != controller) return;
+          if (_markProgressIfVisible(controller, token, settleStarted, slot, assetPath)) {
+            return;
+          }
+        } catch (_) {}
+      }
       if (!kicked && sincePlay.inMilliseconds >= 350 && v.position <= _progressFloor) {
         kicked = true;
         lastAttachPhases['stallKickMs'] = _msSince(settleStarted);
@@ -643,6 +763,18 @@ class AssetVideoPort extends PresentationVideoPort {
       lastAttachPhases['isPlaying'] = controller.value.isPlaying ? 1 : 0;
       lastAttachPhases['isBuffering'] = controller.value.isBuffering ? 1 : 0;
       _emitPlayback('first_frame', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
+      debugPrint(
+        'MIRA_DISCOVER_FF mediaId=${_mediaIdOf(assetPath)} '
+        'offer=${slot.slideId} firstFrameMs=$ms '
+        'source=${lastAttachPhases['source']} '
+        'cacheSource=${lastAttachPhases['cacheSource']} '
+        'cacheBytes=${lastAttachPhases['cacheBytes']} '
+        'initStart=${lastAttachPhases['initStart']} '
+        'initDone=${lastAttachPhases['initDone']} '
+        'playStart=${lastAttachPhases['playStart']} '
+        'resolveMs=${(lastAttachPhases['resolveDone'] ?? 0) - (lastAttachPhases['resolveStart'] ?? 0)} '
+        'seekNudge=${lastAttachPhases['seekNudgeMs']}',
+      );
     }
     return true;
   }
@@ -729,6 +861,9 @@ class AssetVideoPort extends PresentationVideoPort {
     _warmFuture = null;
     _parked = null;
     _parkedPath = null;
+    final prepared = Map<String, VideoPlayerController>.from(_preparedByMediaId);
+    _preparedByMediaId.clear();
+    _preparedOrder.clear();
     activeSlot = null;
     playback = PresentationPlayback.idle;
     if (controller != null) {
@@ -737,6 +872,11 @@ class AssetVideoPort extends PresentationVideoPort {
     }
     if (warm != null && warm != controller) await warm.dispose();
     if (parked != null && parked != controller && parked != warm) await parked.dispose();
+    for (final c in prepared.values) {
+      if (c != controller && c != warm && c != parked) {
+        await c.dispose();
+      }
+    }
     if (token != _generation) return;
   }
 
@@ -756,11 +896,13 @@ class AssetVideoPort extends PresentationVideoPort {
   /// this warm controller is disposed for another URL.
   Future<void> warm(String assetPath) async {
     if (_released || assetPath.isEmpty) return;
-    if (_activePath == assetPath || _parkedPath == assetPath) return;
+    if (_sameMedia(_activePath, assetPath) || _sameMedia(_parkedPath, assetPath)) {
+      return;
+    }
     // Always keep the shared disk fetch alive for this (and previous) URL.
     prefetchDisk(assetPath);
     // Join while download OR mute-prime is still in flight (_warm may still be null).
-    if (_warmPath == assetPath) {
+    if (_sameMedia(_warmPath, assetPath)) {
       final pending = _warmFuture;
       if (pending != null) {
         try {
@@ -798,7 +940,7 @@ class AssetVideoPort extends PresentationVideoPort {
       // Download+open from disk when possible so mute-prime is local (no pos0 stall).
       final opened = await _openResolved(assetPath, waitForDisk: true);
       controller = opened;
-      if (_released || _warmPath != assetPath) {
+      if (_released || !_sameMedia(_warmPath, assetPath)) {
         await opened.dispose();
         return;
       }
@@ -883,9 +1025,15 @@ class AssetVideoPort extends PresentationVideoPort {
     _warmFuture = null;
     _parked = null;
     _parkedPath = null;
+    final prepared = List<VideoPlayerController>.from(_preparedByMediaId.values);
+    _preparedByMediaId.clear();
+    _preparedOrder.clear();
     controller?.dispose();
     if (warm != null && warm != controller) warm.dispose();
     if (parked != null && parked != controller && parked != warm) parked.dispose();
+    for (final c in prepared) {
+      if (c != controller && c != warm && c != parked) c.dispose();
+    }
     super.dispose();
   }
 }

@@ -296,6 +296,32 @@ void main() {
     await port.release();
   });
 
+  test('park survives while next is warming (swipe-back reuses decoder)', () async {
+    final a = ControllableVideoController('$_clip-a');
+    final b = ControllableVideoController('$_clip-b');
+    final c = ControllableVideoController('$_clip-c');
+    var n = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        n += 1;
+        return n == 1 ? a : (n == 2 ? b : c);
+      },
+    );
+    await port.attach(_slotA, '$_clip-a');
+    await port.attach(_slotB, '$_clip-b');
+    expect(a.disposed, isFalse, reason: 'A must be parked after leaving for B');
+    // Warm next while A is parked — must NOT dispose A.
+    unawaited(port.warm('$_clip-c'));
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(a.disposed, isFalse, reason: 'warming C must keep parked A');
+    final createdBeforeBack = n;
+    await port.attach(_slotA, '$_clip-a');
+    expect(n, createdBeforeBack, reason: 'swipe-back must claim parked A, not open cold');
+    expect(a.disposed, isFalse);
+    expect(port.lastAttachPhases['source'], 2);
+    await port.release();
+  });
+
   test('reactivating a parked clip requires new progress past prior position', () async {
     final controller = ControllableVideoController(_clip);
     final port = AssetVideoPort(createController: (_) => controller);

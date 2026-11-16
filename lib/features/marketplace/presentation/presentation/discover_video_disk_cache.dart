@@ -99,7 +99,10 @@ class DiscoverVideoDiskCache {
         id != null &&
         id != _priorityMediaId &&
         _inflight.containsKey(_priorityMediaId)) {
-      // Defer neighbor fill until the visible clip's shared download settles.
+      // Visible clip owns the full GET. Still grow a playable prefix for the
+      // neighbor so forward swipe is not stuck waiting for the current finish.
+      // ignore: discarded_futures
+      ensurePlayablePrefix(url, needBytes: 768 * 1024);
       // ignore: discarded_futures
       _inflight[_priorityMediaId]!.whenComplete(() {
         // ignore: discarded_futures
@@ -109,6 +112,32 @@ class DiscoverVideoDiskCache {
     }
     // ignore: discarded_futures
     ensureLocal(url);
+  }
+
+  /// Ensure at least [needBytes] are on disk (complete file or .part) without
+  /// waiting for the full object — used to arm the next swipe under priority.
+  Future<int> ensurePlayablePrefix(String url, {int needBytes = 512 * 1024}) async {
+    final mediaId = mediaIdFromUrl(url);
+    if (mediaId == null) return 0;
+    _originByMediaId[mediaId] = url;
+    final complete = await peekComplete(url);
+    if (complete != null) return complete.length();
+    final have = await bytesOnDiskFor(url);
+    if (have >= needBytes) return have;
+    try {
+      final fill = await _withWriteLock(
+        mediaId,
+        () => _ensurePrefix(
+          mediaId: mediaId,
+          origin: url,
+          needBytes: needBytes,
+          knownTotal: _knownLength[mediaId],
+        ),
+      );
+      return await fill.file?.length() ?? 0;
+    } catch (_) {
+      return have;
+    }
   }
 
   /// Returns a complete local file when possible. Joins any in-flight download
@@ -189,6 +218,29 @@ class DiscoverVideoDiskCache {
           return f;
         }
       }
+    }
+    // Filesystem fallback when LRU missed a renamed complete object.
+    await for (final entity in root.list()) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.isEmpty
+          ? entity.path.split('/').last
+          : entity.uri.pathSegments.last;
+      final m = RegExp('^${RegExp.escape(mediaId)}_(\\d+)\\.mp4\$').firstMatch(name);
+      if (m == null) continue;
+      final len = int.tryParse(m.group(1)!) ?? 0;
+      final size = await entity.length();
+      if (len <= 0 || size != len) continue;
+      final key = name;
+      _lru[key] = _CacheMeta(
+        key: key,
+        mediaId: mediaId,
+        contentLength: len,
+        path: entity.path,
+        complete: true,
+        bytesOnDisk: size,
+      );
+      _touch(key);
+      return entity;
     }
     return null;
   }
@@ -623,7 +675,8 @@ class DiscoverVideoDiskCache {
   }
 
   Future<void> _indexExisting(Directory root) async {
-    if (_lru.isNotEmpty) return;
+    // Always merge disk files into the LRU — a non-empty map must not hide
+    // complete clips written in a prior session (or by another isolate path).
     await for (final entity in root.list()) {
       if (entity is! File) continue;
       final name = entity.uri.pathSegments.isEmpty ? entity.path.split('/').last : entity.uri.pathSegments.last;
@@ -633,6 +686,7 @@ class DiscoverVideoDiskCache {
       final size = await entity.length();
       if (len <= 0 || size != len) continue;
       final key = m.group(0)!;
+      if (_lru.containsKey(key)) continue;
       _lru[key] = _CacheMeta(
         key: key,
         mediaId: m.group(1)!,
