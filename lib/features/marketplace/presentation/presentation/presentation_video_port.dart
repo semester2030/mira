@@ -134,6 +134,10 @@ class AssetVideoPort extends PresentationVideoPort {
   VideoPlayerController? _warm;
   String? _warmPath;
   Future<void>? _warmFuture;
+  /// Completes when the warm controller is initialized (before mute-prime).
+  /// Attach waits on this — never on the full mute-prime — so a slow prime
+  /// cannot hold the dark cover for multi-second claim rejection cycles.
+  Completer<void>? _warmInitialized;
   VideoPlayerController? _parked;
   String? _parkedPath;
   /// Extra initialized decoders for recently left clips (by mediaId), max 2.
@@ -236,6 +240,8 @@ class AssetVideoPort extends PresentationVideoPort {
   Future<VideoPlayerController> _openResolved(
     String assetPath, {
     required bool waitForDisk,
+    bool claimPriority = true,
+    bool fullFill = true,
     Map<String, int?>? phases,
   }) async {
     final cache = _diskCache;
@@ -249,7 +255,10 @@ class AssetVideoPort extends PresentationVideoPort {
     // waitForDisk kept for call-site compatibility; partials are playable via
     // proxy immediately, so we no longer block up to 2200ms on a full GET.
     phases?['waitForDisk'] = waitForDisk ? 1 : 0;
-    final source = await cache.resolvePlaySource(assetPath);
+    final source = await cache.resolvePlaySource(
+      assetPath,
+      claimPriority: claimPriority,
+    );
     if (source.isFile && source.file != null) {
       phases?['cacheSource'] = 3;
       phases?['cacheBytes'] = source.bytesOnDisk;
@@ -262,8 +271,8 @@ class AssetVideoPort extends PresentationVideoPort {
       return VideoPlayerController.file(source.file!);
     }
     if (source.isProxy && source.uri != null) {
-      // Background fill via the shared download path (does not cancel/restart).
-      cache.prefetch(assetPath);
+      // Active clip: full shared fill. Warm/neighbor: prefix only.
+      cache.prefetch(assetPath, lowPriority: !fullFill);
       phases?['cacheSource'] = 4; // loopback proxy over partial/complete fill
       phases?['cacheBytes'] = source.bytesOnDisk;
       _recordDiag({
@@ -272,6 +281,7 @@ class AssetVideoPort extends PresentationVideoPort {
         'bytesReused': source.bytesOnDisk,
         'bytesDownloaded': 0,
         'playUrl': source.uri.toString(),
+        'fullFill': fullFill ? 1 : 0,
       });
       return VideoPlayerController.networkUrl(source.uri!);
     }
@@ -454,6 +464,9 @@ class AssetVideoPort extends PresentationVideoPort {
       await _silence(previous);
     }
     lastAttachPhases['audioCut'] = _msSince(settleStarted);
+    // Active clip owns the full GET; neighbors stay prefix-only.
+    prefetchDisk(assetPath);
+    _diskCache?.prioritize(assetPath);
     _controller = null;
     _activePath = null;
     activeSlot = slot;
@@ -467,27 +480,34 @@ class AssetVideoPort extends PresentationVideoPort {
     final wantId = _mediaIdOf(assetPath);
     lastAttachPhases['mediaIdHash'] = wantId?.hashCode;
     if (_sameMedia(_warmPath, assetPath)) {
-      final pending = _warmFuture;
-      var warmOk = true;
-      if (pending != null) {
-        try {
-          await pending;
-        } catch (_) {
-          warmOk = false;
+      // Prefer an already-open warm surface immediately — do NOT await mute-prime.
+      // Awaiting warmFuture used to burn 2.5s then dispose on "never advanced",
+      // forcing a cold reopen under the dark cover (10s wedding-dress stall).
+      if (_warm == null || !_warm!.value.isInitialized) {
+        final initWait = _warmInitialized?.future;
+        if (initWait != null) {
+          try {
+            await initWait.timeout(const Duration(milliseconds: 900));
+          } catch (_) {}
+        } else {
+          final pending = _warmFuture;
+          if (pending != null) {
+            try {
+              await pending.timeout(const Duration(milliseconds: 900));
+            } catch (_) {}
+          }
         }
       }
       claimed = _warm;
       _warm = null;
       _warmPath = null;
+      // Leave _warmFuture running so mute-prime can finish/silence itself; clear
+      // the initialized gate so a later warm() for another URL starts clean.
+      _warmInitialized = null;
       _warmFuture = null;
-      // Reject a warm that never decoded a progressing frame — claiming it
-      // recreates the v10 stall (isPlaying+isBuffering, pos0, sizeW=1080).
-      // After reject, _openResolved still prefers a completed disk file.
-      if (!warmOk ||
-          claimed == null ||
+      if (claimed == null ||
           !claimed.value.isInitialized ||
-          claimed.value.hasError ||
-          claimed.value.position <= Duration.zero) {
+          claimed.value.hasError) {
         lastAttachPhases['warmRejected'] = _msSince(settleStarted);
         if (claimed != null) {
           try {
@@ -498,9 +518,11 @@ class AssetVideoPort extends PresentationVideoPort {
         claimedReady = false;
         claimSource = 'cold';
       } else {
+        // Accept warm even at position 0 — attach's first-frame wait advances it.
         claimedReady = true;
         claimSource = 'warm';
         lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+        lastAttachPhases['warmPosMs'] = claimed.value.position.inMilliseconds;
       }
     } else if (_sameMedia(_parkedPath, assetPath) && _parked != null) {
       claimed = _parked;
@@ -957,6 +979,11 @@ class AssetVideoPort extends PresentationVideoPort {
     _warm = null;
     _warmPath = null;
     _warmFuture = null;
+    final warmInit = _warmInitialized;
+    _warmInitialized = null;
+    if (warmInit != null && !warmInit.isCompleted) {
+      warmInit.completeError(StateError('released'));
+    }
     _parked = null;
     _parkedPath = null;
     final prepared = Map<String, VideoPlayerController>.from(_preparedByMediaId);
@@ -997,8 +1024,8 @@ class AssetVideoPort extends PresentationVideoPort {
     if (_sameMedia(_activePath, assetPath) || _sameMedia(_parkedPath, assetPath)) {
       return;
     }
-    // Always keep the shared disk fetch alive for this (and previous) URL.
-    prefetchDisk(assetPath);
+    // Neighbor warm: prefix only — never start a competing full multi‑10 MB GET.
+    prefetchDisk(assetPath, lowPriority: true);
     // Join while download OR mute-prime is still in flight (_warm may still be null).
     if (_sameMedia(_warmPath, assetPath)) {
       final pending = _warmFuture;
@@ -1012,14 +1039,19 @@ class AssetVideoPort extends PresentationVideoPort {
     final previous = _warm;
     final previousPath = _warmPath;
     final previousFuture = _warmFuture;
+    final previousInit = _warmInitialized;
     _warm = null;
     _warmPath = null;
     _warmFuture = null;
+    _warmInitialized = null;
     // Dispose previous decoder only — disk download for previousPath continues.
     if (previous != null && previous != _controller && previous != _parked) {
       if (previousFuture != null) {
         // ignore: unawaited_futures
         previousFuture.catchError((_) {});
+      }
+      if (previousInit != null && !previousInit.isCompleted) {
+        previousInit.completeError(StateError('warm superseded'));
       }
       // Mute-prime may still be playing — silence before dispose (audio leak).
       // ignore: discarded_futures
@@ -1028,7 +1060,7 @@ class AssetVideoPort extends PresentationVideoPort {
         previous.dispose();
       });
       if (previousPath != null && previousPath.isNotEmpty) {
-        prefetchDisk(previousPath);
+        prefetchDisk(previousPath, lowPriority: true);
         _emitPlayback('warm_cancelled', mediaUrl: previousPath);
       }
     }
@@ -1037,55 +1069,92 @@ class AssetVideoPort extends PresentationVideoPort {
     // Reserve the warm path immediately so duplicate warm() calls join this future
     // while the shared disk download is still running.
     _warmPath = assetPath;
+    final initGate = Completer<void>();
+    _warmInitialized = initGate;
     VideoPlayerController? controller;
     final future = () async {
-      // Download+open from disk when possible so mute-prime is local (no pos0 stall).
-      final opened = await _openResolved(assetPath, waitForDisk: true);
+      // Open via proxy/partial — do not steal active priority or start a full GET.
+      final opened = await _openResolved(
+        assetPath,
+        waitForDisk: false,
+        claimPriority: false,
+        fullFill: false,
+      );
       controller = opened;
       if (_released || !_sameMedia(_warmPath, assetPath)) {
         await opened.dispose();
+        if (!initGate.isCompleted) {
+          initGate.completeError(StateError('warm cancelled'));
+        }
         return;
       }
       _warm = opened;
       _emitPlayback('warm_started', mediaUrl: assetPath);
       await opened.initialize();
       if (opened.value.hasError) {
+        if (!initGate.isCompleted) {
+          initGate.completeError(StateError('warm init error'));
+        }
         throw StateError('warm init error');
       }
+      if (!initGate.isCompleted) initGate.complete();
       await opened.setVolume(0);
-      // Mute-play until position advances. Do NOT seekTo(0) after priming.
-      await opened.play();
-      final deadline = DateTime.now().toUtc().add(const Duration(milliseconds: 2500));
-      while (DateTime.now().toUtc().isBefore(deadline)) {
-        if (!_sameMedia(_warmPath, assetPath) || _released) {
-          await _silence(opened);
-          return;
+      // Best-effort mute-prime. Failure must KEEP the initialized controller so
+      // attach can claim it without a cold reopen under the dark cover.
+      try {
+        await opened.play();
+        final deadline = DateTime.now().toUtc().add(const Duration(milliseconds: 1800));
+        while (DateTime.now().toUtc().isBefore(deadline)) {
+          // Attach may claim mid-prime (_warmPath cleared, _controller == opened).
+          // Never silence/pause a controller the active slot already owns.
+          if (!identical(_warm, opened) || _released) {
+            return;
+          }
+          if (!_sameMedia(_warmPath, assetPath)) {
+            return;
+          }
+          if (opened.value.hasError) break;
+          if (opened.value.position > Duration.zero) break;
+          await Future<void>.delayed(const Duration(milliseconds: 40));
         }
-        if (opened.value.hasError) throw StateError('warm play error');
-        if (opened.value.position > Duration.zero) break;
-        await Future<void>.delayed(const Duration(milliseconds: 40));
+      } catch (_) {}
+      // Only park volume if we still own the warm slot.
+      if (identical(_warm, opened) && _sameMedia(_warmPath, assetPath)) {
+        await opened.setVolume(0);
+        try {
+          await opened.pause();
+        } catch (_) {}
       }
-      if (opened.value.position <= Duration.zero) {
-        throw StateError('warm never advanced');
-      }
-      await opened.setVolume(0);
-      await opened.pause();
     }();
     _warmFuture = future;
     try {
       await future;
       if (_warm == controller) {
-        _emitPlayback('warm_ready', mediaUrl: assetPath);
+        final primed = (controller?.value.position ?? Duration.zero) > Duration.zero;
+        _emitPlayback(
+          primed ? 'warm_ready' : 'warm_ready_unprimed',
+          mediaUrl: assetPath,
+        );
       }
     } catch (_) {
-      if (_warm == controller || (_warmPath == assetPath && controller != null)) {
-        _warm = null;
-        _warmPath = null;
-        _warmFuture = null;
-        try {
-          await controller?.dispose();
-        } catch (_) {}
-        _emitPlayback('warm_failed', mediaUrl: assetPath);
+      // Only dispose when initialize itself failed — keep unprimed controllers.
+      if (!initGate.isCompleted ||
+          controller == null ||
+          !controller!.value.isInitialized ||
+          controller!.value.hasError) {
+        if (_warm == controller || (_warmPath == assetPath && controller != null)) {
+          _warm = null;
+          _warmPath = null;
+          _warmFuture = null;
+          _warmInitialized = null;
+          try {
+            await controller?.dispose();
+          } catch (_) {}
+          _emitPlayback('warm_failed', mediaUrl: assetPath);
+        }
+        if (!initGate.isCompleted) {
+          initGate.completeError(StateError('warm failed'));
+        }
       }
     }
   }
@@ -1130,6 +1199,11 @@ class AssetVideoPort extends PresentationVideoPort {
     _warm = null;
     _warmPath = null;
     _warmFuture = null;
+    final warmInit = _warmInitialized;
+    _warmInitialized = null;
+    if (warmInit != null && !warmInit.isCompleted) {
+      warmInit.completeError(StateError('disposed'));
+    }
     _parked = null;
     _parkedPath = null;
     final prepared = List<VideoPlayerController>.from(_preparedByMediaId.values);

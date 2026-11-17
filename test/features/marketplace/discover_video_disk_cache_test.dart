@@ -591,4 +591,70 @@ void main() {
 
     client.close(force: true);
   });
+
+  test('lowPriority prefetch grows prefix only — never a full GET', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_cache_lp_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(4 * 1024 * 1024, (i) => i % 256);
+    var fullGets = 0;
+    var rangeGets = 0;
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      final range = req.headers.value(HttpHeaders.rangeHeader);
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      if (range != null && range.startsWith('bytes=')) {
+        rangeGets += 1;
+        final start = int.parse(range.substring(6).split('-').first);
+        final end = (start + (768 * 1024) - 1).clamp(0, bytes.length - 1);
+        req.response.statusCode = HttpStatus.partialContent;
+        req.response.headers.set(
+          HttpHeaders.contentRangeHeader,
+          'bytes $start-$end/${bytes.length}',
+        );
+        req.response.add(bytes.sublist(start, end + 1));
+      } else {
+        fullGets += 1;
+        req.response.contentLength = bytes.length;
+        req.response.add(bytes);
+      }
+      await req.response.close();
+    });
+
+    final base =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    cache.prioritize(
+      'http://${server.address.host}:${server.port}/api/v1/marketplace/media/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    );
+    cache.prefetch(base, lowPriority: true);
+    // Prefix fill is async — wait until some bytes land.
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    var have = 0;
+    while (DateTime.now().isBefore(deadline)) {
+      have = await cache.bytesOnDiskFor(base);
+      if (have >= 512 * 1024) break;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(have, greaterThanOrEqualTo(512 * 1024));
+    expect(have, lessThan(bytes.length), reason: 'must not download the full 4MiB');
+    expect(fullGets, 0, reason: 'neighbor must not open a full GET');
+    expect(rangeGets, greaterThan(0));
+    final complete = await cache.peekComplete(base);
+    expect(complete, isNull);
+  });
 }

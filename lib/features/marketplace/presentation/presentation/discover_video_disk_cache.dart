@@ -91,24 +91,32 @@ class DiscoverVideoDiskCache {
     _priorityMediaId = mediaIdFromUrl(url);
   }
 
+  /// Full GET only for the priority (on-screen) mediaId; others grow a prefix.
+  void _kickFill(String origin, String mediaId) {
+    if (_priorityMediaId != null && mediaId != _priorityMediaId) {
+      // ignore: discarded_futures
+      ensurePlayablePrefix(origin, needBytes: 1024 * 1024);
+      return;
+    }
+    prefetch(origin);
+  }
+
   /// Fire-and-forget prefetch. Safe to call repeatedly — joins the same download.
+  ///
+  /// [lowPriority] neighbors only grow a playable prefix (~1 MiB). They must NOT
+  /// start or queue a full multi‑10 MB GET — concurrent full downloads starved
+  /// the on-screen clip (wedding dress 9cbed24c: 51 MB cold GET under dark cover).
   void prefetch(String url, {bool lowPriority = false}) {
     final id = mediaIdFromUrl(url);
-    if (lowPriority &&
-        _priorityMediaId != null &&
-        id != null &&
-        id != _priorityMediaId &&
-        _inflight.containsKey(_priorityMediaId)) {
-      // Visible clip owns the full GET. Still grow a playable prefix for the
-      // neighbor so forward swipe is not stuck waiting for the current finish.
+    if (lowPriority) {
+      // Always prefix-only for neighbors. Full ensureLocal runs when that clip
+      // becomes active (attach → prioritize + prefetch without lowPriority).
       // ignore: discarded_futures
-      ensurePlayablePrefix(url, needBytes: 768 * 1024);
-      // ignore: discarded_futures
-      _inflight[_priorityMediaId]!.whenComplete(() {
-        // ignore: discarded_futures
-        ensureLocal(url);
-      });
+      ensurePlayablePrefix(url, needBytes: 1024 * 1024);
       return;
+    }
+    if (id != null) {
+      _priorityMediaId = id;
     }
     // ignore: discarded_futures
     ensureLocal(url);
@@ -264,13 +272,19 @@ class DiscoverVideoDiskCache {
 
   /// Playable source for AVPlayer: complete file, or loopback URL that serves
   /// the local prefix and resumes the shared download for missing bytes.
-  Future<DiscoverPlaySource> resolvePlaySource(String url) async {
+  ///
+  /// [claimPriority] must be true only for the on-screen clip. Warm/neighbor
+  /// opens pass false so they cannot steal the active full-GET slot.
+  Future<DiscoverPlaySource> resolvePlaySource(
+    String url, {
+    bool claimPriority = true,
+  }) async {
     final mediaId = mediaIdFromUrl(url);
     if (mediaId == null) {
       return DiscoverPlaySource.remote(url);
     }
     _originByMediaId[mediaId] = url;
-    prioritize(url);
+    if (claimPriority) prioritize(url);
 
     final complete = await peekComplete(url);
     if (complete != null) {
@@ -371,10 +385,10 @@ class DiscoverVideoDiskCache {
         return;
       }
 
-      // If we don't even have the first requested byte yet, kick the shared
-      // download and wait only until that byte lands — never for the full end.
+      // If we don't even have the first requested byte yet, kick a fill and wait
+      // only until that byte lands — never for the full end.
       if (have <= start) {
-        prefetch(origin);
+        _kickFill(origin, mediaId);
         final deadline = DateTime.now().toUtc().add(const Duration(seconds: 20));
         while (have <= start && DateTime.now().toUtc().isBefore(deadline)) {
           await Future<void>.delayed(const Duration(milliseconds: 20));
@@ -405,9 +419,9 @@ class DiscoverVideoDiskCache {
       // Buffering off so the first local chunk reaches AVPlayer immediately.
       req.response.bufferOutput = false;
 
-      // Shared fill for the missing tail — same write lock as prefetch.
+      // Shared fill for the missing tail — full GET only for the priority clip.
       if (total == null || have < serveEnd + 1) {
-        prefetch(origin);
+        _kickFill(origin, mediaId);
       }
 
       final started = DateTime.now().toUtc();
@@ -582,9 +596,11 @@ class DiscoverVideoDiskCache {
     while (have < needBytes) {
       final req = await _http.getUrl(Uri.parse(origin));
       req.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
-      if (have > 0) {
-        req.headers.set(HttpHeaders.rangeHeader, 'bytes=$have-');
-      }
+      // Always Range with an explicit end so a prefix fill cannot become a
+      // multi‑10 MB full GET (previous bug: bytes=0- / no Range drained the
+      // whole object into the .part after needBytes).
+      final wantEnd = needBytes - 1;
+      req.headers.set(HttpHeaders.rangeHeader, 'bytes=$have-$wantEnd');
       final resp = await req.close().timeout(const Duration(seconds: 20));
       final status = resp.statusCode;
       if (status != 200 && status != 206) {
@@ -592,27 +608,38 @@ class DiscoverVideoDiskCache {
         break;
       }
       if (status == 200) {
-        // Server ignored Range — rewrite from scratch.
+        // Server ignored Range — take only the prefix then abandon the rest.
         have = 0;
       }
-      final declared = resp.contentLength >= 0
-          ? (status == 206 ? have + resp.contentLength : resp.contentLength)
-          : total;
-      if (declared != null && declared > 0) {
-        total = declared;
-        _knownLength[mediaId] = declared;
+      if (resp.contentLength >= 0) {
+        final declared =
+            status == 206 ? have + resp.contentLength : resp.contentLength;
+        if (declared > 0) {
+          total = declared;
+          _knownLength[mediaId] = declared;
+        }
       }
       final sink = part.openWrite(mode: have > 0 && status == 206 ? FileMode.append : FileMode.write);
+      var reachedNeed = false;
       try {
         await for (final chunk in resp) {
-          sink.add(chunk);
-          downloaded += chunk.length;
-          have += chunk.length;
-          if (have >= needBytes) {
-            // Drain remainder of this response into the file for continuity.
-            // (Keep reading so TCP finishes cleanly, still counting.)
+          if (reachedNeed) {
+            // Drain without writing — do not grow past the playable prefix.
             continue;
           }
+          var piece = chunk;
+          if (have + chunk.length > needBytes) {
+            piece = chunk.sublist(0, needBytes - have);
+            reachedNeed = true;
+          }
+          if (piece.isEmpty) {
+            reachedNeed = true;
+            continue;
+          }
+          sink.add(piece);
+          downloaded += piece.length;
+          have += piece.length;
+          if (have >= needBytes) reachedNeed = true;
         }
         await sink.flush();
         await sink.close();
@@ -624,7 +651,7 @@ class DiscoverVideoDiskCache {
       }
       have = await part.length();
       if (total != null && have >= total) break;
-      if (status == 200 && have >= needBytes) break;
+      if (have >= needBytes) break;
       // If server sent only a partial window and we still need more, loop.
       if (downloaded > 0 && have < needBytes && status == 206) {
         continue;

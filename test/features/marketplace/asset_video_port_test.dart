@@ -419,4 +419,36 @@ void main() {
     expect(port.buildView(), isNotNull);
     await port.release();
   });
+
+  test('attach claims unprimed warm (pos0) without cold reopen', () async {
+    // Simulates mute-prime never advancing: warm stays initialized at 0.
+    // Old path awaited warmFuture, rejected pos0, disposed, then cold-opened
+    // under the dark cover for multi-second stalls.
+    final warmCtrl = ControllableVideoController(_clip)..advanceOnPlay = false;
+    var created = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        created += 1;
+        return created == 1 ? warmCtrl : ControllableVideoController('$_clip-cold');
+      },
+    );
+    unawaited(port.warm(_clip));
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(warmCtrl.value.isInitialized, isTrue);
+    expect(warmCtrl.value.position, Duration.zero);
+    final pending = port.attach(_slotA, _clip);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(created, 1, reason: 'must claim warm, not open a second controller');
+    expect(port.lastAttachPhases['source'], 1);
+    expect(warmCtrl.disposed, isFalse);
+    // Attach play advances cover gate.
+    warmCtrl.value = warmCtrl.value.copyWith(
+      isPlaying: true,
+      position: const Duration(milliseconds: 16),
+    );
+    await pending;
+    expect(port.hasVisibleProgress, isTrue);
+    expect(port.audiblePlayingCount, lessThanOrEqualTo(1));
+    await port.release();
+  });
 }
