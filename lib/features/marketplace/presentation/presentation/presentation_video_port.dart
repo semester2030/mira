@@ -294,9 +294,67 @@ class AssetVideoPort extends PresentationVideoPort {
 
   Future<void> _silence(VideoPlayerController controller) async {
     try {
-      await controller.pause();
+      // Volume first so a late play() tick cannot briefly leak audio.
       await controller.setVolume(0);
+      await controller.pause();
     } catch (_) {}
+  }
+
+  /// Nomas-style hard cut: kill outgoing audio immediately on swipe settle,
+  /// before any warm/init await. Fire-and-forget; [attach]/[detach] still park.
+  void cutOutgoingAudio({String? nextMediaUrl}) {
+    final prevPath = _activePath;
+    final prevOffer = activeSlot?.slideId;
+    final active = _controller;
+    if (active != null) {
+      // ignore: discarded_futures
+      _silence(active);
+    }
+    final warm = _warm;
+    if (warm != null && !_sameMedia(_warmPath, nextMediaUrl)) {
+      // ignore: discarded_futures
+      _silence(warm);
+    }
+    final parked = _parked;
+    if (parked != null) {
+      // ignore: discarded_futures
+      _silence(parked);
+    }
+    for (final c in _preparedByMediaId.values) {
+      // ignore: discarded_futures
+      _silence(c);
+    }
+    _recordDiag({
+      'event': 'audio_cut',
+      'prevOffer': prevOffer,
+      'prevMediaId': _mediaIdOf(prevPath),
+      'nextMediaId': _mediaIdOf(nextMediaUrl),
+      'audiblePlaying': audiblePlayingCount,
+      'at': DateTime.now().toUtc().toIso8601String(),
+    });
+    debugPrint(
+      'MIRA_DISCOVER_SWIPE audio_cut prev=${_mediaIdOf(prevPath)} '
+      'next=${_mediaIdOf(nextMediaUrl)} audible=$audiblePlayingCount',
+    );
+  }
+
+  /// Controllers that are both playing and not fully muted (leak detector).
+  int get audiblePlayingCount {
+    var n = 0;
+    void check(VideoPlayerController? c) {
+      if (c == null) return;
+      try {
+        final v = c.value;
+        if (v.isPlaying && v.volume > 0.01) n += 1;
+      } catch (_) {}
+    }
+    check(_controller);
+    check(_warm);
+    check(_parked);
+    for (final c in _preparedByMediaId.values) {
+      check(c);
+    }
+    return n;
   }
 
   String? _mediaIdOf(String? path) {
@@ -383,11 +441,19 @@ class AssetVideoPort extends PresentationVideoPort {
       'firstByteProxy': null,
       'playStart': null,
       'firstFrame': null,
+      'audioArmed': null,
       'source': null,
     };
     final token = ++_generation;
     final previous = _controller;
     final previousPath = _activePath;
+    // Critical (Nomas parity): cut previous audio BEFORE awaiting warm init.
+    // Old order waited on warm then silenced — dual audio + dark plate with sound.
+    cutOutgoingAudio(nextMediaUrl: assetPath);
+    if (previous != null) {
+      await _silence(previous);
+    }
+    lastAttachPhases['audioCut'] = _msSince(settleStarted);
     _controller = null;
     _activePath = null;
     activeSlot = slot;
@@ -475,7 +541,9 @@ class AssetVideoPort extends PresentationVideoPort {
       return;
     }
     if (previous != null && previous != claimed) {
-      await _parkLeaving(previous, previousPath);
+      // Already silenced above — park/stash without blocking first-frame path.
+      // ignore: discarded_futures
+      _parkLeaving(previous, previousPath);
     }
     if (token != _generation || _released) return;
 
@@ -569,7 +637,9 @@ class AssetVideoPort extends PresentationVideoPort {
       playback = PresentationPlayback.ready;
       errorText = null;
       _notify();
-      await controller.setVolume(_muted ? 0 : 1);
+      // Decode under mute until the first progressing frame — never arm speakers
+      // while the Discover cover / dark plate is still on top.
+      await controller.setVolume(0);
       if (!_canStart(controller, token)) {
         await _dropIfStale(controller, token);
         return;
@@ -596,6 +666,28 @@ class AssetVideoPort extends PresentationVideoPort {
         mediaUrl: assetPath,
       );
       await _awaitFirstVisibleProgress(controller, token, settleStarted, slot, assetPath);
+      if (!_canStart(controller, token)) {
+        await _dropIfStale(controller, token);
+        return;
+      }
+      if (_hasVisibleProgress) {
+        await controller.setVolume(_muted ? 0 : 1);
+        lastAttachPhases['audioArmed'] = _msSince(settleStarted);
+        lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
+        _recordDiag({
+          'event': 'audio_armed',
+          'offerId': slot.slideId,
+          'mediaId': wantId,
+          'firstFrameMs': lastAttachPhases['firstFrame'],
+          'audioArmedMs': lastAttachPhases['audioArmed'],
+          'audiblePlaying': audiblePlayingCount,
+        });
+        debugPrint(
+          'MIRA_DISCOVER_SWIPE audio_armed mediaId=$wantId '
+          'firstFrameMs=${lastAttachPhases['firstFrame']} '
+          'audible=$audiblePlayingCount',
+        );
+      }
       _notify();
     } catch (error) {
       if (_controller == controller) _controller = null;
@@ -703,7 +795,7 @@ class AssetVideoPort extends PresentationVideoPort {
                 return;
               }
               await fresh.setLooping(true);
-              await fresh.setVolume(_muted ? 0 : 1);
+              await fresh.setVolume(0);
               lastAttachPhases['initDone'] = _msSince(settleStarted);
               lastAttachPhases['playStart'] = _msSince(settleStarted);
               lastAttachPhases['reopened'] = 1;
@@ -714,7 +806,13 @@ class AssetVideoPort extends PresentationVideoPort {
               final reopenDeadline = DateTime.now().toUtc().add(const Duration(seconds: 3));
               while (DateTime.now().toUtc().isBefore(reopenDeadline)) {
                 if (token != _generation || _released || _controller != fresh) return;
-                if (_markProgressIfVisible(fresh, token, settleStarted, slot, path)) return;
+                if (_markProgressIfVisible(fresh, token, settleStarted, slot, path)) {
+                  if (_canStart(fresh, token) && _hasVisibleProgress) {
+                    await fresh.setVolume(_muted ? 0 : 1);
+                    lastAttachPhases['audioArmed'] = _msSince(settleStarted);
+                  }
+                  return;
+                }
                 await Future<void>.delayed(const Duration(milliseconds: 16));
               }
               if (!_firstFrameEmitted && !_firstFrameTimedOut && token == _generation && _controller == fresh) {
@@ -923,8 +1021,12 @@ class AssetVideoPort extends PresentationVideoPort {
         // ignore: unawaited_futures
         previousFuture.catchError((_) {});
       }
-      // ignore: unawaited_futures
-      previous.dispose();
+      // Mute-prime may still be playing — silence before dispose (audio leak).
+      // ignore: discarded_futures
+      _silence(previous).whenComplete(() {
+        // ignore: discarded_futures
+        previous.dispose();
+      });
       if (previousPath != null && previousPath.isNotEmpty) {
         prefetchDisk(previousPath);
         _emitPlayback('warm_cancelled', mediaUrl: previousPath);
@@ -955,6 +1057,10 @@ class AssetVideoPort extends PresentationVideoPort {
       await opened.play();
       final deadline = DateTime.now().toUtc().add(const Duration(milliseconds: 2500));
       while (DateTime.now().toUtc().isBefore(deadline)) {
+        if (!_sameMedia(_warmPath, assetPath) || _released) {
+          await _silence(opened);
+          return;
+        }
         if (opened.value.hasError) throw StateError('warm play error');
         if (opened.value.position > Duration.zero) break;
         await Future<void>.delayed(const Duration(milliseconds: 40));
@@ -962,6 +1068,7 @@ class AssetVideoPort extends PresentationVideoPort {
       if (opened.value.position <= Duration.zero) {
         throw StateError('warm never advanced');
       }
+      await opened.setVolume(0);
       await opened.pause();
     }();
     _warmFuture = future;

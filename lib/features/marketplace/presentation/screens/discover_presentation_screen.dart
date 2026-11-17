@@ -580,6 +580,13 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   void _onPage(int index) {
+    final nextPath =
+        (index >= 0 && index < _slides.length) ? _videoPath(_slides[index]) : null;
+    final port = _video;
+    // Nomas isActive=false → pause now. Cut before the new page's attach awaits warm.
+    if (port is AssetVideoPort) {
+      port.cutOutgoingAudio(nextMediaUrl: nextPath);
+    }
     setState(() => _page = index);
     _bindActiveViewTarget();
     // Do not warm(next) yet — that would dispose the warm slot holding *this*
@@ -2077,6 +2084,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                       assetFamily: widget.lane?.assetFamily ?? _activeFamily(),
                       selected: _category,
                       onSelected: _onCategory,
+                      enlargeCircles: widget.lane == DiscoverLane.occasions,
                     ),
                   ),
                 if (_catalogDriven)

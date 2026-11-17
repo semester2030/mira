@@ -215,7 +215,7 @@ void main() {
     final port = AssetVideoPort(createController: (_) => controller);
     final pending = port.attach(_slotA, _clip);
     await Future<void>.delayed(Duration.zero);
-    expect(controller.setVolumeCalls, 1);
+    expect(controller.setVolumeCalls, greaterThanOrEqualTo(1));
     await port.pause();
     controller.volumeGate!.complete();
     await pending;
@@ -223,7 +223,7 @@ void main() {
     expect(port.isPlaying, isFalse);
   });
 
-  test('mute survives the next attach and is applied before play', () async {
+  test('mute survives the next attach and stays muted after first frame', () async {
     final port = _port();
     await port.setMuted(true);
     await port.attach(_slotA, _clip);
@@ -234,6 +234,33 @@ void main() {
     final live = ControllableVideoController.instances.where((item) => !item.disposed).last;
     expect(port.isMuted, isTrue);
     expect(live.lastVolume, 0);
+    await port.release();
+  });
+
+  test('outgoing audio is cut before warm wait; speakers arm only after first frame', () async {
+    final leaving = ControllableVideoController('$_clip-leave')
+      ..advanceOnPlay = true;
+    final warmCtrl = ControllableVideoController(_clip)..initDelay = const Duration(milliseconds: 80);
+    var n = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        n += 1;
+        return n == 1 ? leaving : warmCtrl;
+      },
+    );
+    await port.attach(_slotA, '$_clip-leave');
+    expect(leaving.lastVolume, 1);
+    unawaited(port.warm(_clip));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    final pending = port.attach(_slotB, _clip);
+    // cutOutgoingAudio + silence previous must run before warm init finishes.
+    await Future<void>.delayed(Duration.zero);
+    expect(leaving.lastVolume, 0);
+    expect(leaving.value.isPlaying, isFalse);
+    await pending;
+    expect(port.hasVisibleProgress, isTrue);
+    expect(warmCtrl.lastVolume, 1);
+    expect(port.audiblePlayingCount, lessThanOrEqualTo(1));
     await port.release();
   });
 

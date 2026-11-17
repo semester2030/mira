@@ -135,6 +135,8 @@ class ControllableVideoController extends ValueNotifier<VideoPlayerValue>
     setVolumeCalls += 1;
     lastVolume = volume;
     if (volumeGate != null) await volumeGate!.future;
+    if (disposed) return;
+    value = value.copyWith(volume: volume);
   }
 
   @override
