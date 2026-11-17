@@ -241,6 +241,13 @@ class DiscoverFeedController extends ChangeNotifier {
 
   void _applyFirstPage(DiscoverCatalogQuery query, DiscoverBrowseResponse response, DiscoverAdFeed ads) {
     if (!response.succeeded || response.transport == null || response.contentMark == null) {
+      // ignore: avoid_print
+      print(
+        'MIRA_DISCOVER_CATALOG apply_fail lane=${query.lane?.name} '
+        'category=${query.categoryId} failed=${response.failed} '
+        'invalidCursor=${response.invalidCursor} transport=${response.transport} '
+        'contentMark=${response.contentMark} items=${response.items.length}',
+      );
       state = DiscoverFeedState(
         phase: DiscoverFeedPhase.failed,
         query: query,

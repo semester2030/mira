@@ -306,49 +306,84 @@ class AssetVideoPort extends PresentationVideoPort {
     _diskCache?.prefetch(assetPath, lowPriority: lowPriority);
   }
 
-  Future<void> _silence(VideoPlayerController controller) async {
+  int _playerId(VideoPlayerController? c) =>
+      c == null ? 0 : identityHashCode(c);
+
+  Future<void> _silence(
+    VideoPlayerController controller, {
+    String role = 'unknown',
+  }) async {
+    final id = _playerId(controller);
+    final t0 = DateTime.now().toUtc();
     try {
       // Volume first so a late play() tick cannot briefly leak audio.
+      debugPrint(
+        'MIRA_DISCOVER_AUDIO mute_req playerId=$id role=$role '
+        'at=${t0.toIso8601String()}',
+      );
       await controller.setVolume(0);
+      final tVol = DateTime.now().toUtc();
+      debugPrint(
+        'MIRA_DISCOVER_AUDIO mute_done playerId=$id role=$role '
+        'ms=${tVol.difference(t0).inMilliseconds}',
+      );
       await controller.pause();
-    } catch (_) {}
+      final tPause = DateTime.now().toUtc();
+      debugPrint(
+        'MIRA_DISCOVER_AUDIO pause_done playerId=$id role=$role '
+        'ms=${tPause.difference(t0).inMilliseconds}',
+      );
+      _recordDiag({
+        'event': 'audio_silence',
+        'playerId': id,
+        'role': role,
+        'muteMs': tVol.difference(t0).inMilliseconds,
+        'pauseMs': tPause.difference(t0).inMilliseconds,
+        'at': t0.toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('MIRA_DISCOVER_AUDIO silence_err playerId=$id role=$role err=$e');
+    }
   }
 
   /// Nomas-style hard cut: kill outgoing audio immediately on swipe settle,
-  /// before any warm/init await. Fire-and-forget; [attach]/[detach] still park.
-  void cutOutgoingAudio({String? nextMediaUrl}) {
+  /// before any warm/init await. Awaits mute+pause so overlap can be proven.
+  Future<void> cutOutgoingAudio({String? nextMediaUrl}) async {
     final prevPath = _activePath;
     final prevOffer = activeSlot?.slideId;
+    final futures = <Future<void>>[];
     final active = _controller;
     if (active != null) {
-      // ignore: discarded_futures
-      _silence(active);
+      futures.add(_silence(active, role: 'active'));
     }
     final warm = _warm;
     if (warm != null && !_sameMedia(_warmPath, nextMediaUrl)) {
-      // ignore: discarded_futures
-      _silence(warm);
+      futures.add(_silence(warm, role: 'warm'));
     }
     final parked = _parked;
     if (parked != null) {
-      // ignore: discarded_futures
-      _silence(parked);
+      futures.add(_silence(parked, role: 'parked'));
     }
     for (final c in _preparedByMediaId.values) {
-      // ignore: discarded_futures
-      _silence(c);
+      futures.add(_silence(c, role: 'prepared'));
     }
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
+    }
+    final audibleAfter = audiblePlayingCount;
     _recordDiag({
       'event': 'audio_cut',
       'prevOffer': prevOffer,
       'prevMediaId': _mediaIdOf(prevPath),
       'nextMediaId': _mediaIdOf(nextMediaUrl),
-      'audiblePlaying': audiblePlayingCount,
+      'audiblePlaying': audibleAfter,
+      'activePlayerId': _playerId(active),
       'at': DateTime.now().toUtc().toIso8601String(),
     });
     debugPrint(
       'MIRA_DISCOVER_SWIPE audio_cut prev=${_mediaIdOf(prevPath)} '
-      'next=${_mediaIdOf(nextMediaUrl)} audible=$audiblePlayingCount',
+      'next=${_mediaIdOf(nextMediaUrl)} audible=$audibleAfter '
+      'activePlayerId=${_playerId(active)}',
     );
   }
 
@@ -427,7 +462,7 @@ class AssetVideoPort extends PresentationVideoPort {
     final slot = activeSlot;
     final hadFrame = _hasVisibleProgress;
     final settle = _settleStartedAt;
-    cutOutgoingAudio();
+    await cutOutgoingAudio();
     if (active != null) {
       final ms = settle == null
           ? null
@@ -541,11 +576,9 @@ class AssetVideoPort extends PresentationVideoPort {
     final previousPath = _activePath;
     // Critical (Nomas parity): cut previous audio BEFORE awaiting warm init.
     // Old order waited on warm then silenced — dual audio + dark plate with sound.
-    cutOutgoingAudio(nextMediaUrl: assetPath);
-    if (previous != null) {
-      await _silence(previous);
-    }
+    await cutOutgoingAudio(nextMediaUrl: assetPath);
     lastAttachPhases['audioCut'] = _msSince(settleStarted);
+    lastAttachPhases['prevPlayerId'] = _playerId(previous);
     // Active clip owns the full GET; neighbors stay prefix-only.
     prefetchDisk(assetPath);
     _diskCache?.prioritize(assetPath);
@@ -778,20 +811,28 @@ class AssetVideoPort extends PresentationVideoPort {
         return;
       }
       if (_hasVisibleProgress) {
+        final nextId = _playerId(controller);
+        debugPrint(
+          'MIRA_DISCOVER_AUDIO unmute_req playerId=$nextId '
+          'at=${DateTime.now().toUtc().toIso8601String()}',
+        );
         await controller.setVolume(_muted ? 0 : 1);
         lastAttachPhases['audioArmed'] = _msSince(settleStarted);
         lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
+        lastAttachPhases['nextPlayerId'] = nextId;
         _recordDiag({
           'event': 'audio_armed',
           'offerId': slot.slideId,
           'mediaId': wantId,
+          'playerId': nextId,
+          'prevPlayerId': lastAttachPhases['prevPlayerId'],
           'firstFrameMs': lastAttachPhases['firstFrame'],
           'audioArmedMs': lastAttachPhases['audioArmed'],
           'audiblePlaying': audiblePlayingCount,
         });
         debugPrint(
           'MIRA_DISCOVER_SWIPE audio_armed mediaId=$wantId '
-          'firstFrameMs=${lastAttachPhases['firstFrame']} '
+          'playerId=$nextId firstFrameMs=${lastAttachPhases['firstFrame']} '
           'audible=$audiblePlayingCount',
         );
       }
@@ -1221,7 +1262,8 @@ class AssetVideoPort extends PresentationVideoPort {
         previousFuture.catchError((_) {});
       }
       if (previousInit != null && !previousInit.isCompleted) {
-        previousInit.completeError(StateError('warm superseded'));
+        // Completing normally avoids unhandled "warm superseded" exceptions in logs.
+        previousInit.complete();
       }
       // Mute-prime may still be playing — silence before dispose (audio leak).
       // ignore: discarded_futures
@@ -1253,9 +1295,8 @@ class AssetVideoPort extends PresentationVideoPort {
       controller = opened;
       if (_released || !_sameMedia(_warmPath, assetPath)) {
         await opened.dispose();
-        if (!initGate.isCompleted) {
-          initGate.completeError(StateError('warm cancelled'));
-        }
+        // Expected cancel on swipe away — complete normally (no unhandled error).
+        if (!initGate.isCompleted) initGate.complete();
         return;
       }
       _warm = opened;
@@ -1306,7 +1347,17 @@ class AssetVideoPort extends PresentationVideoPort {
           mediaUrl: assetPath,
         );
       }
-    } catch (_) {
+    } catch (e) {
+      final msg = '$e';
+      final expected = msg.contains('warm cancelled') ||
+          msg.contains('warm superseded') ||
+          msg.contains('warm cancelled');
+      if (expected) {
+        // Expected on fast swipe / reverse — never surface as unhandled.
+        debugPrint('MIRA_DISCOVER_WARM expected_cancel mediaId=${_mediaIdOf(assetPath)}');
+        if (!initGate.isCompleted) initGate.complete();
+        return;
+      }
       // Only dispose when initialize itself failed — keep unprimed controllers.
       if (!initGate.isCompleted ||
           controller == null ||
@@ -1321,6 +1372,9 @@ class AssetVideoPort extends PresentationVideoPort {
             await controller?.dispose();
           } catch (_) {}
           _emitPlayback('warm_failed', mediaUrl: assetPath);
+          debugPrint(
+            'MIRA_DISCOVER_WARM failed mediaId=${_mediaIdOf(assetPath)} err=$e',
+          );
         }
         if (!initGate.isCompleted) {
           initGate.completeError(StateError('warm failed'));

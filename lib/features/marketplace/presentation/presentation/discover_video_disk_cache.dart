@@ -241,34 +241,102 @@ class DiscoverVideoDiskCache {
     }
   }
 
+  /// Prefix windows must never be mistaken for the whole object (6e153366 @
+  /// 13:34:31 renamed to `*_1048576.mp4` then raced PathNotFound).
+  static bool _looksLikePrefixCeiling(int total) =>
+      total == 1024 * 1024 || total == 512 * 1024 || total == 256 * 1024;
+
   /// If `{mediaId}.part` already holds the full object, promote it to a
-  /// complete `mediaId_TOTAL.mp4`. Fixes return-to-clip stalls where the
-  /// dress stayed on `.part` after a finished download (71062d9e @ 10:25).
+  /// complete `mediaId_TOTAL.mp4`. Safe under the per-media write lock and
+  /// idempotent when several callers race the same promote.
   Future<File?> finalizePartIfComplete(String url) async {
     final mediaId = mediaIdFromUrl(url);
     if (mediaId == null) return null;
+    return _withWriteLock(
+      mediaId,
+      () => _finalizePartIfCompleteUnlocked(mediaId: mediaId, url: url),
+    );
+  }
+
+  /// Caller must already hold the write lock for [mediaId].
+  Future<File?> _finalizePartIfCompleteUnlocked({
+    required String mediaId,
+    String? url,
+    int? knownTotal,
+  }) async {
     final root = await _ensureRoot();
     final part = File('${root.path}/$mediaId.part');
-    if (!await part.exists()) return null;
-    final have = await part.length();
-    var total = _knownLength[mediaId];
-    total ??= await _headLength(url);
-    if (total != null && total > 0) _knownLength[mediaId] = total;
-    if (total == null || total <= 0 || have < total) return null;
+    // Prefer a live HEAD over a stale/prefix-sized cache entry.
+    if (url != null && url.isNotEmpty) {
+      final headed = await _headLength(url);
+      if (headed != null && headed > 0) {
+        _knownLength[mediaId] = headed;
+      }
+    }
+    final total = knownTotal ?? _knownLength[mediaId];
+    if (total == null || total <= 0) return null;
+    // Refuse to promote a 1 MiB (etc.) ceiling as a "complete" object.
+    if (_looksLikePrefixCeiling(total)) return null;
+
     final key = '${mediaId}_$total.mp4';
     final dest = File('${root.path}/$key');
-    if (await dest.exists()) await dest.delete();
-    await part.rename(dest.path);
-    _lru.removeWhere((_, m) => m.mediaId == mediaId);
-    _lru[key] = _CacheMeta(
-      key: key,
-      mediaId: mediaId,
-      contentLength: total,
-      path: dest.path,
-      complete: true,
-      bytesOnDisk: total,
-    );
-    _touch(key);
+    if (await dest.exists()) {
+      final destLen = await dest.length();
+      if (destLen == total) {
+        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+        return dest;
+      }
+    }
+    if (!await part.exists()) {
+      // Another finalize already moved .part → complete.
+      if (await dest.exists() && await dest.length() == total) {
+        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+        return dest;
+      }
+      return null;
+    }
+    final have = await part.length();
+    if (have < total) return null;
+    // Sniff HTML / error pages written into .part (Render 502, etc.).
+    if (!await _looksLikeMp4(part)) {
+      try {
+        await part.delete();
+      } catch (_) {}
+      _diag(DiscoverVideoDiag(
+        mediaId: mediaId,
+        source: 'finalize_rejected',
+        bytesReused: have,
+        bytesDownloaded: 0,
+        elapsedMs: 0,
+        error: 'non_mp4_part',
+      ));
+      return null;
+    }
+    try {
+      if (await dest.exists()) await dest.delete();
+      await part.rename(dest.path);
+    } on PathNotFoundException {
+      if (await dest.exists() && await dest.length() == total) {
+        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+        return dest;
+      }
+      return null;
+    } catch (e) {
+      if (await dest.exists() && await dest.length() == total) {
+        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+        return dest;
+      }
+      _diag(DiscoverVideoDiag(
+        mediaId: mediaId,
+        source: 'finalize_error',
+        bytesReused: have,
+        bytesDownloaded: 0,
+        elapsedMs: 0,
+        error: '$e',
+      ));
+      return null;
+    }
+    _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
     _diag(DiscoverVideoDiag(
       mediaId: mediaId,
       source: 'finalize_part',
@@ -279,13 +347,63 @@ class DiscoverVideoDiskCache {
     return dest;
   }
 
+  void _rememberComplete({
+    required String mediaId,
+    required String key,
+    required File dest,
+    required int total,
+  }) {
+    final drop = <String>[];
+    for (final e in _lru.entries) {
+      if (e.value.mediaId == mediaId) drop.add(e.key);
+    }
+    for (final k in drop) {
+      _lru.remove(k);
+    }
+    _lru[key] = _CacheMeta(
+      key: key,
+      mediaId: mediaId,
+      contentLength: total,
+      path: dest.path,
+      complete: true,
+      bytesOnDisk: total,
+    );
+    _touch(key);
+  }
+
+  /// Reject HTML/JSON error bodies that were persisted as `.part`.
+  static Future<bool> _looksLikeMp4(File file) async {
+    try {
+      final raf = await file.open();
+      try {
+        final n = await raf.length();
+        if (n < 12) return false;
+        final buf = await raf.read(16);
+        // HTML / XML error pages
+        if (buf.isNotEmpty && (buf[0] == 0x3c /* < */ || buf[0] == 0x7b /* { */)) {
+          return false;
+        }
+        // ftyp box at 4..8
+        if (buf.length >= 8) {
+          final typ = String.fromCharCodes(buf.sublist(4, 8));
+          if (typ == 'ftyp') return true;
+        }
+        return true; // unknown but not HTML
+      } finally {
+        await raf.close();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Non-blocking peek: complete file already on disk for this URL's media id.
   Future<File?> peekComplete(String url) async {
     final mediaId = mediaIdFromUrl(url);
     if (mediaId == null) return null;
     final root = await _ensureRoot();
     await _indexExisting(root);
-    for (final e in _lru.entries) {
+    for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
       if (e.value.mediaId == mediaId && e.value.complete) {
         final f = File(e.value.path);
         if (await f.exists()) {
@@ -327,7 +445,7 @@ class DiscoverVideoDiskCache {
     if (mediaId == null) return 0;
     final root = await _ensureRoot();
     await _indexExisting(root);
-    for (final e in _lru.entries) {
+    for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
       if (e.value.mediaId == mediaId && e.value.complete) {
         final f = File(e.value.path);
         if (await f.exists()) return f.length();
@@ -391,7 +509,7 @@ class DiscoverVideoDiskCache {
 
   Future<File> _openBodyFile(String mediaId) async {
     final root = await _ensureRoot();
-    for (final e in _lru.entries) {
+    for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
       if (e.value.mediaId == mediaId && e.value.complete) {
         final f = File(e.value.path);
         if (await f.exists()) return f;
@@ -593,7 +711,7 @@ class DiscoverVideoDiskCache {
   }) async {
     final root = await _ensureRoot();
     // Prefer complete file.
-    for (final e in _lru.entries) {
+    for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
       if (e.value.mediaId == mediaId && e.value.complete) {
         final f = File(e.value.path);
         if (await f.exists()) {
@@ -679,8 +797,9 @@ class DiscoverVideoDiskCache {
       if (status == 200) {
         // Server ignored Range — rewrite from byte 0, keep only the prefix.
         have = 0;
-        // Full-object Content-Length is trusted; partial Content-Length is not.
-        if (resp.contentLength > 0) {
+        // Full-object Content-Length is trusted only when clearly larger than
+        // this prefix window (never record needBytes as the whole object).
+        if (resp.contentLength > needBytes) {
           total = resp.contentLength;
           _knownLength[mediaId] = resp.contentLength;
         }
@@ -690,21 +809,63 @@ class DiscoverVideoDiskCache {
         final fromRange = contentRangeTotal(
           resp.headers.value(HttpHeaders.contentRangeHeader),
         );
-        if (fromRange != null) {
+        if (fromRange != null && !_looksLikePrefixCeiling(fromRange)) {
           total = fromRange;
           _knownLength[mediaId] = fromRange;
         }
         // else: total stays knownTotal/_knownLength or null (unknown).
       }
+      final ctype = resp.headers.contentType?.mimeType ?? '';
+      if (ctype.contains('html') || ctype.contains('json') || ctype.contains('text/')) {
+        await abortHttpBody(resp);
+        _diag(DiscoverVideoDiag(
+          mediaId: mediaId,
+          source: 'network_error',
+          bytesReused: have,
+          bytesDownloaded: 0,
+          elapsedMs: 0,
+          error: 'bad_content_type_$ctype',
+        ));
+        break;
+      }
       final sink = part.openWrite(mode: have > 0 && status == 206 ? FileMode.append : FileMode.write);
       var reachedNeed = false;
       var abortedEarly = false;
+      var sniffed = have > 0;
       try {
         await for (final chunk in resp) {
           networkBytesRead += chunk.length;
           if (reachedNeed) {
             // Should not happen — we abort as soon as needBytes lands.
             continue;
+          }
+          if (!sniffed && chunk.isNotEmpty) {
+            sniffed = true;
+            final b0 = chunk[0];
+            if (b0 == 0x3c /* < */ || b0 == 0x7b /* { */) {
+              await abortHttpBody(resp);
+              try {
+                await sink.close();
+              } catch (_) {}
+              try {
+                await part.delete();
+              } catch (_) {}
+              _diag(DiscoverVideoDiag(
+                mediaId: mediaId,
+                source: 'network_error',
+                bytesReused: 0,
+                bytesDownloaded: 0,
+                elapsedMs: 0,
+                error: 'non_video_body',
+              ));
+              return _PrefixFill(
+                file: part,
+                bytesOnDiskBefore: before,
+                bytesReused: before,
+                bytesDownloaded: 0,
+                contentLength: total,
+              );
+            }
           }
           var piece = chunk;
           if (have + chunk.length > needBytes) {
@@ -757,28 +918,25 @@ class DiscoverVideoDiskCache {
       contentLength: total,
       complete: total != null && total > 0 && have >= total,
     );
-    if (total != null && total > 0 && have >= total) {
-      final key = '${mediaId}_$total.mp4';
-      final dest = File('${root.path}/$key');
-      if (await dest.exists()) await dest.delete();
-      await part.rename(dest.path);
-      _lru.removeWhere((_, m) => m.mediaId == mediaId);
-      _lru[key] = _CacheMeta(
-        key: key,
+    if (total != null &&
+        total > 0 &&
+        have >= total &&
+        !_looksLikePrefixCeiling(total)) {
+      final dest = await _finalizePartIfCompleteUnlocked(
         mediaId: mediaId,
-        contentLength: total,
-        path: dest.path,
-        complete: true,
-        bytesOnDisk: total,
+        url: origin,
+        knownTotal: total,
       );
-      await _evictIfNeeded();
-      return _PrefixFill(
-        file: dest,
-        bytesOnDiskBefore: before,
-        bytesReused: before,
-        bytesDownloaded: downloaded,
-        contentLength: total,
-      );
+      if (dest != null) {
+        await _evictIfNeeded();
+        return _PrefixFill(
+          file: dest,
+          bytesOnDiskBefore: before,
+          bytesReused: before,
+          bytesDownloaded: downloaded,
+          contentLength: total,
+        );
+      }
     }
 
     _diag(DiscoverVideoDiag(
@@ -916,17 +1074,75 @@ class DiscoverVideoDiskCache {
       have = 0;
     }
 
-    final total = resp.contentLength >= 0
-        ? (status == 206 ? have + resp.contentLength : resp.contentLength)
-        : contentLength;
-    if (total != null && total > 0) _knownLength[mediaId] = total;
+    // 206: Content-Range TOTAL only. Never have+Content-Length (prefix windows
+    // became *_1048576.mp4 and raced finalize — 6e153366 @ 13:34:31).
+    int? total = contentLength;
+    if (status == 206) {
+      final fromRange = contentRangeTotal(
+        resp.headers.value(HttpHeaders.contentRangeHeader),
+      );
+      if (fromRange != null && !_looksLikePrefixCeiling(fromRange)) {
+        total = fromRange;
+      }
+    } else if (resp.contentLength > 0 &&
+        (stopAfterBytes == null || resp.contentLength > stopAfterBytes)) {
+      total = resp.contentLength;
+    }
+    if (total != null && total > 0 && !_looksLikePrefixCeiling(total)) {
+      _knownLength[mediaId] = total;
+    }
+
+    final ctype = resp.headers.contentType?.mimeType ?? '';
+    if (ctype.contains('html') || ctype.contains('json') || ctype.contains('text/')) {
+      await abortHttpBody(resp);
+      _diag(DiscoverVideoDiag(
+        mediaId: mediaId,
+        source: 'network_error',
+        bytesReused: have,
+        bytesDownloaded: 0,
+        elapsedMs: DateTime.now().toUtc().difference(started).inMilliseconds,
+        error: 'bad_content_type_$ctype',
+      ));
+      return DiscoverCachedVideo.network(
+        url: url,
+        mediaId: mediaId,
+        reason: 'bad_content_type',
+      );
+    }
 
     final sink = part.openWrite(mode: have > 0 && status == 206 ? FileMode.append : FileMode.write);
     var downloaded = 0;
     final reused = have;
     var stoppedEarly = false;
+    var sniffed = have > 0;
     try {
       await for (final chunk in resp) {
+        if (!sniffed && chunk.isNotEmpty) {
+          sniffed = true;
+          final b0 = chunk[0];
+          if (b0 == 0x3c /* < */ || b0 == 0x7b /* { */) {
+            await abortHttpBody(resp);
+            try {
+              await sink.close();
+            } catch (_) {}
+            try {
+              await part.delete();
+            } catch (_) {}
+            _diag(DiscoverVideoDiag(
+              mediaId: mediaId,
+              source: 'network_error',
+              bytesReused: reused,
+              bytesDownloaded: 0,
+              elapsedMs: DateTime.now().toUtc().difference(started).inMilliseconds,
+              error: 'non_video_body',
+            ));
+            return DiscoverCachedVideo.network(
+              url: url,
+              mediaId: mediaId,
+              reason: 'non_video_body',
+            );
+          }
+        }
         if (stopAfterBytes != null && have >= stopAfterBytes) {
           stoppedEarly = true;
           break;
@@ -971,7 +1187,10 @@ class DiscoverVideoDiskCache {
     }
 
     final finalLen = await part.length();
-    final expected = total ?? contentLength;
+    var expected = total ?? contentLength;
+    if (expected != null && _looksLikePrefixCeiling(expected)) {
+      expected = null;
+    }
     if (expected == null || finalLen <= 0) {
       return DiscoverCachedVideo.network(url: url, mediaId: mediaId, reason: 'unknown_length');
     }
@@ -996,21 +1215,23 @@ class DiscoverVideoDiskCache {
       );
     }
 
-    final key = '${mediaId}_$expected.mp4';
-    final dest = File('${root.path}/$key');
-    if (await dest.exists()) {
-      await dest.delete();
-    }
-    await part.rename(dest.path);
-    _lru.removeWhere((_, m) => m.mediaId == mediaId);
-    _lru[key] = _CacheMeta(
-      key: key,
+    final dest = await _finalizePartIfCompleteUnlocked(
       mediaId: mediaId,
-      contentLength: expected,
-      path: dest.path,
-      complete: true,
-      bytesOnDisk: expected,
+      url: url,
+      knownTotal: expected,
     );
+    if (dest == null) {
+      return DiscoverCachedVideo(
+        url: url,
+        mediaId: mediaId,
+        file: part,
+        complete: false,
+        fromDisk: reused > 0 && downloaded == 0,
+        bytesOnDisk: finalLen,
+        bytesDownloaded: downloaded,
+        contentLength: expected,
+      );
+    }
     await _evictIfNeeded();
     _diag(DiscoverVideoDiag(
       mediaId: mediaId,
