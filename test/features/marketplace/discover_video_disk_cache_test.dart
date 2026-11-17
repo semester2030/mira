@@ -592,6 +592,115 @@ void main() {
     client.close(force: true);
   });
 
+  test('contentRangeTotal reads TOTAL and rejects star/malformed', () {
+    expect(
+      DiscoverVideoDiskCache.contentRangeTotal('bytes 0-1048575/14537110'),
+      14537110,
+    );
+    expect(DiscoverVideoDiskCache.contentRangeTotal('bytes 100-200/*'), isNull);
+    expect(DiscoverVideoDiskCache.contentRangeTotal('bytes 0-10/0'), isNull);
+    expect(DiscoverVideoDiskCache.contentRangeTotal(null), isNull);
+  });
+
+  test('206 prefix fill records Content-Range total and stays incomplete', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_cache_206_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(4 * 1024 * 1024, (i) => i % 256);
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      final range = req.headers.value(HttpHeaders.rangeHeader)!;
+      final start = int.parse(range.substring(6).split('-').first);
+      final end = int.parse(range.substring(6).split('-').last);
+      req.response.statusCode = HttpStatus.partialContent;
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.headers.set(
+        HttpHeaders.contentRangeHeader,
+        'bytes $start-$end/${bytes.length}',
+      );
+      req.response.add(bytes.sublist(start, end + 1));
+      await req.response.close();
+    });
+    final base =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/cccccccc-cccc-cccc-cccc-cccccccccccc';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    final have = await cache.ensurePlayablePrefix(base, needBytes: 1024 * 1024);
+    expect(have, 1024 * 1024);
+    expect(cache.lastPrefixStats?.contentLength, bytes.length);
+    expect(cache.lastPrefixStats?.complete, isFalse);
+    expect(await cache.peekComplete(base), isNull);
+  });
+
+  test('200 ignore-Range aborts body after prefix (networkBytesRead near need)', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_cache_200_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(8 * 1024 * 1024, (i) => i % 256);
+    var serverBytesSent = 0;
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      // Ignore Range — always 200 full body (chunked-ish writes).
+      req.response.statusCode = HttpStatus.ok;
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.contentLength = bytes.length;
+      const chunk = 64 * 1024;
+      for (var i = 0; i < bytes.length; i += chunk) {
+        final end = (i + chunk).clamp(0, bytes.length);
+        final piece = bytes.sublist(i, end);
+        try {
+          req.response.add(piece);
+          serverBytesSent += piece.length;
+          await req.response.flush();
+        } catch (_) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+      try {
+        await req.response.close();
+      } catch (_) {}
+    });
+    final base =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/dddddddd-dddd-dddd-dddd-dddddddddddd';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    const need = 1024 * 1024;
+    final have = await cache.ensurePlayablePrefix(base, needBytes: need);
+    expect(have, need);
+    expect(cache.lastPrefixStats?.bytesOnDisk, need);
+    expect(cache.lastPrefixStats?.complete, isFalse);
+    expect(cache.lastPrefixStats?.contentLength, bytes.length);
+    // Client must not keep reading the remaining ~7MiB.
+    expect(cache.lastPrefixStats!.networkBytesRead, lessThan(need + 256 * 1024));
+    expect(serverBytesSent, lessThan(bytes.length));
+    expect(await cache.peekComplete(base), isNull);
+  });
+
   test('lowPriority prefetch grows prefix only — never a full GET', () async {
     final root = Directory.systemTemp.createTempSync('mira_vid_cache_lp_');
     addTearDown(() {

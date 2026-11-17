@@ -856,8 +856,29 @@ class AssetVideoPort extends PresentationVideoPort {
       lastAttachPhases['isPlaying'] = v.isPlaying ? 1 : 0;
       lastAttachPhases['isBuffering'] = v.isBuffering ? 1 : 0;
       lastAttachPhases['hasError'] = v.hasError ? 1 : 0;
+      lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
       _firstFrameTimedOut = true;
       _emitPlayback('first_frame_timeout', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
+      _recordDiag({
+        'event': 'swipe_settle_timeout',
+        'offerId': slot.slideId,
+        'mediaId': _mediaIdOf(assetPath),
+        'claimSource': lastAttachPhases['source'],
+        'cacheSource': lastAttachPhases['cacheSource'],
+        'cacheBytes': lastAttachPhases['cacheBytes'],
+        'audioCutMs': lastAttachPhases['audioCut'],
+        'firstFrameMs': null,
+        'timeoutMs': ms,
+        'audiblePlaying': audiblePlayingCount,
+        'at': DateTime.now().toUtc().toIso8601String(),
+      });
+      debugPrint(
+        'MIRA_DISCOVER_SWIPE settle_timeout mediaId=${_mediaIdOf(assetPath)} '
+        'offer=${slot.slideId} claim=${lastAttachPhases['source']} '
+        'cache=${lastAttachPhases['cacheSource']} bytes=${lastAttachPhases['cacheBytes']} '
+        'audioCutMs=${lastAttachPhases['audioCut']} timeoutMs=$ms '
+        'audible=$audiblePlayingCount',
+      );
     }
   }
 
@@ -883,17 +904,39 @@ class AssetVideoPort extends PresentationVideoPort {
       lastAttachPhases['isPlaying'] = controller.value.isPlaying ? 1 : 0;
       lastAttachPhases['isBuffering'] = controller.value.isBuffering ? 1 : 0;
       _emitPlayback('first_frame', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
+      lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
+      _recordDiag({
+        'event': 'swipe_settle',
+        'offerId': slot.slideId,
+        'mediaId': _mediaIdOf(assetPath),
+        'claimSource': lastAttachPhases['source'],
+        'cacheSource': lastAttachPhases['cacheSource'],
+        'cacheBytes': lastAttachPhases['cacheBytes'],
+        'audioCutMs': lastAttachPhases['audioCut'],
+        'firstFrameMs': ms,
+        'audiblePlaying': audiblePlayingCount,
+        'at': DateTime.now().toUtc().toIso8601String(),
+      });
       debugPrint(
         'MIRA_DISCOVER_FF mediaId=${_mediaIdOf(assetPath)} '
         'offer=${slot.slideId} firstFrameMs=$ms '
         'source=${lastAttachPhases['source']} '
         'cacheSource=${lastAttachPhases['cacheSource']} '
         'cacheBytes=${lastAttachPhases['cacheBytes']} '
+        'audioCutMs=${lastAttachPhases['audioCut']} '
+        'audible=$audiblePlayingCount '
         'initStart=${lastAttachPhases['initStart']} '
         'initDone=${lastAttachPhases['initDone']} '
         'playStart=${lastAttachPhases['playStart']} '
         'resolveMs=${(lastAttachPhases['resolveDone'] ?? 0) - (lastAttachPhases['resolveStart'] ?? 0)} '
         'seekNudge=${lastAttachPhases['seekNudgeMs']}',
+      );
+      debugPrint(
+        'MIRA_DISCOVER_SWIPE settle mediaId=${_mediaIdOf(assetPath)} '
+        'offer=${slot.slideId} claim=${lastAttachPhases['source']} '
+        'cache=${lastAttachPhases['cacheSource']} bytes=${lastAttachPhases['cacheBytes']} '
+        'audioCutMs=${lastAttachPhases['audioCut']} firstFrameMs=$ms '
+        'audible=$audiblePlayingCount',
       );
     }
     return true;

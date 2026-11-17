@@ -47,6 +47,9 @@ class DiscoverVideoDiskCache {
   /// Last Range-serve stats (for logic tests / diagnostics).
   DiscoverByteServeStats? lastServeStats;
 
+  /// Last [ensurePlayablePrefix] outcome (bytes on disk vs network read).
+  DiscoverPrefixFillStats? lastPrefixStats;
+
   /// Media id currently on screen — fill jobs for this id start before others.
   String? _priorityMediaId;
 
@@ -63,6 +66,32 @@ class DiscoverVideoDiskCache {
       if (id.isNotEmpty) return id;
     }
     return null;
+  }
+
+  /// Trusted object size from `Content-Range: bytes start-end/TOTAL`.
+  /// Returns null for missing header, malformed values, or `TOTAL=*`.
+  static int? contentRangeTotal(String? header) {
+    if (header == null || header.isEmpty) return null;
+    final m = RegExp(r'bytes\s+\d+-\d+/(\d+|\*)', caseSensitive: false).firstMatch(header.trim());
+    if (m == null) return null;
+    final raw = m.group(1);
+    if (raw == null || raw == '*') return null;
+    final n = int.tryParse(raw);
+    if (n == null || n <= 0) return null;
+    return n;
+  }
+
+  /// Stop reading an HTTP body without writing more bytes. Prefer tearing the
+  /// socket down so a 200-to-Range-ignore cannot keep competing for bandwidth.
+  static Future<void> abortHttpBody(HttpClientResponse resp) async {
+    try {
+      final socket = await resp.detachSocket();
+      socket.destroy();
+    } catch (_) {
+      try {
+        await resp.drain<void>().timeout(const Duration(milliseconds: 80));
+      } catch (_) {}
+    }
   }
 
   Future<Directory> _ensureRoot() async {
@@ -593,6 +622,7 @@ class DiscoverVideoDiskCache {
 
     var total = knownTotal ?? _knownLength[mediaId];
     var downloaded = 0;
+    var networkBytesRead = 0;
     while (have < needBytes) {
       final req = await _http.getUrl(Uri.parse(origin));
       req.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
@@ -604,45 +634,63 @@ class DiscoverVideoDiskCache {
       final resp = await req.close().timeout(const Duration(seconds: 20));
       final status = resp.statusCode;
       if (status != 200 && status != 206) {
-        await resp.drain<void>();
+        await abortHttpBody(resp);
         break;
       }
       if (status == 200) {
-        // Server ignored Range — take only the prefix then abandon the rest.
+        // Server ignored Range — rewrite from byte 0, keep only the prefix.
         have = 0;
-      }
-      if (resp.contentLength >= 0) {
-        final declared =
-            status == 206 ? have + resp.contentLength : resp.contentLength;
-        if (declared > 0) {
-          total = declared;
-          _knownLength[mediaId] = declared;
+        // Full-object Content-Length is trusted; partial Content-Length is not.
+        if (resp.contentLength > 0) {
+          total = resp.contentLength;
+          _knownLength[mediaId] = resp.contentLength;
         }
+      } else {
+        // 206: ONLY Content-Range TOTAL is authoritative. Never use
+        // have+contentLength (that records the window end as the whole file).
+        final fromRange = contentRangeTotal(
+          resp.headers.value(HttpHeaders.contentRangeHeader),
+        );
+        if (fromRange != null) {
+          total = fromRange;
+          _knownLength[mediaId] = fromRange;
+        }
+        // else: total stays knownTotal/_knownLength or null (unknown).
       }
       final sink = part.openWrite(mode: have > 0 && status == 206 ? FileMode.append : FileMode.write);
       var reachedNeed = false;
+      var abortedEarly = false;
       try {
         await for (final chunk in resp) {
+          networkBytesRead += chunk.length;
           if (reachedNeed) {
-            // Drain without writing — do not grow past the playable prefix.
+            // Should not happen — we abort as soon as needBytes lands.
             continue;
           }
           var piece = chunk;
           if (have + chunk.length > needBytes) {
             piece = chunk.sublist(0, needBytes - have);
-            reachedNeed = true;
           }
-          if (piece.isEmpty) {
-            reachedNeed = true;
-            continue;
+          if (piece.isNotEmpty) {
+            sink.add(piece);
+            downloaded += piece.length;
+            have += piece.length;
           }
-          sink.add(piece);
-          downloaded += piece.length;
-          have += piece.length;
-          if (have >= needBytes) reachedNeed = true;
+          if (have >= needBytes) {
+            reachedNeed = true;
+            await sink.flush();
+            await sink.close();
+            // 200 ignore-Range: tear down so the rest of the object is not
+            // pulled across the wire (gold-set stall: neighbor 25MB GET 200).
+            await abortHttpBody(resp);
+            abortedEarly = true;
+            break;
+          }
         }
-        await sink.flush();
-        await sink.close();
+        if (!abortedEarly) {
+          await sink.flush();
+          await sink.close();
+        }
       } catch (_) {
         try {
           await sink.close();
@@ -650,7 +698,9 @@ class DiscoverVideoDiskCache {
         break;
       }
       have = await part.length();
-      if (total != null && have >= total) break;
+      // Complete only when we truly have the whole object — never promote a
+      // truncated prefix just because total was mis-recorded as the window size.
+      if (total != null && total > 0 && have >= total) break;
       if (have >= needBytes) break;
       // If server sent only a partial window and we still need more, loop.
       if (downloaded > 0 && have < needBytes && status == 206) {
@@ -660,7 +710,15 @@ class DiscoverVideoDiskCache {
     }
 
     have = await part.length();
-    if (total != null && have >= total && total > 0) {
+    lastPrefixStats = DiscoverPrefixFillStats(
+      mediaId: mediaId,
+      bytesOnDisk: have,
+      bytesDownloaded: downloaded,
+      networkBytesRead: networkBytesRead,
+      contentLength: total,
+      complete: total != null && total > 0 && have >= total,
+    );
+    if (total != null && total > 0 && have >= total) {
       final key = '${mediaId}_$total.mp4';
       final dest = File('${root.path}/$key');
       if (await dest.exists()) await dest.delete();
@@ -690,6 +748,7 @@ class DiscoverVideoDiskCache {
       bytesReused: before,
       bytesDownloaded: downloaded,
       elapsedMs: 0,
+      error: total == null ? 'total_unknown' : null,
     ));
 
     return _PrefixFill(
@@ -996,6 +1055,35 @@ class DiscoverPlaySource {
 
   bool get isFile => kind == 'file' && file != null;
   bool get isProxy => kind == 'proxy' && uri != null;
+}
+
+class DiscoverPrefixFillStats {
+  const DiscoverPrefixFillStats({
+    required this.mediaId,
+    required this.bytesOnDisk,
+    required this.bytesDownloaded,
+    required this.networkBytesRead,
+    this.contentLength,
+    required this.complete,
+  });
+
+  final String mediaId;
+  final int bytesOnDisk;
+  final int bytesDownloaded;
+  /// Bytes actually read from the HTTP body (should stay near [bytesDownloaded]
+  /// when a 200 ignore-Range is aborted early).
+  final int networkBytesRead;
+  final int? contentLength;
+  final bool complete;
+
+  Map<String, Object?> toJson() => {
+        'mediaId': mediaId,
+        'bytesOnDisk': bytesOnDisk,
+        'bytesDownloaded': bytesDownloaded,
+        'networkBytesRead': networkBytesRead,
+        'contentLength': contentLength,
+        'complete': complete,
+      };
 }
 
 class DiscoverByteServeStats {

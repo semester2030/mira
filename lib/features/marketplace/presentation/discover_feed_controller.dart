@@ -131,16 +131,29 @@ class DiscoverFeedController extends ChangeNotifier {
     DiscoverBrowseResponse response;
     try {
       response = await _gateway.browse(query);
-    } catch (_) {
-      if (_disposed || generation != _queryGeneration) return;
-      state = DiscoverFeedState(
-        phase: DiscoverFeedPhase.failed,
-        query: query,
-        loadError: 'تعذر تحميل الكتالوج',
-        replacement: state.replacement + 1,
-      );
-      _notify();
-      return;
+    } catch (firstError) {
+      // One automatic retry — covers brief API redeploy blips (jewelry 01:12
+      // during 6dff5b7 rollout) without surfacing a hard fail to the customer.
+      try {
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        if (_disposed || generation != _queryGeneration) return;
+        response = await _gateway.browse(query);
+      } catch (retryError) {
+        if (_disposed || generation != _queryGeneration) return;
+        // ignore: avoid_print
+        print(
+          'MIRA_DISCOVER_CATALOG fail lane=${query.lane?.name} '
+          'category=${query.categoryId} first=$firstError retry=$retryError',
+        );
+        state = DiscoverFeedState(
+          phase: DiscoverFeedPhase.failed,
+          query: query,
+          loadError: 'تعذر تحميل الكتالوج',
+          replacement: state.replacement + 1,
+        );
+        _notify();
+        return;
+      }
     }
     if (_disposed || generation != _queryGeneration) return;
     DiscoverAdFeed ads = DiscoverAdFeed.empty;
