@@ -420,6 +420,40 @@ void main() {
     await port.release();
   });
 
+  test('leaveSection parks sticky clip so return claims prepared', () async {
+    final a = ControllableVideoController('$_clip-a');
+    final b = ControllableVideoController('$_clip-b');
+    var n = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        n += 1;
+        return n == 1 ? a : b;
+      },
+    );
+    await port.attach(_slotA, '$_clip-a');
+    expect(port.hasVisibleProgress, isTrue);
+    await port.leaveSection();
+    expect(a.disposed, isFalse, reason: 'leaveSection must park, not dispose');
+    final before = n;
+    await port.attach(_slotA, '$_clip-a');
+    expect(n, before, reason: 'return must reclaim parked/prepared decoder');
+    expect(port.lastAttachPhases['source'], anyOf(2, 3));
+    expect(port.hasVisibleProgress, isTrue);
+    await port.release();
+  });
+
+  test('detach without first frame emits left_dark', () async {
+    final controller = ControllableVideoController(_clip)..advanceOnPlay = false;
+    final port = AssetVideoPort(createController: (_) => controller);
+    final pending = port.attach(_slotA, _clip);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(port.hasVisibleProgress, isFalse);
+    await port.detach(_slotA);
+    await pending;
+    expect(port.playbackEvents.where((e) => e.type == 'left_dark'), isNotEmpty);
+    await port.release();
+  });
+
   test('attach claims unprimed warm (pos0) without cold reopen', () async {
     // Simulates mute-prime never advancing: warm stays initialized at 0.
     // Old path awaited warmFuture, rejected pos0, disposed, then cold-opened

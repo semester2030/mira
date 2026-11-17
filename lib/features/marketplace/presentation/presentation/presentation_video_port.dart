@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -144,7 +145,10 @@ class AssetVideoPort extends PresentationVideoPort {
   /// Survives beyond the single [_parked] slot so return-after-N is still local.
   final Map<String, VideoPlayerController> _preparedByMediaId = {};
   final List<String> _preparedOrder = [];
-  static const int _maxPrepared = 2;
+  /// Keep enough decoders for return-after-N and cross-lane revisits.
+  static const int _maxPrepared = 12;
+  /// MediaIds that reached a visible frame — evicted last from the prepared pool.
+  final LinkedHashSet<String> _stickyMediaIds = LinkedHashSet<String>();
   int _generation = 0;
   bool _released = false;
   String? _lastOfferId;
@@ -396,12 +400,90 @@ class AssetVideoPort extends PresentationVideoPort {
     _preparedOrder.remove(id);
     _preparedOrder.add(id);
     while (_preparedOrder.length > _maxPrepared) {
-      final evictId = _preparedOrder.removeAt(0);
+      // Evict non-sticky first so return-to-watched keeps its decoder.
+      String? evictId;
+      for (final candidate in _preparedOrder) {
+        if (!_stickyMediaIds.contains(candidate)) {
+          evictId = candidate;
+          break;
+        }
+      }
+      evictId ??= _preparedOrder.isEmpty ? null : _preparedOrder.first;
+      if (evictId == null) break;
+      _preparedOrder.remove(evictId);
       final evict = _preparedByMediaId.remove(evictId);
       if (evict != null && evict != controller) {
         await evict.dispose();
       }
     }
+  }
+
+  /// Called when the Discover section route is popped. Parks the active clip,
+  /// pins its disk bytes, and keeps the prepared pool — do NOT [release].
+  Future<void> leaveSection() async {
+    if (_released) return;
+    final active = _controller;
+    final path = _activePath;
+    final slot = activeSlot;
+    final hadFrame = _hasVisibleProgress;
+    final settle = _settleStartedAt;
+    cutOutgoingAudio();
+    if (active != null) {
+      final ms = settle == null
+          ? null
+          : DateTime.now().toUtc().difference(settle).inMilliseconds;
+      if (!hadFrame && path != null && path.isNotEmpty) {
+        _emitPlayback('left_dark', positionMs: ms, offerId: slot?.slideId, mediaUrl: path);
+        _recordDiag({
+          'event': 'left_dark',
+          'offerId': slot?.slideId,
+          'mediaId': _mediaIdOf(path),
+          'dwellMs': ms,
+          'claimSource': lastAttachPhases['source'],
+          'cacheSource': lastAttachPhases['cacheSource'],
+          'cacheBytes': lastAttachPhases['cacheBytes'],
+          'audiblePlaying': audiblePlayingCount,
+          'at': DateTime.now().toUtc().toIso8601String(),
+        });
+        debugPrint(
+          'MIRA_DISCOVER_SWIPE left_dark mediaId=${_mediaIdOf(path)} '
+          'offer=${slot?.slideId} dwellMs=$ms '
+          'claim=${lastAttachPhases['source']} cache=${lastAttachPhases['cacheSource']} '
+          'bytes=${lastAttachPhases['cacheBytes']} audible=$audiblePlayingCount',
+        );
+      }
+      if (path != null && path.isNotEmpty) {
+        // Ensure full object lands so the next section visit opens a file, not .part.
+        prefetchDisk(path);
+        // ignore: discarded_futures
+        _diskCache?.finalizePartIfComplete(path);
+      }
+      _controller = null;
+      _activePath = null;
+      activeSlot = null;
+      playback = PresentationPlayback.idle;
+      _hasVisibleProgress = false;
+      _notify();
+      await _parkLeaving(active, path);
+    }
+    if (_parkedPath != null && _parkedPath!.isNotEmpty) {
+      prefetchDisk(_parkedPath!);
+      // ignore: discarded_futures
+      _diskCache?.finalizePartIfComplete(_parkedPath!);
+    }
+    for (final id in List<String>.from(_preparedByMediaId.keys)) {
+      final c = _preparedByMediaId[id];
+      if (c == null) continue;
+      try {
+        prefetchDisk(c.dataSource);
+        // ignore: discarded_futures
+        _diskCache?.finalizePartIfComplete(c.dataSource);
+      } catch (_) {}
+    }
+    debugPrint(
+      'MIRA_DISCOVER_SWIPE leave_section parked=${_mediaIdOf(_parkedPath)} '
+      'prepared=${_preparedOrder.length} sticky=${_stickyMediaIds.length}',
+    );
   }
 
   VideoPlayerController? _takePrepared(String assetPath) {
@@ -467,6 +549,9 @@ class AssetVideoPort extends PresentationVideoPort {
     // Active clip owns the full GET; neighbors stay prefix-only.
     prefetchDisk(assetPath);
     _diskCache?.prioritize(assetPath);
+    // Promote a finished .part before resolve so return-to-clip opens a file.
+    // ignore: discarded_futures
+    _diskCache?.finalizePartIfComplete(assetPath);
     _controller = null;
     _activePath = null;
     activeSlot = slot;
@@ -903,6 +988,18 @@ class AssetVideoPort extends PresentationVideoPort {
       lastAttachPhases['posAtFirstMs'] = controller.value.position.inMilliseconds;
       lastAttachPhases['isPlaying'] = controller.value.isPlaying ? 1 : 0;
       lastAttachPhases['isBuffering'] = controller.value.isBuffering ? 1 : 0;
+      final stickyId = _mediaIdOf(assetPath);
+      if (stickyId != null) {
+        _stickyMediaIds.remove(stickyId);
+        _stickyMediaIds.add(stickyId);
+        while (_stickyMediaIds.length > _maxPrepared) {
+          _stickyMediaIds.remove(_stickyMediaIds.first);
+        }
+      }
+      // Finish disk object in background so section return is a file open.
+      prefetchDisk(assetPath);
+      // ignore: discarded_futures
+      _diskCache?.finalizePartIfComplete(assetPath);
       _emitPlayback('first_frame', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
       lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
       _recordDiag({
@@ -973,12 +1070,42 @@ class AssetVideoPort extends PresentationVideoPort {
     final controller = _controller;
     final path = _activePath;
     final pos = controller?.value.position.inMilliseconds;
+    final hadFrame = _hasVisibleProgress;
+    final settle = _settleStartedAt;
     if (_controller == controller) {
       _controller = null;
       _activePath = null;
     }
     if (path != null && path.isNotEmpty) {
       _emitPlayback('stopped', positionMs: pos, offerId: slot.slideId, mediaUrl: path);
+      if (!hadFrame) {
+        final ms = settle == null
+            ? null
+            : DateTime.now().toUtc().difference(settle).inMilliseconds;
+        _emitPlayback('left_dark', positionMs: ms, offerId: slot.slideId, mediaUrl: path);
+        _recordDiag({
+          'event': 'left_dark',
+          'offerId': slot.slideId,
+          'mediaId': _mediaIdOf(path),
+          'dwellMs': ms,
+          'claimSource': lastAttachPhases['source'],
+          'cacheSource': lastAttachPhases['cacheSource'],
+          'cacheBytes': lastAttachPhases['cacheBytes'],
+          'audiblePlaying': audiblePlayingCount,
+          'at': DateTime.now().toUtc().toIso8601String(),
+        });
+        debugPrint(
+          'MIRA_DISCOVER_SWIPE left_dark mediaId=${_mediaIdOf(path)} '
+          'offer=${slot.slideId} dwellMs=$ms '
+          'claim=${lastAttachPhases['source']} cache=${lastAttachPhases['cacheSource']} '
+          'bytes=${lastAttachPhases['cacheBytes']} audible=$audiblePlayingCount',
+        );
+      } else {
+        // Pin watched clip bytes so cross-lane return opens a complete file.
+        prefetchDisk(path);
+        // ignore: discarded_futures
+        _diskCache?.finalizePartIfComplete(path);
+      }
     }
     activeSlot = null;
     playback = PresentationPlayback.idle;

@@ -129,30 +129,39 @@ class DiscoverFeedController extends ChangeNotifier {
     );
     _notify();
     DiscoverBrowseResponse response;
-    try {
-      response = await _gateway.browse(query);
-    } catch (firstError) {
-      // One automatic retry — covers brief API redeploy blips (jewelry 01:12
-      // during 6dff5b7 rollout) without surfacing a hard fail to the customer.
+    Object? lastError;
+    var attempt = 0;
+    while (true) {
       try {
-        await Future<void>.delayed(const Duration(milliseconds: 350));
-        if (_disposed || generation != _queryGeneration) return;
         response = await _gateway.browse(query);
-      } catch (retryError) {
-        if (_disposed || generation != _queryGeneration) return;
+        break;
+      } catch (error) {
+        lastError = error;
+        attempt += 1;
         // ignore: avoid_print
         print(
-          'MIRA_DISCOVER_CATALOG fail lane=${query.lane?.name} '
-          'category=${query.categoryId} first=$firstError retry=$retryError',
+          'MIRA_DISCOVER_CATALOG attempt=$attempt lane=${query.lane?.name} '
+          'category=${query.categoryId} error=$error',
         );
-        state = DiscoverFeedState(
-          phase: DiscoverFeedPhase.failed,
-          query: query,
-          loadError: 'تعذر تحميل الكتالوج',
-          replacement: state.replacement + 1,
-        );
-        _notify();
-        return;
+        // Up to 2 retries for transient transport blips (jewelry open).
+        if (attempt >= 3) {
+          if (_disposed || generation != _queryGeneration) return;
+          // ignore: avoid_print
+          print(
+            'MIRA_DISCOVER_CATALOG fail lane=${query.lane?.name} '
+            'category=${query.categoryId} last=$lastError',
+          );
+          state = DiscoverFeedState(
+            phase: DiscoverFeedPhase.failed,
+            query: query,
+            loadError: 'تعذر تحميل الكتالوج',
+            replacement: state.replacement + 1,
+          );
+          _notify();
+          return;
+        }
+        await Future<void>.delayed(Duration(milliseconds: 300 * attempt));
+        if (_disposed || generation != _queryGeneration) return;
       }
     }
     if (_disposed || generation != _queryGeneration) return;

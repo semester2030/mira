@@ -241,6 +241,44 @@ class DiscoverVideoDiskCache {
     }
   }
 
+  /// If `{mediaId}.part` already holds the full object, promote it to a
+  /// complete `mediaId_TOTAL.mp4`. Fixes return-to-clip stalls where the
+  /// dress stayed on `.part` after a finished download (71062d9e @ 10:25).
+  Future<File?> finalizePartIfComplete(String url) async {
+    final mediaId = mediaIdFromUrl(url);
+    if (mediaId == null) return null;
+    final root = await _ensureRoot();
+    final part = File('${root.path}/$mediaId.part');
+    if (!await part.exists()) return null;
+    final have = await part.length();
+    var total = _knownLength[mediaId];
+    total ??= await _headLength(url);
+    if (total != null && total > 0) _knownLength[mediaId] = total;
+    if (total == null || total <= 0 || have < total) return null;
+    final key = '${mediaId}_$total.mp4';
+    final dest = File('${root.path}/$key');
+    if (await dest.exists()) await dest.delete();
+    await part.rename(dest.path);
+    _lru.removeWhere((_, m) => m.mediaId == mediaId);
+    _lru[key] = _CacheMeta(
+      key: key,
+      mediaId: mediaId,
+      contentLength: total,
+      path: dest.path,
+      complete: true,
+      bytesOnDisk: total,
+    );
+    _touch(key);
+    _diag(DiscoverVideoDiag(
+      mediaId: mediaId,
+      source: 'finalize_part',
+      bytesReused: have,
+      bytesDownloaded: 0,
+      elapsedMs: 0,
+    ));
+    return dest;
+  }
+
   /// Non-blocking peek: complete file already on disk for this URL's media id.
   Future<File?> peekComplete(String url) async {
     final mediaId = mediaIdFromUrl(url);
@@ -279,7 +317,8 @@ class DiscoverVideoDiskCache {
       _touch(key);
       return entity;
     }
-    return null;
+    // Stuck .part that already equals TOTAL → promote before giving up.
+    return finalizePartIfComplete(url);
   }
 
   /// Bytes already on disk for [url] (complete file or `.part` prefix).

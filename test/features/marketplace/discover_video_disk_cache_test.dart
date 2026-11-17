@@ -592,6 +592,44 @@ void main() {
     client.close(force: true);
   });
 
+  test('finalizePartIfComplete promotes full .part to complete file', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_cache_fin_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(64 * 1024, (i) => i % 256);
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      req.response.statusCode = HttpStatus.ok;
+      req.response.contentLength = bytes.length;
+      req.response.add(bytes);
+      await req.response.close();
+    });
+    const mediaId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+    final base =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$mediaId';
+    final part = File('${root.path}/$mediaId.part');
+    await part.writeAsBytes(bytes);
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    final promoted = await cache.finalizePartIfComplete(base);
+    expect(promoted, isNotNull);
+    expect(await promoted!.exists(), isTrue);
+    expect(await part.exists(), isFalse);
+    expect(await cache.peekComplete(base), isNotNull);
+  });
+
   test('contentRangeTotal reads TOTAL and rejects star/malformed', () {
     expect(
       DiscoverVideoDiskCache.contentRangeTotal('bytes 0-1048575/14537110'),

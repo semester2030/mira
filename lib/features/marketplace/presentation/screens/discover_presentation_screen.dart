@@ -39,6 +39,7 @@ import '../discover_feed_controller.dart';
 import '../presentation/discover_presentation_catalog.dart';
 import '../presentation/discover_view_count.dart';
 import '../presentation/discover_visual_chrome.dart';
+import '../presentation/discover_video_session.dart';
 import '../presentation/presentation_video_port.dart';
 import '../widgets/discover_scene_still.dart';
 import '../intro_video_booking.dart';
@@ -235,7 +236,9 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _slides = widget.slides!;
     }
     _ownsVideo = widget.videoPort == null;
-    _video = widget.videoPort ?? AssetVideoPort();
+    // Shared session keeps parked/prepared decoders across lane pop/push
+    // (return to فستان زواج 15k after المجوهرات).
+    _video = widget.videoPort ?? DiscoverVideoSession.instance.port;
     _vertical = widget.verticalController ?? PageController();
     WidgetsBinding.instance.addObserver(this);
     _video.addListener(_onVideo);
@@ -278,8 +281,15 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     if (_ownsFavorites) _favorites?.dispose();
     _searchFocus.dispose();
     _search.dispose();
-    _video.release();
-    if (_ownsVideo) _video.dispose();
+    if (_ownsVideo) {
+      // Shared session: park/pin only — do not release prepared decoders.
+      // ignore: discarded_futures
+      DiscoverVideoSession.instance.leaveSection();
+    } else {
+      // Injected port (tests): release ownership back to the harness.
+      // ignore: discarded_futures
+      _video.release();
+    }
     super.dispose();
   }
 
