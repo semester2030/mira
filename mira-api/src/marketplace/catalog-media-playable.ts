@@ -13,6 +13,9 @@ export const PROVEN_BROKEN_CATALOG_MEDIA_IDS: ReadonlySet<string> = new Set([
   '0eb8d0e0-3991-4a2a-a435-81642baa7b79',
   // Live Range probe 2026-11-16: 2267-byte stub; mid-range 416; black frame on device.
   '94d514e3-99bf-4c5f-b517-fe4178aacb0f',
+  // Live Range probe 2026-11-17: same 2267-byte QT stub (Content-Range 0-2047/2267).
+  // Owned by product 9b8edf30; appeared in Discover feed after wedding-dress stall.
+  '37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c',
   'a9a871ca-df82-482e-b4b8-3ab7eab7e412',
   'ff222451-9e16-4a84-8f1f-974adf34f7ee',
   '38f83110-07ae-450e-9299-04ed12bf61f1',
