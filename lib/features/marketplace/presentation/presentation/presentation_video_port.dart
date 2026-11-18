@@ -113,7 +113,7 @@ class AssetVideoPort extends PresentationVideoPort {
   /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
   static const String buildStamp = String.fromEnvironment(
     'MIRA_BUILD',
-    defaultValue: '2026111716',
+    defaultValue: '2026111717',
   );
 
   /// When non-null (unit tests), paths are passed straight to this factory and
@@ -178,12 +178,28 @@ class AssetVideoPort extends PresentationVideoPort {
   int? _progressAttemptId;
   int? _progressPlayerId;
   bool _seekInFlight = false;
+  /// Attempt that currently owns [_seekInFlight] — stale finally must not clear a newer seek.
+  int? _seekOwnerAttemptId;
   bool _firstFrameEmitted = false;
   bool _firstFrameTimedOut = false;
   bool _hasVisibleProgress = false;
   /// Single shared unmute Future per attempt — prevents double unmute_req.
   Future<void>? _audioArmInFlight;
   int? _audioArmAttemptId;
+  /// Attempt currently being attached (for accounting across detach/supersede).
+  int? _activeAttemptId;
+  /// Outcomes keyed by attemptId — never rewritten by a later attach's phases map.
+  final Map<int, String> _attemptOutcomes = <int, String>{};
+  final Set<int> _attemptStarts = <int>{};
+  @visibleForTesting
+  static int debugAttemptStartCount = 0;
+  @visibleForTesting
+  static int debugAttemptEndCount = 0;
+  @visibleForTesting
+  static void debugResetAttemptCounters() {
+    debugAttemptStartCount = 0;
+    debugAttemptEndCount = 0;
+  }
   final List<DiscoverPlaybackEvent> playbackEvents = <DiscoverPlaybackEvent>[];
 
   /// Source URL bound to the controller (null when no video attached).
@@ -262,10 +278,23 @@ class AssetVideoPort extends PresentationVideoPort {
 
   @override
   Future<void> setMuted(bool muted) async {
-    _muted = muted;
+    final gen = _generation;
     final controller = _controller;
+    final attemptId = _activeAttemptId ?? lastAttachPhases['attemptId'];
+    _muted = muted;
     if (controller != null) {
       await controller.setVolume(muted ? 0 : 1);
+      if (gen != _generation || !identical(_controller, controller)) {
+        _notify();
+        return;
+      }
+      if (!muted &&
+          attemptId != null &&
+          lastAttachPhases['attemptId'] == attemptId &&
+          _hasVisibleProgress) {
+        lastAttachPhases['audioArmed'] ??=
+            _settleStartedAt == null ? 0 : _msSince(_settleStartedAt!);
+      }
     }
     _notify();
   }
@@ -689,9 +718,15 @@ class AssetVideoPort extends PresentationVideoPort {
     // Clock starts at swipe settle — before waiting on warm/park/previous dispose.
     final settleStarted = DateTime.now().toUtc();
     _settleStartedAt = settleStarted;
+    final leavingAttempt = _activeAttemptId;
+    if (leavingAttempt != null && !_attemptOutcomes.containsKey(leavingAttempt)) {
+      _endAttempt(leavingAttempt, outcome: 'superseded', mediaId: _mediaIdOf(_activePath ?? ''));
+    }
     _progressFloor = Duration.zero;
     _progressAttemptId = null;
     _progressPlayerId = null;
+    // Do not clear _seekInFlight here if a stale seek's finally must no-op via owner id.
+    _seekOwnerAttemptId = null;
     _seekInFlight = false;
     _audioArmInFlight = null;
     _audioArmAttemptId = null;
@@ -713,10 +748,11 @@ class AssetVideoPort extends PresentationVideoPort {
     final previousPath = _activePath;
     final attemptId = DateTime.now().toUtc().microsecondsSinceEpoch;
     lastAttachPhases['attemptId'] = attemptId;
-    miraDiscoverLog(
-      'MIRA_DISCOVER_ATTEMPT attempt=$attemptId phase=start '
-      'mediaId=${_mediaIdOf(assetPath)} offer=${slot.slideId} '
-      'app=$_appLifecycleLabel gen=$token build=$buildStamp',
+    _beginAttempt(
+      attemptId,
+      mediaId: _mediaIdOf(assetPath),
+      offerId: slot.slideId,
+      gen: token,
     );
     // Critical (Nomas parity): cut previous audio BEFORE awaiting warm init.
     // Old order waited on warm then silenced — dual audio + dark plate with sound.
@@ -887,6 +923,7 @@ class AssetVideoPort extends PresentationVideoPort {
             offerId: slot.slideId,
             mediaUrl: assetPath,
           );
+          _endAttempt(attemptId, outcome: 'timeout', mediaId: wantId);
           playback = PresentationPlayback.failed;
           errorText = 'تعذر تشغيل الفيديو';
           _notify();
@@ -1011,16 +1048,34 @@ class AssetVideoPort extends PresentationVideoPort {
     }
   }
 
+  void _beginAttempt(int attemptId, {String? mediaId, String? offerId, required int gen}) {
+    _attemptStarts.add(attemptId);
+    _activeAttemptId = attemptId;
+    debugAttemptStartCount += 1;
+    miraDiscoverLog(
+      'MIRA_DISCOVER_ATTEMPT attempt=$attemptId phase=start '
+      'mediaId=$mediaId offer=$offerId '
+      'app=$_appLifecycleLabel gen=$gen build=$buildStamp',
+    );
+  }
+
   void _endAttempt(int? attemptId, {required String outcome, String? mediaId}) {
     if (attemptId == null) return;
-    if (lastAttachPhases['attemptEnded'] == 1) return;
-    lastAttachPhases['attemptEnded'] = 1;
-    lastAttachPhases['attemptOutcome'] = outcome.hashCode;
+    if (_attemptOutcomes.containsKey(attemptId)) return;
+    if (!_attemptStarts.contains(attemptId)) return;
+    _attemptOutcomes[attemptId] = outcome;
+    debugAttemptEndCount += 1;
+    if (_activeAttemptId == attemptId) {
+      _activeAttemptId = null;
+    }
+    // Snapshot phases only when this attempt still owns lastAttachPhases.
+    final posMs = lastAttachPhases['attemptId'] == attemptId
+        ? lastAttachPhases['firstFrame']
+        : null;
     miraDiscoverLog(
       'MIRA_DISCOVER_ATTEMPT attempt=$attemptId phase=end outcome=$outcome '
       'mediaId=$mediaId kind=${_sourceKindLabel()} app=$_appLifecycleLabel '
-      'posProgressMs=${lastAttachPhases['firstFrame']} '
-      'metric=position_not_pixels',
+      'posProgressMs=$posMs metric=position_not_pixels',
     );
   }
 
@@ -1033,7 +1088,7 @@ class AssetVideoPort extends PresentationVideoPort {
     required int attemptId,
   }) async {
     if (_muted) return;
-    if (lastAttachPhases['audioArmed'] != null) return;
+    if (_attemptOutcomes.containsKey(attemptId)) return;
     if (_audioArmAttemptId == attemptId && _audioArmInFlight != null) {
       await _audioArmInFlight;
       return;
@@ -1041,42 +1096,61 @@ class AssetVideoPort extends PresentationVideoPort {
     final gate = Completer<void>();
     _audioArmAttemptId = attemptId;
     _audioArmInFlight = gate.future;
+    final armedPlayerId = _playerId(controller);
     try {
       if (!_canStart(controller, token) || _muted) return;
-      if (lastAttachPhases['audioArmed'] != null) return;
       if (lastAttachPhases['attemptId'] != attemptId) return;
-      final id = _playerId(controller);
-      if (_progressPlayerId != null && _progressPlayerId != id) return;
+      if (lastAttachPhases['audioArmed'] != null &&
+          lastAttachPhases['attemptId'] == attemptId) {
+        return;
+      }
       miraDiscoverLog(
-        'MIRA_DISCOVER_AUDIO unmute_req playerId=$id '
+        'MIRA_DISCOVER_AUDIO unmute_req playerId=$armedPlayerId '
         'attempt=$attemptId '
         'at=${DateTime.now().toUtc().toIso8601String()}',
       );
       await controller.setVolume(1);
-      if (!_canStart(controller, token) ||
-          lastAttachPhases['attemptId'] != attemptId ||
-          _muted) {
-        // Stale completion must not leave a left clip audible.
-        try {
-          await controller.setVolume(0);
-        } catch (_) {}
+      final stillThisAttempt = lastAttachPhases['attemptId'] == attemptId &&
+          token == _generation &&
+          !_released;
+      final stillActiveController = identical(_controller, controller);
+      if (_muted) {
+        if (stillActiveController) {
+          try {
+            await controller.setVolume(0);
+          } catch (_) {}
+        }
+        return;
+      }
+      if (!stillThisAttempt || !stillActiveController) {
+        // Stale arm: mute only if this controller is NOT the live player for a
+        // newer attempt (same instance may have been reclaimed by A→image→A).
+        final reusedByNewer = stillActiveController &&
+            lastAttachPhases['attemptId'] != null &&
+            lastAttachPhases['attemptId'] != attemptId;
+        if (!reusedByNewer) {
+          try {
+            await controller.setVolume(0);
+          } catch (_) {}
+        }
         return;
       }
       lastAttachPhases['audioArmed'] = _msSince(settleStarted);
       lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
-      lastAttachPhases['nextPlayerId'] = id;
+      lastAttachPhases['nextPlayerId'] = armedPlayerId;
       miraDiscoverLog(
         'MIRA_DISCOVER_SWIPE audio_armed mediaId=${_mediaIdOf(assetPath)} '
-        'playerId=$id firstFrameMs=${lastAttachPhases['firstFrame']} '
+        'playerId=$armedPlayerId firstFrameMs=${lastAttachPhases['firstFrame']} '
         'audible=$audiblePlayingCount attempt=$attemptId',
       );
     } catch (e) {
       miraDiscoverLog(
-        'MIRA_DISCOVER_AUDIO unmute_err playerId=${_playerId(controller)} err=$e',
+        'MIRA_DISCOVER_AUDIO unmute_err playerId=$armedPlayerId err=$e',
       );
     } finally {
       if (!gate.isCompleted) gate.complete();
-      if (identical(_audioArmInFlight, gate.future)) {
+      if (identical(_audioArmInFlight, gate.future) &&
+          _audioArmAttemptId == attemptId) {
         _audioArmInFlight = null;
       }
     }
@@ -1127,6 +1201,8 @@ class AssetVideoPort extends PresentationVideoPort {
         lastAttachPhases['seekNudgeMs'] = _msSince(settleStarted);
         lastAttachPhases['seekNudgeKind'] = completeDiskCold ? 2 : 1;
         final attemptId = lastAttachPhases['attemptId'];
+        final seekPlayerId = _playerId(controller);
+        final seekGen = token;
         try {
           final nudge = _progressFloor + const Duration(milliseconds: 32);
           final dur = v.duration;
@@ -1138,9 +1214,10 @@ class AssetVideoPort extends PresentationVideoPort {
           if (attemptId != null) {
             _bindProgressGuard(
               attemptId: attemptId,
-              playerId: _playerId(controller),
+              playerId: seekPlayerId,
               floor: target,
             );
+            _seekOwnerAttemptId = attemptId;
           } else {
             _progressFloor = target;
           }
@@ -1152,6 +1229,17 @@ class AssetVideoPort extends PresentationVideoPort {
             'floorMs=${_progressFloor.inMilliseconds}',
           );
           await controller.seekTo(target);
+          // Stale seek must not mutate a newer attempt's floor / phases / seek flag.
+          final stillOwner = attemptId != null &&
+              attemptId == _seekOwnerAttemptId &&
+              attemptId == _progressAttemptId &&
+              seekGen == _generation &&
+              seekPlayerId == _progressPlayerId &&
+              identical(_controller, controller) &&
+              lastAttachPhases['attemptId'] == attemptId;
+          if (!stillOwner) {
+            return;
+          }
           final afterSeek = controller.value.position;
           if (afterSeek > _progressFloor) {
             _progressFloor = afterSeek;
@@ -1165,7 +1253,10 @@ class AssetVideoPort extends PresentationVideoPort {
           );
         } catch (_) {
         } finally {
-          _seekInFlight = false;
+          if (attemptId != null && _seekOwnerAttemptId == attemptId) {
+            _seekInFlight = false;
+            _seekOwnerAttemptId = null;
+          }
         }
         if (token != _generation || _released || _controller != controller) return;
         try {
@@ -1415,6 +1506,7 @@ class AssetVideoPort extends PresentationVideoPort {
   @override
   Future<void> detach(PresentationSlot slot) async {
     if (activeSlot == null || !activeSlot!.same(slot)) return;
+    final attemptId = _activeAttemptId ?? lastAttachPhases['attemptId'];
     final token = ++_generation;
     final controller = _controller;
     final path = _activePath;
@@ -1433,7 +1525,7 @@ class AssetVideoPort extends PresentationVideoPort {
             : DateTime.now().toUtc().difference(settle).inMilliseconds;
         _emitPlayback('left_dark', positionMs: ms, offerId: slot.slideId, mediaUrl: path);
         _endAttempt(
-          lastAttachPhases['attemptId'],
+          attemptId,
           outcome: 'left_dark',
           mediaId: _mediaIdOf(path),
         );
@@ -1458,6 +1550,11 @@ class AssetVideoPort extends PresentationVideoPort {
           'app=$_appLifecycleLabel kind=${_sourceKindLabel()}',
         );
       } else {
+        _endAttempt(
+          attemptId,
+          outcome: 'position_progress',
+          mediaId: _mediaIdOf(path),
+        );
         // Pin watched clip bytes so cross-lane return opens a complete file.
         prefetchDisk(path);
         // ignore: discarded_futures
@@ -1476,6 +1573,7 @@ class AssetVideoPort extends PresentationVideoPort {
 
   @override
   Future<void> pause() async {
+    final attemptId = _activeAttemptId ?? lastAttachPhases['attemptId'];
     final token = ++_generation;
     final controller = _controller;
     final path = _activePath;
@@ -1486,11 +1584,17 @@ class AssetVideoPort extends PresentationVideoPort {
     if (path != null && path.isNotEmpty) {
       _emitPlayback('stopped', positionMs: pos, mediaUrl: path);
     }
+    _endAttempt(
+      attemptId,
+      outcome: _hasVisibleProgress ? 'position_progress' : 'cancelled',
+      mediaId: _mediaIdOf(path ?? ''),
+    );
     if (token != _generation || _released) return;
   }
 
   @override
   Future<void> release() async {
+    final attemptId = _activeAttemptId ?? lastAttachPhases['attemptId'];
     _released = true;
     final token = ++_generation;
     final controller = _controller;
@@ -1501,6 +1605,11 @@ class AssetVideoPort extends PresentationVideoPort {
     if (path != null && path.isNotEmpty) {
       _emitPlayback('stopped', positionMs: pos, mediaUrl: path);
     }
+    _endAttempt(
+      attemptId,
+      outcome: _hasVisibleProgress ? 'position_progress' : 'cancelled',
+      mediaId: _mediaIdOf(path ?? ''),
+    );
     _controller = null;
     _activePath = null;
     _warm = null;

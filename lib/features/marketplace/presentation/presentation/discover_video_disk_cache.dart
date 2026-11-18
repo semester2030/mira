@@ -139,26 +139,32 @@ class DiscoverVideoDiskCache {
     _priorityMediaId = mediaIdFromUrl(url);
   }
 
+  /// Preferred append window for one proxy kick (batch size, not a file-offset cap).
+  static const int kickChunkBytes = 1024 * 1024;
+
   /// Grow bytes the proxy reader needs — never start a full-object GET here.
   ///
-  /// Device 1715: `_handleProxyRequest → _kickFill → ensureLocal` launched a
-  /// multi‑second full download before position progress, contradicting
-  /// "full fill deferred until after first frame". Prefix growth is enough for
-  /// the Range reader; [prefetch] without [lowPriority] still finishes the
-  /// object after visible progress.
-  void _kickFill(String origin, String mediaId, {int? needThrough}) {
-    final need = needThrough == null
-        ? 1024 * 1024
+  /// [needThrough] is the last byte index the reader must reach (absolute from
+  /// file start for a contiguous `.part`). Do **not** clamp that offset to 2MiB:
+  /// a Range starting at 3MiB must grow through 3MiB. Callers batch via
+  /// `have + kickChunkBytes` / `start + 256KiB` so an open-ended Range does not
+  /// become one full-object request.
+  void _kickFill(
+    String origin,
+    String mediaId, {
+    int? needThrough,
+    int? haveBytes,
+  }) {
+    final needBytes = needThrough == null
+        ? kickChunkBytes
         : math.max(needThrough + 1, 256 * 1024);
-    // Cap a single kick so an open-ended Range end=total-1 cannot force a
-    // full multi‑10 MB GET from the proxy path alone.
-    final capped = math.min(need, 2 * 1024 * 1024);
     miraDiscoverLog(
       'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=proxy_kick_prefix '
-      'need=$capped prio=$_priorityMediaId',
+      'need=$needBytes have=${haveBytes ?? -1} chunk=$kickChunkBytes '
+      'prio=$_priorityMediaId',
     );
     // ignore: discarded_futures
-    ensurePlayablePrefix(origin, needBytes: capped).catchError((Object _) => 0);
+    ensurePlayablePrefix(origin, needBytes: needBytes).catchError((Object _) => 0);
   }
 
   /// Fire-and-forget prefetch. Safe to call repeatedly — joins the same download.
@@ -784,18 +790,41 @@ class DiscoverVideoDiskCache {
         return;
       }
 
-      // If we don't even have the first requested byte yet, kick a prefix fill
-      // and wait only until that byte lands — never for the full object.
+      // Abort wait/stream loops when the player cancels the Range request.
+      var clientGone = false;
+      // ignore: unawaited_futures
+      req.response.done.then((_) {
+        clientGone = true;
+      }).catchError((Object _) {
+        clientGone = true;
+      });
+
+      // If we don't even have the first requested byte yet, kick a fill that
+      // covers that absolute offset (may be past 2MiB) and wait only until
+      // that byte lands — never for the full object.
       if (have <= start) {
-        _kickFill(origin, mediaId, needThrough: start + 256 * 1024);
+        _kickFill(
+          origin,
+          mediaId,
+          needThrough: start + 256 * 1024,
+          haveBytes: have,
+        );
         final deadline = DateTime.now().toUtc().add(const Duration(seconds: 20));
-        while (have <= start && DateTime.now().toUtc().isBefore(deadline)) {
+        while (have <= start &&
+            !clientGone &&
+            DateTime.now().toUtc().isBefore(deadline)) {
           await Future<void>.delayed(const Duration(milliseconds: 20));
           file = await _openBodyFile(mediaId);
           have = await file.length();
           total = _knownLength[mediaId] ?? total;
           if (total != null && total > 0) end = math.min(end, total - 1);
         }
+      }
+      if (clientGone) {
+        try {
+          await req.response.close();
+        } catch (_) {}
+        return;
       }
       if (have <= start) {
         req.response.statusCode = HttpStatus.serviceUnavailable;
@@ -818,10 +847,10 @@ class DiscoverVideoDiskCache {
       // Buffering off so the first local chunk reaches AVPlayer immediately.
       req.response.bufferOutput = false;
 
-      // Shared prefix fill for the next readable window — not a full-object GET.
+      // Next readable window only — one kickChunk past have, not full serveEnd.
       if (total == null || have < serveEnd + 1) {
-        final windowEnd = math.min(serveEnd, have + 1024 * 1024);
-        _kickFill(origin, mediaId, needThrough: windowEnd);
+        final windowEnd = math.min(serveEnd, have + kickChunkBytes);
+        _kickFill(origin, mediaId, needThrough: windowEnd, haveBytes: have);
       }
 
       final started = DateTime.now().toUtc();
@@ -848,14 +877,19 @@ class DiscoverVideoDiskCache {
       try {
         await raf.setPosition(start);
         final buf = List<int>.filled(64 * 1024, 0);
-        while (pos <= serveEnd) {
+        while (pos <= serveEnd && !clientGone) {
           file = await _openBodyFile(mediaId);
           have = await file.length();
           if (have <= pos) {
-            // Grow only enough for the reader window — never escalate to a
-            // full-object ensureLocal from the proxy stream loop.
+            // Grow one chunk past the blocked read position — never a full GET.
             if (_inflight[mediaId] == null && (total == null || have < serveEnd + 1)) {
-              _kickFill(origin, mediaId, needThrough: pos + 1024 * 1024);
+              final windowEnd = math.min(serveEnd, pos + kickChunkBytes);
+              _kickFill(
+                origin,
+                mediaId,
+                needThrough: windowEnd,
+                haveBytes: have,
+              );
             }
             await Future<void>.delayed(const Duration(milliseconds: 20));
             continue;
