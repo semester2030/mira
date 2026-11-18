@@ -297,13 +297,11 @@ class DiscoverVideoDiskCache {
   /// Test/diag: true when a full [ensureLocal] job is registered for [mediaId].
   bool debugHasInflight(String mediaId) => _inflight.containsKey(mediaId);
 
-  /// Test-only: awaited under the write lock inside [_ensurePrefix] immediately
-  /// before the `_inflight` join check — lets tests interleave [ensureLocal].
+  /// Test-only (@visibleForTesting): awaited under the write lock inside
+  /// [_ensurePrefix] before Range fill — lets tests interleave [ensureLocal].
+  /// Never set in production / release builds.
+  @visibleForTesting
   Future<void> Function()? debugYieldBeforeInflightJoin;
-
-  /// Test-only: when true, restores the pre-1711 join-on-inflight-under-lock
-  /// path so the deadlock can be reproduced deterministically.
-  bool debugJoinInflightUnderLock = false;
 
   /// True when [total] was recorded from an authoritative HTTP source or a
   /// validated on-disk complete marker for [mediaId].
@@ -950,43 +948,12 @@ class DiscoverVideoDiskCache {
       );
     }
 
+    // Never join [_inflight] here: that job waits behind this write lock and
+    // cannot grow `.part` (1711 deadlock ~12s). Grow via Range; full download
+    // resumes afterward. Test harness may yield via [debugYieldBeforeInflightJoin].
     final yieldHook = debugYieldBeforeInflightJoin;
     if (yieldHook != null) {
       await yieldHook();
-    }
-
-    // BUG REPRO PATH (toggled by debugJoinInflightUnderLock): waiting on an
-    // [_inflight] ensureLocal while holding the write lock deadlocks — that
-    // job is queued behind this lock and cannot grow `.part`.
-    if (debugJoinInflightUnderLock) {
-      final pending = _inflight[mediaId];
-      if (pending != null) {
-        final deadline = DateTime.now().toUtc().add(const Duration(seconds: 12));
-        while (DateTime.now().toUtc().isBefore(deadline)) {
-          have = await part.exists() ? await part.length() : 0;
-          if (have >= needBytes) {
-            return _PrefixFill(
-              file: part,
-              bytesOnDiskBefore: before,
-              bytesReused: before,
-              bytesDownloaded: have - before,
-              contentLength: knownTotal ?? _knownLength[mediaId],
-            );
-          }
-          final done = await _findCompleteOnDiskUnlocked(mediaId);
-          if (done != null) {
-            final len = await done.length();
-            return _PrefixFill(
-              file: done,
-              bytesOnDiskBefore: before,
-              bytesReused: before,
-              bytesDownloaded: math.max(0, len - before),
-              contentLength: len,
-            );
-          }
-          await Future<void>.delayed(const Duration(milliseconds: 40));
-        }
-      }
     }
 
     var total = knownTotal ?? _knownLength[mediaId];

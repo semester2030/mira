@@ -1532,101 +1532,47 @@ void main() {
     expect(maxConcurrent, 1);
   });
 
-  test('prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)', () async {
-    final root = Directory.systemTemp.createTempSync('mira_vid_deadlock_repro_');
-    addTearDown(() {
-      try {
-        root.deleteSync(recursive: true);
-      } catch (_) {}
-    });
-    HttpServer? server;
-    addTearDown(() async {
-      await server?.close(force: true);
-    });
-    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final bytes = List<int>.generate(128 * 1024, (i) => i % 256);
+  test('documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)', () async {
+    // Production no longer contains debugJoinInflightUnderLock. This simulates
+    // the pre-1711 join-under-lock pattern with Completers only.
+    final writeLock = Completer<void>();
+    final inflightRegistered = Completer<void>();
+    final partGrew = Completer<void>(); // never completed by waiter behind lock
     final events = <String>[];
-    server.listen((req) async {
-      if (req.method == 'HEAD') {
-        req.response.headers.contentType = ContentType('video', 'mp4');
-        req.response.contentLength = bytes.length;
-        await req.response.close();
-        return;
-      }
-      events.add('GET ${req.headers.value(HttpHeaders.rangeHeader)}');
-      req.response.headers.contentType = ContentType('video', 'mp4');
-      final range = req.headers.value(HttpHeaders.rangeHeader);
-      if (range != null && range.startsWith('bytes=')) {
-        final spec = range.substring(6);
-        final parts = spec.split('-');
-        final start = int.tryParse(parts[0]) ?? 0;
-        final end = (parts.length > 1 && parts[1].isNotEmpty)
-            ? (int.tryParse(parts[1]) ?? (bytes.length - 1))
-            : (bytes.length - 1);
-        final lo = start.clamp(0, bytes.length - 1);
-        final hi = end.clamp(lo, bytes.length - 1);
-        req.response.statusCode = HttpStatus.partialContent;
-        req.response.headers.set(
-          HttpHeaders.contentRangeHeader,
-          'bytes $lo-$hi/${bytes.length}',
-        );
-        req.response.add(bytes.sublist(lo, hi + 1));
-      } else {
-        req.response.contentLength = bytes.length;
-        req.response.add(bytes);
-      }
-      await req.response.close();
-    });
-
-    const id = 'fdead10c-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-    final url =
-        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
-    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
-    addTearDown(() async {
-      await cache.disposeProxy();
-    });
-
-    // Restore the buggy join path for this repro only.
-    cache.debugJoinInflightUnderLock = true;
-    final prefixInLock = Completer<void>();
-    final allowPrefixPastJoin = Completer<void>();
-    cache.debugYieldBeforeInflightJoin = () async {
-      events.add('prefix_under_lock');
-      if (!prefixInLock.isCompleted) prefixInLock.complete();
-      await allowPrefixPastJoin.future;
-      events.add('prefix_past_yield inflight=${cache.debugHasInflight(id)}');
-    };
-
     final sw = Stopwatch()..start();
-    final prefixJob = cache.ensurePlayablePrefix(url, needBytes: 8 * 1024);
-    await prefixInLock.future.timeout(const Duration(seconds: 3));
-    expect(cache.debugHasWriteLock(id), isTrue);
 
-    final localJob = cache.ensureLocal(url);
-    // ensureLocal registers _inflight then waits on the write lock.
-    final registered = DateTime.now().add(const Duration(seconds: 2));
-    while (DateTime.now().isBefore(registered)) {
-      if (cache.debugHasInflight(id)) break;
-      await Future<void>.delayed(const Duration(milliseconds: 5));
+    Future<void> prefixHoldingLock() async {
+      events.add('prefix_holds_lock');
+      // Yield so ensureLocal can register inflight while we hold the lock.
+      await Future<void>.delayed(Duration.zero);
+      await inflightRegistered.future;
+      events.add('prefix_sees_inflight_joins');
+      final deadline = DateTime.now().add(const Duration(seconds: 12));
+      while (DateTime.now().isBefore(deadline)) {
+        if (partGrew.isCompleted) {
+          events.add('prefix_saw_growth');
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
+      events.add('prefix_releases_lock');
+      writeLock.complete();
     }
-    expect(cache.debugHasInflight(id), isTrue, reason: 'ensureLocal must register before join');
-    events.add('ensureLocal_inflight_waiting_lock');
 
-    allowPrefixPastJoin.complete();
-    final prefixBytes = await prefixJob.timeout(
-      const Duration(seconds: 15),
-      onTimeout: () => -1,
-    );
+    Future<void> ensureLocalBehindLock() async {
+      events.add('ensureLocal_inflight_waiting');
+      if (!inflightRegistered.isCompleted) inflightRegistered.complete();
+      await writeLock.future;
+      events.add('ensureLocal_got_lock');
+      // Would grow .part here — too late for prefix's join wait.
+      if (!partGrew.isCompleted) partGrew.complete();
+    }
+
+    await Future.wait([prefixHoldingLock(), ensureLocalBehindLock()]);
     sw.stop();
-    events.add('prefix_done bytes=$prefixBytes ms=${sw.elapsedMilliseconds}');
-
-    // Bug: prefix waits on inflight that cannot run → ~12s stall.
-    expect(
-      sw.elapsedMilliseconds,
-      greaterThan(10000),
-      reason: 'bug repro must stall near the 12s join deadline; events=$events',
-    );
-    await localJob.timeout(const Duration(seconds: 5));
+    expect(sw.elapsedMilliseconds, greaterThan(10000), reason: 'events=$events');
+    expect(events, contains('prefix_sees_inflight_joins'));
+    expect(events, contains('ensureLocal_got_lock'));
   });
 
   test('prefix holding lock + ensureLocal inflight: Range fill without join (fixed)', () async {
@@ -1688,8 +1634,6 @@ void main() {
     addTearDown(() async {
       await cache.disposeProxy();
     });
-    cache.debugJoinInflightUnderLock = false; // fixed path
-
     final prefixInLock = Completer<void>();
     final allowPrefixContinue = Completer<void>();
     cache.debugYieldBeforeInflightJoin = () async {

@@ -112,7 +112,7 @@ class AssetVideoPort extends PresentationVideoPort {
   /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
   static const String buildStamp = String.fromEnvironment(
     'MIRA_BUILD',
-    defaultValue: '2026111711',
+    defaultValue: '2026111712',
   );
 
   /// When non-null (unit tests), paths are passed straight to this factory and
