@@ -1,13 +1,14 @@
 resolvedPath: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706
 realpath: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706
-gitCommonDir: /Users/fayez/Desktop/mira/.git/worktrees/mira-wt-merge-1706
+gitWorktree: /Users/fayez/Desktop/mira/.git/worktrees/mira-wt-merge-1706
 branch: mira/discover-speed-multi-media
-gitHeadAtStart: 47ef7963f383d11a873f3e5ad86c9a213494bed5
+codeCommit: 764017c (persist/HEAD/complete fix)
+docsHead: 6d79fc2
 appBundleId: app.mira.beauty
-deviceInstalledAtStart: 1.0.0+2026111709
-device: fayez iPhone 00008110-00191986268BA01E iOS 26.6
-apiBaseDefault: https://mira-api-n4p3.onrender.com/api/v1
-apiHealth: HTTP 200 status=ok service=mira-api (curl live check)
-apiOverrideInLastBuild: none — MiraApiConfig.baseUrl default
+buildNumber: 2026111710
+installMethod: devicectl device install app (in-place; no flutter uninstall)
+device: fayez iPhone 00008110-00191986268BA01E
+apiBase: https://mira-api-n4p3.onrender.com/api/v1
+apiHealth: HTTP 200 live curl
 noResetNoClean: true
 performanceVerdict: OPEN
