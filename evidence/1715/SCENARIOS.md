@@ -1,16 +1,25 @@
-# سيناريوهات جهاز — 1715
+# سيناريوهات التحقق — 1715
 
-بعد فتح اكتشفي، أثبت من السجل: `MIRA_BUILD_IDENTITY build=2026111715`.
+## مثبت بالاختبارات
 
-```bash
-bash evidence/1713/raw/pull_device_discover_log.sh \
-  00008110-00191986268BA01E \
-  evidence/1715/raw/mira_discover_device_after_fix.log
-```
+1. **بادئة محلية قبل tailGate** — ساعة من قبل `resolvePlaySource` → أول بايت محلي و`tailGate` مغلق.
+2. **أصل متوقف** — `claimPriority` لا ينتظر GET كامل؛ يرجع proxy مع ≥8KiB محلية.
+3. **بعد 20 id مفتوح Range** — نفس ساعة البداية الكاملة؛ بدون قبول مهلة 20s.
+4. **Seek لا يُحتسب إطارًا** — رفع `_progressFloor` بعد seek؛ اختبارات المشغّل تمرّ.
+5. **صوت** — مسارات arm بما فيها الاستبدال؛ sync A→image→A ناجح.
 
-| # | السيناريو | مقارنة |
+## مثبت على الجهاز جزئيًا
+
+1. تثبيت بدون مسح بيانات → Bundle **2026111715**.
+2. تشغيل → `MIRA_BUILD_IDENTITY build=2026111715`.
+3. تمرير دافئ قصير (14 FF) بلا `prefix_seed` حاجب.
+
+## مطلوب لإغلاق الأداء على الجهاز
+
+| رمز | الإجراء | دليل النجاح |
 |---|---|---|
-| A | كاش جزئي / مقطع جديد بطيء (شبه T41) | initDone و firstFrameMs مقابل 4009؛ وجود prefix_kick blocking=0؛ cacheBytesAtOpen |
-| B | رجوع لمكتمل بعد ≥20 (شبه T35) | firstFrameMs مقابل 607؛ إن وُجد seek: seek_nudge_done ثم تقدم بعد posAfterSeek |
-| C | تسجيل شاشة لـA/B | لا تُساوَى firstFrameMs بالظهور دون ذكر المصدر |
-| D | صوت | unmute_req/audio_armed للمشغّل الحالي |
+| T41′ | فتح `b7989c2f-8f14-4d70-a106-5e0ee2062fcd` (أو جزئي مشابه) مع شاشة+سجل | `cacheBytesAtOpen` + `attemptId` + firstFrameMs؛ بلا انتظار resolve لـ1MiB |
+| T35′ | رجوع لمقطع مكتمل؛ تسجيل شاشة | `seekDone` / `posAfterSeek` منفصلان عن تقدم مرئي بعد الـfloor |
+| Fail-count | أي left_dark / -1001 أثناء الجلسة | تُحسب في الحكم؛ لا تُستبعد |
+
+لا محاكي · لا مسح بيانات · لا نشر عام.

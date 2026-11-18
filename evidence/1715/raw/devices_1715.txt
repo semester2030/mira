@@ -1,0 +1,5 @@
+Name             Hostname                         Identifier                             State                Model                         
+--------------   ------------------------------   ------------------------------------   ------------------   ------------------------------
+Engineer FA      Engineer-FA-1.coredevice.local   60DB76BA-259D-5A28-ABF8-1187C6DE9414   unavailable          iPhone 17 Pro Max (iPhone18,2)
+Engineer FA      Engineer-FA.coredevice.local     C0F78F09-1892-535F-8E22-79A799E0FC52   unavailable          iPhone 12 (iPhone13,2)        
+fayez’s iPhone   fayezs-iPhone.coredevice.local   B79649B9-0E99-5AF3-B82D-BC7FA7E47A15   available (paired)   iPhone 14 Plus (iPhone14,8)   
