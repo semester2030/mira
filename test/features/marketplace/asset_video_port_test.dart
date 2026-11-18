@@ -35,9 +35,13 @@ void main() {
   setUp(() {
     ControllableVideoController.instances.clear();
     AssetVideoPort.debugResetAttemptCounters();
+    AssetVideoPort.debugInitializeTimeout = null;
+    AssetVideoPort.debugBeforeControllerOpen = null;
   });
 
   tearDown(() {
+    AssetVideoPort.debugInitializeTimeout = null;
+    AssetVideoPort.debugBeforeControllerOpen = null;
     expect(
       AssetVideoPort.debugAttemptEndCount,
       AssetVideoPort.debugAttemptStartCount,
@@ -643,6 +647,8 @@ void main() {
     expect(shared.setVolumeCalls, greaterThanOrEqualTo(2));
     // Detach without awaiting first — it is blocked on firstGate unmute.
     await port.detach(_slotA);
+    // Finish the first attempt so park completes; keep firstGate open for stale unmute.
+    // The pending setVolume(1) still awaits firstGate.
     final secondGate = Completer<void>();
     shared.volumeGate = secondGate;
     final second = port.attach(_slotA, _clip);
@@ -651,13 +657,19 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
     expect(shared.setVolumeCalls, greaterThanOrEqualTo(4));
-    // Stale unmute completes while second attempt owns the same controller.
-    firstGate.complete();
-    await Future<void>.delayed(const Duration(milliseconds: 30));
     secondGate.complete();
-    await Future.wait([first, second]);
+    await second.timeout(const Duration(seconds: 2));
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(shared.value.volume, 1, reason: 'new attempt must be audible');
+    expect(shared.lastVolume, 1);
+    final volumeCallsAfterArm = shared.setVolumeCalls;
+    firstGate.complete();
+    await first.timeout(const Duration(seconds: 2));
     await Future<void>.delayed(const Duration(milliseconds: 40));
-    expect(shared.value.volume, 1, reason: 'reused controller stays audible');
+    expect(shared.value.volume, 1, reason: 'stale unmute must not mute reused live controller');
+    expect(shared.lastVolume, 1);
+    expect(shared.setVolumeCalls, volumeCallsAfterArm,
+        reason: 'stale path must not issue another setVolume after new arm');
     expect(port.audiblePlayingCount, 1);
     await port.release();
   });
@@ -726,18 +738,126 @@ void main() {
     await port.release();
   });
 
-  test('init timeout ends the attempt', () async {
+  test('init timeout ends the attempt via real TimeoutException branch', () async {
+    AssetVideoPort.debugInitializeTimeout = const Duration(milliseconds: 40);
     final controller = ControllableVideoController(_clip)
       ..initGate = Completer<void>();
     final port = AssetVideoPort(createController: (_) => controller);
     final pending = port.attach(_slotA, _clip);
-    // Force initialize to hang past the port's 6s timeout — use failInit instead
-    // for a fast countable error path covered by release/cancel accounting.
-    await Future<void>.delayed(const Duration(milliseconds: 20));
-    await port.release();
-    controller.initGate!.complete();
     await pending;
+    expect(port.playback, PresentationPlayback.failed);
+    expect(port.firstFrameTimedOut, isTrue);
     expect(AssetVideoPort.debugAttemptStartCount, 1);
     expect(AssetVideoPort.debugAttemptEndCount, 1);
+    controller.initGate!.complete();
+    await port.release();
+  });
+
+  test('stale A resolve after B attach does not replace B controller', () async {
+    final aGate = Completer<void>();
+    final a = ControllableVideoController('$_clip-a')..advanceOnPlay = true;
+    final b = ControllableVideoController('$_clip-b')..advanceOnPlay = true;
+    final port = AssetVideoPort(
+      createController: (path) => path.contains('-a') ? a : b,
+    );
+    AssetVideoPort.debugBeforeControllerOpen = (path) async {
+      if (path.contains('-a')) await aGate.future;
+    };
+    final first = port.attach(_slotA, '$_clip-a');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await port.attach(_slotB, '$_clip-b');
+    expect(port.activeSlot, _slotB);
+    expect(b.lastVolume, 1);
+    aGate.complete();
+    await first.timeout(const Duration(seconds: 2));
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(port.activeSlot, _slotB);
+    expect(b.disposed, isFalse);
+    expect(b.lastVolume, 1);
+    // A never became the live controller after B won — either never created or disposed.
+    expect(
+      a.disposed || a.playCalls == 0,
+      isTrue,
+      reason: 'stale A must not keep playing after B attach',
+    );
+    expect(port.playback, isNot(PresentationPlayback.failed));
+    expect(port.audiblePlayingCount, 1);
+    await port.release();
+  });
+
+  test('stale delayed audio cut does not rewrite B state', () async {
+    final a = ControllableVideoController('$_clip-a')..advanceOnPlay = true;
+    final b = ControllableVideoController('$_clip-b')..advanceOnPlay = true;
+    final port = AssetVideoPort(
+      createController: (path) => path.contains('-a') ? a : b,
+    );
+    await port.attach(_slotA, '$_clip-a');
+    final genA = port.debugGeneration;
+    expect(a.lastVolume, 1);
+    await port.attach(_slotB, '$_clip-b');
+    expect(port.activeSlot, _slotB);
+    expect(b.lastVolume, 1);
+    final bPlayback = port.playback;
+    // Late cut from A's generation must no-op after B owns the port.
+    await port.cutOutgoingAudio(ownerSlot: _slotA, generation: genA);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(port.activeSlot, _slotB);
+    expect(port.playback, bPlayback);
+    expect(b.lastVolume, 1);
+    expect(port.audiblePlayingCount, 1);
+    await port.release();
+  });
+
+  test('A initialize timeout after B started does not fail B', () async {
+    AssetVideoPort.debugInitializeTimeout = const Duration(milliseconds: 50);
+    final a = ControllableVideoController('$_clip-a')..initGate = Completer<void>();
+    final b = ControllableVideoController('$_clip-b')..advanceOnPlay = true;
+    var n = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        n += 1;
+        return n == 1 ? a : b;
+      },
+    );
+    final first = port.attach(_slotA, '$_clip-a');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await port.attach(_slotB, '$_clip-b');
+    await first;
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    expect(port.activeSlot, _slotB);
+    expect(port.playback, PresentationPlayback.ready);
+    expect(port.hasVisibleProgress, isTrue);
+    expect(b.lastVolume, 1);
+    a.initGate!.complete();
+    await port.release();
+  });
+
+  test('stale warm wait does not claim warm prepared for newer attach', () async {
+    final warmA = ControllableVideoController('$_clip-a')
+      ..initGate = Completer<void>()
+      ..advanceOnPlay = true;
+    final coldB = ControllableVideoController('$_clip-b')..advanceOnPlay = true;
+    var n = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        n += 1;
+        return n == 1 ? warmA : coldB;
+      },
+    );
+    unawaited(port.warm('$_clip-a'));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    final first = port.attach(_slotA, '$_clip-a');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    // B starts while A is still waiting on warm init.
+    final second = port.attach(_slotB, '$_clip-b');
+    warmA.initGate!.complete();
+    await first;
+    await second;
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(port.activeSlot, _slotB);
+    expect(coldB.disposed, isFalse);
+    expect(coldB.lastVolume, 1);
+    expect(port.audiblePlayingCount, 1);
+    await port.release();
   });
 }

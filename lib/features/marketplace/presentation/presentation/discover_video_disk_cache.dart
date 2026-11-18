@@ -52,6 +52,16 @@ class DiscoverVideoDiskCache {
   /// Last Range-serve stats (for logic tests / diagnostics).
   DiscoverByteServeStats? lastServeStats;
 
+  /// Test/diag: proxy handlers currently blocked waiting for bytes (client may abort).
+  @visibleForTesting
+  int debugActiveProxyWaits = 0;
+
+  /// Test hook: force wait/stream loops to treat the peer as gone.
+  /// dart:io does not surface peer-close until a response write is attempted,
+  /// so headers-only byte-waits cannot observe [HttpClient.close] alone.
+  @visibleForTesting
+  bool debugForceProxyClientGone = false;
+
   /// Last [ensurePlayablePrefix] outcome (bytes on disk vs network read).
   DiscoverPrefixFillStats? lastPrefixStats;
 
@@ -792,6 +802,7 @@ class DiscoverVideoDiskCache {
 
       // Abort wait/stream loops when the player cancels the Range request.
       var clientGone = false;
+      bool isClientGone() => clientGone || debugForceProxyClientGone;
       // ignore: unawaited_futures
       req.response.done.then((_) {
         clientGone = true;
@@ -809,18 +820,23 @@ class DiscoverVideoDiskCache {
           needThrough: start + 256 * 1024,
           haveBytes: have,
         );
-        final deadline = DateTime.now().toUtc().add(const Duration(seconds: 20));
-        while (have <= start &&
-            !clientGone &&
-            DateTime.now().toUtc().isBefore(deadline)) {
-          await Future<void>.delayed(const Duration(milliseconds: 20));
-          file = await _openBodyFile(mediaId);
-          have = await file.length();
-          total = _knownLength[mediaId] ?? total;
-          if (total != null && total > 0) end = math.min(end, total - 1);
+        debugActiveProxyWaits += 1;
+        try {
+          final deadline = DateTime.now().toUtc().add(const Duration(seconds: 20));
+          while (have <= start &&
+              !isClientGone() &&
+              DateTime.now().toUtc().isBefore(deadline)) {
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+            file = await _openBodyFile(mediaId);
+            have = await file.length();
+            total = _knownLength[mediaId] ?? total;
+            if (total != null && total > 0) end = math.min(end, total - 1);
+          }
+        } finally {
+          debugActiveProxyWaits -= 1;
         }
       }
-      if (clientGone) {
+      if (isClientGone()) {
         try {
           await req.response.close();
         } catch (_) {}
@@ -837,11 +853,16 @@ class DiscoverVideoDiskCache {
       final bodyLen = serveEnd - start + 1;
 
       req.response.statusCode =
-          (start == 0 && total != null && serveEnd == total - 1) ? HttpStatus.ok : HttpStatus.partialContent;
+          (start == 0 && total != null && serveEnd == total - 1)
+              ? HttpStatus.ok
+              : HttpStatus.partialContent;
       req.response.headers.contentType = ContentType('video', 'mp4');
       req.response.headers.set(HttpHeaders.acceptRangesHeader, 'bytes');
       if (total != null && total > 0) {
-        req.response.headers.set(HttpHeaders.contentRangeHeader, 'bytes $start-$serveEnd/$total');
+        req.response.headers.set(
+          HttpHeaders.contentRangeHeader,
+          'bytes $start-$serveEnd/$total',
+        );
       }
       req.response.headers.contentLength = bodyLen;
       // Buffering off so the first local chunk reaches AVPlayer immediately.
@@ -877,7 +898,7 @@ class DiscoverVideoDiskCache {
       try {
         await raf.setPosition(start);
         final buf = List<int>.filled(64 * 1024, 0);
-        while (pos <= serveEnd && !clientGone) {
+        while (pos <= serveEnd && !isClientGone()) {
           file = await _openBodyFile(mediaId);
           have = await file.length();
           if (have <= pos) {
@@ -903,11 +924,20 @@ class DiscoverVideoDiskCache {
           }
           final canReadTo = math.min(serveEnd, have - 1);
           var left = canReadTo - pos + 1;
-          while (left > 0) {
+          while (left > 0 && !isClientGone()) {
             final n = await raf.readInto(buf, 0, math.min(buf.length, left));
             if (n <= 0) break;
-            req.response.add(buf.sublist(0, n));
-            await req.response.flush();
+            try {
+              req.response.add(buf.sublist(0, n));
+              // Hung flush after peer abort → leave the stream loop.
+              await req.response.flush().timeout(const Duration(milliseconds: 400));
+            } on TimeoutException {
+              clientGone = true;
+              break;
+            } catch (_) {
+              clientGone = true;
+              break;
+            }
             firstByteMs ??= DateTime.now().toUtc().difference(started).inMilliseconds;
             final diskEnd = math.min(pos + n, alreadyHad);
             if (diskEnd > pos) {

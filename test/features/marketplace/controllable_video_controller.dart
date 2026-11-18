@@ -167,9 +167,11 @@ class ControllableVideoController extends ValueNotifier<VideoPlayerValue>
 
   @override
   Future<void> dispose() async {
+    if (disposed) return;
     if (disposeGate != null) {
       await disposeGate!.future;
     }
+    if (disposed) return;
     disposed = true;
     disposeCalls += 1;
     instances.remove(this);

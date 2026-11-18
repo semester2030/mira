@@ -2157,12 +2157,28 @@ void main() {
     final req = await client.getUrl(source.uri!);
     req.headers.set(HttpHeaders.rangeHeader, 'bytes=${3 * 1024 * 1024}-');
     final respFuture = req.close();
-    await Future<void>.delayed(const Duration(milliseconds: 80));
+    final waitDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (cache.debugActiveProxyWaits == 0 &&
+        DateTime.now().isBefore(waitDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(cache.debugActiveProxyWaits, greaterThan(0),
+        reason: 'handler must enter the byte-wait loop');
+    // dart:io does not surface peer-close until a response write is attempted
+    // (headers-only waits stay silent). Trip the wait via the test hook, and
+    // also force-close the client the way AVPlayer would on swipe-away.
+    cache.debugForceProxyClientGone = true;
     client.close(force: true);
     try {
       await respFuture.timeout(const Duration(milliseconds: 500));
     } catch (_) {}
-    // Origin still held — proving we did not require the full wait to finish.
+    final clearDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (cache.debugActiveProxyWaits > 0 &&
+        DateTime.now().isBefore(clearDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(cache.debugActiveProxyWaits, 0,
+        reason: 'wait loop must exit while origin is still blocked');
     expect(release.isCompleted, isFalse);
     release.complete();
   });

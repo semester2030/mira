@@ -113,8 +113,16 @@ class AssetVideoPort extends PresentationVideoPort {
   /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
   static const String buildStamp = String.fromEnvironment(
     'MIRA_BUILD',
-    defaultValue: '2026111717',
+    defaultValue: '2026111718',
   );
+
+  /// Test hook: shorten initialize timeout to hit the real TimeoutException branch.
+  @visibleForTesting
+  static Duration? debugInitializeTimeout;
+
+  /// Test hook: await before creating/opening a cold controller (gates resolve).
+  @visibleForTesting
+  static Future<void> Function(String assetPath)? debugBeforeControllerOpen;
 
   /// When non-null (unit tests), paths are passed straight to this factory and
   /// disk cache is skipped.
@@ -316,11 +324,49 @@ class AssetVideoPort extends PresentationVideoPort {
   bool get isPlaying => _controller?.value.isPlaying ?? false;
 
   Future<void> _dropIfStale(VideoPlayerController controller, int token) async {
-    if (token == _generation && !_released && _controller == controller) return;
-    if (_controller != controller) return;
-    _controller = null;
-    await controller.pause();
-    await controller.dispose();
+    if (token == _generation && !_released && identical(_controller, controller)) {
+      return;
+    }
+    // Still retained by a newer attempt or park/warm/prepared pool — keep it.
+    if (identical(_controller, controller)) {
+      _controller = null;
+      _activePath = null;
+    } else if (identical(_warm, controller) ||
+        identical(_parked, controller) ||
+        _preparedByMediaId.containsValue(controller)) {
+      return;
+    }
+    try {
+      await controller.pause();
+    } catch (_) {}
+    try {
+      await controller.dispose();
+    } catch (_) {}
+  }
+
+  bool _isLiveAttempt(int token, int attemptId) =>
+      !_released &&
+      token == _generation &&
+      lastAttachPhases['attemptId'] == attemptId;
+
+  Duration get _initializeTimeout =>
+      debugInitializeTimeout ?? const Duration(seconds: 6);
+
+  /// Dispose a controller this attempt opened only if nothing live still holds it.
+  Future<void> _disposeOwnedIfUnused(VideoPlayerController? controller) async {
+    if (controller == null) return;
+    if (identical(_controller, controller) ||
+        identical(_warm, controller) ||
+        identical(_parked, controller) ||
+        _preparedByMediaId.containsValue(controller)) {
+      return;
+    }
+    try {
+      await controller.pause();
+    } catch (_) {}
+    try {
+      await controller.dispose();
+    } catch (_) {}
   }
 
   void _notify() => notifyPlayback();
@@ -733,7 +779,8 @@ class AssetVideoPort extends PresentationVideoPort {
     _firstFrameEmitted = false;
     _firstFrameTimedOut = false;
     _hasVisibleProgress = false;
-    lastAttachPhases = <String, int?>{
+    // Per-attempt phase map — stale completions write here only, never into B's map.
+    final phases = <String, int?>{
       'warmClaimed': null,
       'initStart': null,
       'initDone': null,
@@ -743,11 +790,12 @@ class AssetVideoPort extends PresentationVideoPort {
       'audioArmed': null,
       'source': null,
     };
+    lastAttachPhases = phases;
     final token = ++_generation;
     final previous = _controller;
     final previousPath = _activePath;
     final attemptId = DateTime.now().toUtc().microsecondsSinceEpoch;
-    lastAttachPhases['attemptId'] = attemptId;
+    phases['attemptId'] = attemptId;
     _beginAttempt(
       attemptId,
       mediaId: _mediaIdOf(assetPath),
@@ -755,10 +803,14 @@ class AssetVideoPort extends PresentationVideoPort {
       gen: token,
     );
     // Critical (Nomas parity): cut previous audio BEFORE awaiting warm init.
-    // Old order waited on warm then silenced — dual audio + dark plate with sound.
-    await cutOutgoingAudio(nextMediaUrl: assetPath);
-    lastAttachPhases['audioCut'] = _msSince(settleStarted);
-    lastAttachPhases['prevPlayerId'] = _playerId(previous);
+    // Pass generation so a delayed cut cannot keep mutating after a newer attach.
+    await cutOutgoingAudio(nextMediaUrl: assetPath, generation: token);
+    if (!_isLiveAttempt(token, attemptId)) {
+      _endAttempt(attemptId, outcome: 'superseded', mediaId: _mediaIdOf(assetPath));
+      return;
+    }
+    phases['audioCut'] = _msSince(settleStarted);
+    phases['prevPlayerId'] = _playerId(previous);
     // Prioritize BEFORE any kick so this media is not treated as a neighbor.
     // Prefix-only during open — full ensureLocal under the write lock raced
     // AVPlayer.initialize on device T41 (~3s init / firstFrameMs=4009).
@@ -783,7 +835,7 @@ class AssetVideoPort extends PresentationVideoPort {
     var claimedReady = false;
     var claimSource = 'cold';
     final wantId = _mediaIdOf(assetPath);
-    lastAttachPhases['mediaIdHash'] = wantId?.hashCode;
+    phases['mediaIdHash'] = wantId?.hashCode;
     if (_sameMedia(_warmPath, assetPath)) {
       // Prefer an already-open warm surface immediately — do NOT await mute-prime.
       // Awaiting warmFuture used to burn 2.5s then dispose on "never advanced",
@@ -803,68 +855,81 @@ class AssetVideoPort extends PresentationVideoPort {
           }
         }
       }
-      claimed = _warm;
-      _warm = null;
-      _warmPath = null;
-      // Leave _warmFuture running so mute-prime can finish/silence itself; clear
-      // the initialized gate so a later warm() for another URL starts clean.
-      _warmInitialized = null;
-      _warmFuture = null;
-      if (claimed == null ||
-          !claimed.value.isInitialized ||
-          claimed.value.hasError) {
-        lastAttachPhases['warmRejected'] = _msSince(settleStarted);
-        if (claimed != null) {
-          try {
-            await claimed.dispose();
-          } catch (_) {}
-        }
+      // Re-check before claiming _warm — a newer attach may have taken it.
+      if (!_isLiveAttempt(token, attemptId)) {
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
+        return;
+      }
+      if (!_sameMedia(_warmPath, assetPath)) {
+        // Warm slot moved to another URL while we waited — fall through to cold.
         claimed = null;
         claimedReady = false;
         claimSource = 'cold';
       } else {
-        // Accept warm even at position 0 — attach's first-frame wait advances it.
-        claimedReady = true;
-        claimSource = 'warm';
-        lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
-        lastAttachPhases['warmPosMs'] = claimed.value.position.inMilliseconds;
+        claimed = _warm;
+        _warm = null;
+        _warmPath = null;
+        // Leave _warmFuture running so mute-prime can finish/silence itself; clear
+        // the initialized gate so a later warm() for another URL starts clean.
+        _warmInitialized = null;
+        _warmFuture = null;
+        if (claimed == null ||
+            !claimed.value.isInitialized ||
+            claimed.value.hasError) {
+          phases['warmRejected'] = _msSince(settleStarted);
+          if (claimed != null) {
+            await _disposeOwnedIfUnused(claimed);
+          }
+          claimed = null;
+          claimedReady = false;
+          claimSource = 'cold';
+        } else {
+          // Accept warm even at position 0 — attach's first-frame wait advances it.
+          claimedReady = true;
+          claimSource = 'warm';
+          phases['warmClaimed'] = _msSince(settleStarted);
+          phases['warmPosMs'] = claimed.value.position.inMilliseconds;
+        }
       }
     } else if (_sameMedia(_parkedPath, assetPath) && _parked != null) {
+      if (!_isLiveAttempt(token, attemptId)) {
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
+        return;
+      }
       claimed = _parked;
       _parked = null;
       _parkedPath = null;
       claimedReady = claimed?.value.isInitialized ?? false;
       claimSource = 'parked';
-      lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+      phases['warmClaimed'] = _msSince(settleStarted);
     } else {
       final prepared = _takePrepared(assetPath);
       if (prepared != null) {
+        if (!_isLiveAttempt(token, attemptId)) {
+          await _disposeOwnedIfUnused(prepared);
+          _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
+          return;
+        }
         claimed = prepared;
         claimedReady = prepared.value.isInitialized && !prepared.value.hasError;
         claimSource = claimedReady ? 'prepared' : 'cold';
         if (!claimedReady) {
-          try {
-            await prepared.dispose();
-          } catch (_) {}
+          await _disposeOwnedIfUnused(prepared);
           claimed = null;
         } else {
-          lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+          phases['warmClaimed'] = _msSince(settleStarted);
         }
       }
     }
-    lastAttachPhases['source'] = switch (claimSource) {
+    phases['source'] = switch (claimSource) {
       'warm' => 1,
       'parked' => 2,
       'prepared' => 3,
       _ => 0,
     };
-    if (token != _generation || _released) {
-      if (claimed != null && claimed != _controller && claimed != _warm && claimed != _parked) {
-        await claimed.dispose();
-      }
-      if (previous != null && previous != _controller && previous != _warm && previous != _parked && previous != claimed) {
-        await previous.dispose();
-      }
+    if (!_isLiveAttempt(token, attemptId)) {
+      await _disposeOwnedIfUnused(claimed);
+      _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
       return;
     }
     if (previous != null && previous != claimed) {
@@ -872,7 +937,11 @@ class AssetVideoPort extends PresentationVideoPort {
       // ignore: discarded_futures
       _parkLeaving(previous, previousPath);
     }
-    if (token != _generation || _released) return;
+    if (!_isLiveAttempt(token, attemptId)) {
+      await _disposeOwnedIfUnused(claimed);
+      _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
+      return;
+    }
 
     // Keep an in-flight warm/parked controller — never dispose and re-open the same URL.
     // Previous bug: swipe during warm disposed the half-ready player → cold 1.5–3s path.
@@ -880,18 +949,31 @@ class AssetVideoPort extends PresentationVideoPort {
     if (claimed != null) {
       controller = claimed;
       if (!claimedReady) {
-        lastAttachPhases['initStart'] = lastAttachPhases['warmClaimed'] ?? _msSince(settleStarted);
+        phases['initStart'] = phases['warmClaimed'] ?? _msSince(settleStarted);
       }
     } else {
       // Prefer complete disk file (rewind after many swipes) without blocking the
       // first-ever play on a full download — network plays while bytes land.
-      lastAttachPhases['resolveStart'] = _msSince(settleStarted);
+      phases['resolveStart'] = _msSince(settleStarted);
+      final beforeOpen = debugBeforeControllerOpen;
+      if (beforeOpen != null) {
+        await beforeOpen(assetPath);
+      }
+      if (!_isLiveAttempt(token, attemptId)) {
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
+        return;
+      }
       controller = await _openResolved(
         assetPath,
         waitForDisk: false,
-        phases: lastAttachPhases,
+        phases: phases,
       );
-      lastAttachPhases['resolveDone'] = _msSince(settleStarted);
+      if (!_isLiveAttempt(token, attemptId)) {
+        await _disposeOwnedIfUnused(controller);
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
+        return;
+      }
+      phases['resolveDone'] = _msSince(settleStarted);
     }
     _controller = controller;
     _activePath = assetPath;
@@ -899,42 +981,50 @@ class AssetVideoPort extends PresentationVideoPort {
       'event': 'attach_open',
       'claimSource': claimSource,
       'mediaId': wantId,
-      'cacheSource': lastAttachPhases['cacheSource'],
-      'cacheBytes': lastAttachPhases['cacheBytes'],
-      'resolveMs': lastAttachPhases['resolveDone'] == null ||
-              lastAttachPhases['resolveStart'] == null
+      'cacheSource': phases['cacheSource'],
+      'cacheBytes': phases['cacheBytes'],
+      'resolveMs': phases['resolveDone'] == null || phases['resolveStart'] == null
           ? null
-          : (lastAttachPhases['resolveDone']! - lastAttachPhases['resolveStart']!),
+          : (phases['resolveDone']! - phases['resolveStart']!),
       'ms': _msSince(settleStarted),
     });
     controller.addListener(() => _onController(controller, token));
     try {
       if (!controller.value.isInitialized) {
-        lastAttachPhases['initStart'] ??= _msSince(settleStarted);
+        phases['initStart'] ??= _msSince(settleStarted);
         try {
-          await controller.initialize().timeout(const Duration(seconds: 6));
+          await controller.initialize().timeout(_initializeTimeout);
         } on TimeoutException {
-          lastAttachPhases['initTimeoutMs'] = _msSince(settleStarted);
-          // Slow network/decode — emit a countable timeout instead of hanging the swipe budget.
-          _firstFrameTimedOut = true;
-          _emitPlayback(
-            'first_frame_timeout',
-            positionMs: _msSince(settleStarted),
-            offerId: slot.slideId,
-            mediaUrl: assetPath,
-          );
+          phases['initTimeoutMs'] = _msSince(settleStarted);
           _endAttempt(attemptId, outcome: 'timeout', mediaId: wantId);
-          playback = PresentationPlayback.failed;
-          errorText = 'تعذر تشغيل الفيديو';
-          _notify();
+          // Only fail shared playback state if this attempt is still live.
+          if (_isLiveAttempt(token, attemptId) && identical(_controller, controller)) {
+            _firstFrameTimedOut = true;
+            _emitPlayback(
+              'first_frame_timeout',
+              positionMs: _msSince(settleStarted),
+              offerId: slot.slideId,
+              mediaUrl: assetPath,
+            );
+            playback = PresentationPlayback.failed;
+            errorText = 'تعذر تشغيل الفيديو';
+            _notify();
+          } else {
+            await _disposeOwnedIfUnused(controller);
+          }
+          return;
+        }
+        if (!_isLiveAttempt(token, attemptId)) {
+          await _disposeOwnedIfUnused(controller);
+          _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
           return;
         }
         // First successful init only — reopen must not rewrite these fields.
-        lastAttachPhases['initDone'] ??= _msSince(settleStarted);
-        lastAttachPhases['firstByteProxy'] ??= lastAttachPhases['initDone'];
+        phases['initDone'] ??= _msSince(settleStarted);
+        phases['firstByteProxy'] ??= phases['initDone'];
         // Still count as warm/parked/prepared source if we reused the controller.
         if (claimSource != 'cold') {
-          lastAttachPhases['source'] = switch (claimSource) {
+          phases['source'] = switch (claimSource) {
             'warm' => 1,
             'parked' => 2,
             'prepared' => 3,
@@ -943,24 +1033,29 @@ class AssetVideoPort extends PresentationVideoPort {
         }
       } else {
         // Already warm/parked — init was paid earlier; stamp once for comparison.
-        lastAttachPhases['initStart'] ??= lastAttachPhases['warmClaimed'] ?? 0;
-        lastAttachPhases['initDone'] ??= _msSince(settleStarted);
-        lastAttachPhases['firstByteProxy'] ??= lastAttachPhases['initDone'];
+        phases['initStart'] ??= phases['warmClaimed'] ?? 0;
+        phases['initDone'] ??= _msSince(settleStarted);
+        phases['firstByteProxy'] ??= phases['initDone'];
       }
-      if (token != _generation || _released || _controller != controller) {
+      if (!_isLiveAttempt(token, attemptId) || _controller != controller) {
         await _dropIfStale(controller, token);
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
         return;
       }
       await controller.setLooping(true);
-      if (token != _generation || _released || _controller != controller) {
+      if (!_isLiveAttempt(token, attemptId) || _controller != controller) {
         await _dropIfStale(controller, token);
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
         return;
       }
       // Show the decoded surface (cover → video), then start play and wait for real progress.
       if (controller.value.hasError) {
-        playback = PresentationPlayback.failed;
-        errorText = 'تعذر تشغيل الفيديو';
-        _notify();
+        if (_isLiveAttempt(token, attemptId)) {
+          playback = PresentationPlayback.failed;
+          errorText = 'تعذر تشغيل الفيديو';
+          _notify();
+        }
+        _endAttempt(attemptId, outcome: 'error', mediaId: wantId);
         return;
       }
       playback = PresentationPlayback.ready;
@@ -969,36 +1064,38 @@ class AssetVideoPort extends PresentationVideoPort {
       // Decode under mute until the first progressing frame — never arm speakers
       // while the Discover cover / dark plate is still on top.
       await controller.setVolume(0);
-      if (!_canStart(controller, token)) {
+      if (!_canStart(controller, token) || !_isLiveAttempt(token, attemptId)) {
         await _dropIfStale(controller, token);
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
         return;
       }
       // Capture floor before play so parked/rewind clips must advance again after activate.
-      final attemptNow = lastAttachPhases['attemptId'] ?? attemptId;
       _bindProgressGuard(
-        attemptId: attemptNow,
+        attemptId: attemptId,
         playerId: _playerId(controller),
         floor: controller.value.position,
       );
-      lastAttachPhases['playStart'] ??= _msSince(settleStarted);
-      lastAttachPhases['posAtPlayMs'] = controller.value.position.inMilliseconds;
-      lastAttachPhases['sourceKind'] = _sourceKindLabel().hashCode;
+      phases['playStart'] ??= _msSince(settleStarted);
+      phases['posAtPlayMs'] = controller.value.position.inMilliseconds;
+      phases['sourceKind'] = _sourceKindLabel().hashCode;
       miraDiscoverLog(
-        'MIRA_DISCOVER_ATTEMPT attempt=$attemptNow phase=play '
+        'MIRA_DISCOVER_ATTEMPT attempt=$attemptId phase=play '
         'mediaId=$wantId kind=${_sourceKindLabel()} '
         'app=$_appLifecycleLabel playerId=${_playerId(controller)}',
       );
       await controller.play();
-      if (token != _generation || _released || _controller != controller) {
-        _endAttempt(attemptNow, outcome: 'superseded', mediaId: wantId);
+      if (!_isLiveAttempt(token, attemptId) || _controller != controller) {
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
         await _dropIfStale(controller, token);
         return;
       }
       if (controller.value.hasError) {
-        playback = PresentationPlayback.failed;
-        errorText = 'تعذر تشغيل الفيديو';
-        _endAttempt(attemptNow, outcome: 'error', mediaId: wantId);
-        _notify();
+        if (_isLiveAttempt(token, attemptId)) {
+          playback = PresentationPlayback.failed;
+          errorText = 'تعذر تشغيل الفيديو';
+          _notify();
+        }
+        _endAttempt(attemptId, outcome: 'error', mediaId: wantId);
         return;
       }
       _emitPlayback(
@@ -1009,15 +1106,15 @@ class AssetVideoPort extends PresentationVideoPort {
       );
       await _awaitFirstVisibleProgress(controller, token, settleStarted, slot, assetPath);
       if (_hasVisibleProgress) {
-        if (!_canStart(controller, token)) {
+        if (!_canStart(controller, token) || !_isLiveAttempt(token, attemptId)) {
           miraDiscoverLog(
             'MIRA_DISCOVER_AUDIO unmute_skipped playerId=${_playerId(controller)} '
             'reason=not_active gen=$token live=$_generation '
             'ctrlMatch=${identical(_controller, controller)} '
-            'firstFrameMs=${lastAttachPhases['firstFrame']} '
-            'attempt=${lastAttachPhases['attemptId']}',
+            'firstFrameMs=${phases['firstFrame']} '
+            'attempt=$attemptId',
           );
-          _endAttempt(attemptNow, outcome: 'progress_stale', mediaId: wantId);
+          _endAttempt(attemptId, outcome: 'progress_stale', mediaId: wantId);
           await _dropIfStale(controller, token);
           return;
         }
@@ -1026,24 +1123,27 @@ class AssetVideoPort extends PresentationVideoPort {
           token: token,
           settleStarted: settleStarted,
           assetPath: assetPath,
-          attemptId: attemptNow,
+          attemptId: attemptId,
         );
-        _endAttempt(attemptNow, outcome: 'position_progress', mediaId: wantId);
-      } else if (_firstFrameTimedOut) {
-        _endAttempt(attemptNow, outcome: 'timeout', mediaId: wantId);
-      } else if (!_canStart(controller, token)) {
-        _endAttempt(attemptNow, outcome: 'superseded', mediaId: wantId);
+        _endAttempt(attemptId, outcome: 'position_progress', mediaId: wantId);
+      } else if (_firstFrameTimedOut && _isLiveAttempt(token, attemptId)) {
+        _endAttempt(attemptId, outcome: 'timeout', mediaId: wantId);
+      } else if (!_canStart(controller, token) || !_isLiveAttempt(token, attemptId)) {
+        _endAttempt(attemptId, outcome: 'superseded', mediaId: wantId);
         await _dropIfStale(controller, token);
         return;
       }
       _notify();
     } catch (error) {
-      if (_controller == controller) _controller = null;
-      await controller.dispose();
-      if (token != _generation || _released) return;
+      if (_controller == controller) {
+        _controller = null;
+        _activePath = null;
+      }
+      await _disposeOwnedIfUnused(controller);
+      _endAttempt(attemptId, outcome: 'error', mediaId: wantId);
+      if (!_isLiveAttempt(token, attemptId)) return;
       playback = PresentationPlayback.failed;
       errorText = 'تعذر تشغيل الفيديو';
-      _endAttempt(lastAttachPhases['attemptId'], outcome: 'error', mediaId: wantId);
       _notify();
     }
   }
@@ -1110,29 +1210,23 @@ class AssetVideoPort extends PresentationVideoPort {
         'at=${DateTime.now().toUtc().toIso8601String()}',
       );
       await controller.setVolume(1);
-      final stillThisAttempt = lastAttachPhases['attemptId'] == attemptId &&
-          token == _generation &&
-          !_released;
-      final stillActiveController = identical(_controller, controller);
-      if (_muted) {
-        if (stillActiveController) {
+      // After the await, this attempt may be stale (detach / A→image→A reuse).
+      // Never mute the live controller — a newer attempt may own the same
+      // instance and has already (or will) set the correct volume.
+      final stillLive = _isLiveAttempt(token, attemptId) &&
+          identical(_controller, controller);
+      if (!stillLive) {
+        if (!identical(_controller, controller)) {
           try {
             await controller.setVolume(0);
           } catch (_) {}
         }
         return;
       }
-      if (!stillThisAttempt || !stillActiveController) {
-        // Stale arm: mute only if this controller is NOT the live player for a
-        // newer attempt (same instance may have been reclaimed by A→image→A).
-        final reusedByNewer = stillActiveController &&
-            lastAttachPhases['attemptId'] != null &&
-            lastAttachPhases['attemptId'] != attemptId;
-        if (!reusedByNewer) {
-          try {
-            await controller.setVolume(0);
-          } catch (_) {}
-        }
+      if (_muted) {
+        try {
+          await controller.setVolume(0);
+        } catch (_) {}
         return;
       }
       lastAttachPhases['audioArmed'] = _msSince(settleStarted);
@@ -1627,15 +1721,24 @@ class AssetVideoPort extends PresentationVideoPort {
     _preparedOrder.clear();
     activeSlot = null;
     playback = PresentationPlayback.idle;
-    if (controller != null) {
-      await controller.pause();
-      await controller.dispose();
+    Future<void> disposeQuiet(VideoPlayerController? c) async {
+      if (c == null) return;
+      try {
+        await c.pause();
+      } catch (_) {}
+      try {
+        await c.dispose();
+      } catch (_) {}
     }
-    if (warm != null && warm != controller) await warm.dispose();
-    if (parked != null && parked != controller && parked != warm) await parked.dispose();
+
+    await disposeQuiet(controller);
+    if (warm != null && warm != controller) await disposeQuiet(warm);
+    if (parked != null && parked != controller && parked != warm) {
+      await disposeQuiet(parked);
+    }
     for (final c in prepared.values) {
       if (c != controller && c != warm && c != parked) {
-        await c.dispose();
+        await disposeQuiet(c);
       }
     }
     if (token != _generation) return;
