@@ -56,12 +56,6 @@ class DiscoverVideoDiskCache {
   @visibleForTesting
   int debugActiveProxyWaits = 0;
 
-  /// Test hook: force wait/stream loops to treat the peer as gone.
-  /// dart:io does not surface peer-close until a response write is attempted,
-  /// so headers-only byte-waits cannot observe [HttpClient.close] alone.
-  @visibleForTesting
-  bool debugForceProxyClientGone = false;
-
   /// Last [ensurePlayablePrefix] outcome (bytes on disk vs network read).
   DiscoverPrefixFillStats? lastPrefixStats;
 
@@ -747,6 +741,7 @@ class DiscoverVideoDiskCache {
   }
 
   Future<void> _handleProxyRequest(HttpRequest req) async {
+    var responseDetached = false;
     try {
       final segments = req.uri.pathSegments;
       if (segments.length < 2 || segments[0] != 'play') {
@@ -802,17 +797,14 @@ class DiscoverVideoDiskCache {
 
       // Abort wait/stream loops when the player cancels the Range request.
       var clientGone = false;
-      bool isClientGone() => clientGone || debugForceProxyClientGone;
-      // ignore: unawaited_futures
-      req.response.done.then((_) {
-        clientGone = true;
-      }).catchError((Object _) {
-        clientGone = true;
-      });
 
-      // If we don't even have the first requested byte yet, kick a fill that
-      // covers that absolute offset (may be past 2MiB) and wait only until
-      // that byte lands — never for the full object.
+      // Missing first requested byte: detach the socket so peer-close is visible
+      // (HttpResponse.done stays silent until a write — sdk#49024). Kick fill,
+      // wait only until that absolute offset lands, then write the Range on the
+      // raw socket — or exit immediately when the player aborts mid-wait.
+      //
+      // Important: do NOT arm [req.response.done] before detach — detach
+      // completes that future and would look like a false client abort.
       if (have <= start) {
         _kickFill(
           origin,
@@ -820,11 +812,29 @@ class DiscoverVideoDiskCache {
           needThrough: start + 256 * 1024,
           haveBytes: have,
         );
+        responseDetached = true;
+        final socket = await req.response.detachSocket(writeHeaders: false);
+        // listen() is required to observe peer-close before any write;
+        // Socket.done alone stays silent during a headers-less wait.
+        // Ignore onDone after we cancel the wait subscription — cancel can
+        // surface as onDone and must not look like a client abort.
+        var watchingPeer = true;
+        final sockSub = socket.listen(
+          (_) {},
+          onDone: () {
+            if (watchingPeer) clientGone = true;
+          },
+          onError: (_) {
+            if (watchingPeer) clientGone = true;
+          },
+          cancelOnError: true,
+        );
         debugActiveProxyWaits += 1;
         try {
-          final deadline = DateTime.now().toUtc().add(const Duration(seconds: 20));
+          final deadline =
+              DateTime.now().toUtc().add(const Duration(seconds: 20));
           while (have <= start &&
-              !isClientGone() &&
+              !clientGone &&
               DateTime.now().toUtc().isBefore(deadline)) {
             await Future<void>.delayed(const Duration(milliseconds: 20));
             file = await _openBodyFile(mediaId);
@@ -835,18 +845,89 @@ class DiscoverVideoDiskCache {
         } finally {
           debugActiveProxyWaits -= 1;
         }
-      }
-      if (isClientGone()) {
+        // Keep the subscription alive for peer-close; only stop flipping
+        // [clientGone] from subscription lifecycle once we begin writing.
+        watchingPeer = false;
+        if (clientGone) {
+          try {
+            await sockSub.cancel();
+          } catch (_) {}
+          try {
+            await socket.close();
+          } catch (_) {}
+          return;
+        }
+        if (have <= start) {
+          try {
+            await sockSub.cancel();
+          } catch (_) {}
+          try {
+            socket.add(
+              utf8.encode(
+                'HTTP/1.1 503 Service Unavailable\r\n'
+                'Content-Length: 0\r\n'
+                'Connection: close\r\n'
+                '\r\n',
+              ),
+            );
+            await socket.close();
+          } catch (_) {}
+          return;
+        }
+        // Re-resolve the body file — wait may have finalized .part → complete.
+        file = await _openBodyFile(mediaId);
+        have = await file.length();
+        if (have <= start) {
+          try {
+            await sockSub.cancel();
+          } catch (_) {}
+          try {
+            socket.add(
+              utf8.encode(
+                'HTTP/1.1 503 Service Unavailable\r\n'
+                'Content-Length: 0\r\n'
+                'Connection: close\r\n'
+                '\r\n',
+              ),
+            );
+            await socket.close();
+          } catch (_) {}
+          return;
+        }
         try {
-          await req.response.close();
-        } catch (_) {}
+          await _streamRangeOnSocket(
+            socket: socket,
+            mediaId: mediaId,
+            origin: origin,
+            start: start,
+            end: end,
+            total: total,
+            have: have,
+            file: file,
+            isClientGone: () => clientGone,
+            markClientGone: () {
+              clientGone = true;
+            },
+          );
+        } catch (_) {
+          try {
+            await socket.close();
+          } catch (_) {}
+        } finally {
+          try {
+            await sockSub.cancel();
+          } catch (_) {}
+        }
         return;
       }
-      if (have <= start) {
-        req.response.statusCode = HttpStatus.serviceUnavailable;
-        await req.response.close();
-        return;
-      }
+
+      // Normal path (bytes already local): arm response.done for mid-stream abort.
+      // ignore: unawaited_futures
+      req.response.done.then((_) {
+        clientGone = true;
+      }).catchError((Object _) {
+        clientGone = true;
+      });
 
       final alreadyHad = have;
       final serveEnd = end;
@@ -898,12 +979,13 @@ class DiscoverVideoDiskCache {
       try {
         await raf.setPosition(start);
         final buf = List<int>.filled(64 * 1024, 0);
-        while (pos <= serveEnd && !isClientGone()) {
+        while (pos <= serveEnd && !clientGone) {
           file = await _openBodyFile(mediaId);
           have = await file.length();
           if (have <= pos) {
             // Grow one chunk past the blocked read position — never a full GET.
-            if (_inflight[mediaId] == null && (total == null || have < serveEnd + 1)) {
+            if (_inflight[mediaId] == null &&
+                (total == null || have < serveEnd + 1)) {
               final windowEnd = math.min(serveEnd, pos + kickChunkBytes);
               _kickFill(
                 origin,
@@ -924,13 +1006,15 @@ class DiscoverVideoDiskCache {
           }
           final canReadTo = math.min(serveEnd, have - 1);
           var left = canReadTo - pos + 1;
-          while (left > 0 && !isClientGone()) {
+          while (left > 0 && !clientGone) {
             final n = await raf.readInto(buf, 0, math.min(buf.length, left));
             if (n <= 0) break;
             try {
               req.response.add(buf.sublist(0, n));
               // Hung flush after peer abort → leave the stream loop.
-              await req.response.flush().timeout(const Duration(milliseconds: 400));
+              await req.response
+                  .flush()
+                  .timeout(const Duration(milliseconds: 400));
             } on TimeoutException {
               clientGone = true;
               break;
@@ -938,7 +1022,8 @@ class DiscoverVideoDiskCache {
               clientGone = true;
               break;
             }
-            firstByteMs ??= DateTime.now().toUtc().difference(started).inMilliseconds;
+            firstByteMs ??=
+                DateTime.now().toUtc().difference(started).inMilliseconds;
             final diskEnd = math.min(pos + n, alreadyHad);
             if (diskEnd > pos) {
               bytesFromDisk += diskEnd - pos;
@@ -957,14 +1042,160 @@ class DiscoverVideoDiskCache {
           await raf.close();
         } catch (_) {}
       }
-      publishStats(completeMs: DateTime.now().toUtc().difference(started).inMilliseconds);
+      publishStats(
+        completeMs: DateTime.now().toUtc().difference(started).inMilliseconds,
+      );
       await req.response.close();
     } catch (_) {
+      if (responseDetached) return;
       try {
         req.response.statusCode = HttpStatus.internalServerError;
         await req.response.close();
       } catch (_) {}
     }
+  }
+
+  /// Writes a Range response on a socket previously detached during prefix wait.
+  Future<void> _streamRangeOnSocket({
+    required Socket socket,
+    required String mediaId,
+    required String origin,
+    required int start,
+    required int end,
+    required int? total,
+    required int have,
+    required File file,
+    required bool Function() isClientGone,
+    required void Function() markClientGone,
+  }) async {
+    final serveEnd = end;
+    final bodyLen = serveEnd - start + 1;
+    final status = (start == 0 && total != null && serveEnd == total - 1)
+        ? HttpStatus.ok
+        : HttpStatus.partialContent;
+    final reason = status == HttpStatus.ok ? 'OK' : 'Partial Content';
+    final header = StringBuffer()
+      ..write('HTTP/1.1 $status $reason\r\n')
+      ..write('Content-Type: video/mp4\r\n')
+      ..write('Accept-Ranges: bytes\r\n');
+    if (total != null && total > 0) {
+      header.write('Content-Range: bytes $start-$serveEnd/$total\r\n');
+    }
+    header
+      ..write('Content-Length: $bodyLen\r\n')
+      ..write('\r\n');
+    try {
+      socket.add(utf8.encode(header.toString()));
+      await socket.flush().timeout(const Duration(seconds: 2));
+    } catch (_) {
+      try {
+        await socket.close();
+      } catch (_) {}
+      return;
+    }
+
+    if (total == null || have < serveEnd + 1) {
+      final windowEnd = math.min(serveEnd, have + kickChunkBytes);
+      _kickFill(origin, mediaId, needThrough: windowEnd, haveBytes: have);
+    }
+
+    final alreadyHad = have;
+    final started = DateTime.now().toUtc();
+    int? firstByteMs;
+    var bytesFromDisk = 0;
+    var bytesFromNetwork = 0;
+    void publishStats({int? completeMs}) {
+      lastServeStats = DiscoverByteServeStats(
+        mediaId: mediaId,
+        bytesFromDisk: bytesFromDisk,
+        bytesFromNetwork: bytesFromNetwork,
+        contentLength: total,
+        source: 'proxy_stream',
+        requestStart: start,
+        requestEnd: serveEnd,
+        firstByteMs: firstByteMs,
+        completeMs: completeMs,
+      );
+    }
+
+    var pos = start;
+    // Always open via mediaId so a mid-wait finalize (.part → complete) is visible.
+    file = await _openBodyFile(mediaId);
+    var openPath = file.path;
+    var localHave = await file.length();
+    if (localHave <= start) {
+      try {
+        await socket.close();
+      } catch (_) {}
+      return;
+    }
+    var raf = await file.open();
+    try {
+      await raf.setPosition(start);
+      final buf = List<int>.filled(64 * 1024, 0);
+      while (pos <= serveEnd && !isClientGone()) {
+        file = await _openBodyFile(mediaId);
+        localHave = await file.length();
+        if (localHave <= pos) {
+          if (_inflight[mediaId] == null &&
+              (total == null || localHave < serveEnd + 1)) {
+            final windowEnd = math.min(serveEnd, pos + kickChunkBytes);
+            _kickFill(
+              origin,
+              mediaId,
+              needThrough: windowEnd,
+              haveBytes: localHave,
+            );
+          }
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          continue;
+        }
+        if (openPath != file.path) {
+          await raf.close();
+          raf = await file.open();
+          await raf.setPosition(pos);
+          openPath = file.path;
+        }
+        final canReadTo = math.min(serveEnd, localHave - 1);
+        var left = canReadTo - pos + 1;
+        while (left > 0 && !isClientGone()) {
+          final n = await raf.readInto(buf, 0, math.min(buf.length, left));
+          if (n <= 0) break;
+          try {
+            socket.add(buf.sublist(0, n));
+            await socket.flush().timeout(const Duration(seconds: 2));
+          } on TimeoutException {
+            markClientGone();
+            break;
+          } catch (_) {
+            markClientGone();
+            break;
+          }
+          firstByteMs ??=
+              DateTime.now().toUtc().difference(started).inMilliseconds;
+          final diskEnd = math.min(pos + n, alreadyHad);
+          if (diskEnd > pos) {
+            bytesFromDisk += diskEnd - pos;
+          }
+          if (pos + n > alreadyHad) {
+            bytesFromNetwork += pos + n - math.max(pos, alreadyHad);
+          }
+          pos += n;
+          left -= n;
+          publishStats();
+        }
+      }
+    } finally {
+      try {
+        await raf.close();
+      } catch (_) {}
+    }
+    publishStats(
+      completeMs: DateTime.now().toUtc().difference(started).inMilliseconds,
+    );
+    try {
+      await socket.close();
+    } catch (_) {}
   }
 
   /// Opens a GET while isolating HttpClient's internal zone errors (aborted

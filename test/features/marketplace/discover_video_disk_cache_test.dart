@@ -2164,10 +2164,7 @@ void main() {
     }
     expect(cache.debugActiveProxyWaits, greaterThan(0),
         reason: 'handler must enter the byte-wait loop');
-    // dart:io does not surface peer-close until a response write is attempted
-    // (headers-only waits stay silent). Trip the wait via the test hook, and
-    // also force-close the client the way AVPlayer would on swipe-away.
-    cache.debugForceProxyClientGone = true;
+    // Real peer abort — detached socket observes close without a test hook.
     client.close(force: true);
     try {
       await respFuture.timeout(const Duration(milliseconds: 500));
@@ -2178,7 +2175,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     expect(cache.debugActiveProxyWaits, 0,
-        reason: 'wait loop must exit while origin is still blocked');
+        reason: 'wait loop must exit on real client abort while origin blocked');
     expect(release.isCompleted, isFalse);
     release.complete();
   });
