@@ -1931,4 +1931,58 @@ void main() {
     expect(source.bytesOnDisk, greaterThanOrEqualTo(8 * 1024));
     release.complete();
   });
+
+  test('proxy Range kick grows prefix without full ensureLocal inflight', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_proxy_kick_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? origin;
+    addTearDown(() async {
+      await origin?.close(force: true);
+    });
+    origin = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final release = Completer<void>();
+    final bytes = List<int>.generate(4 * 1024 * 1024, (i) => i % 256);
+    var fullGets = 0;
+    origin.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      fullGets += 1;
+      await release.future;
+      req.response.contentLength = bytes.length;
+      req.response.add(bytes);
+      await req.response.close();
+    });
+    const id = 'fproxy01-cccc-cccc-cccc-cccccccccccc';
+    final url =
+        'http://${origin.address.host}:${origin.port}/api/v1/marketplace/media/$id';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+    await File('${root.path}/$id.part').writeAsBytes(bytes.sublist(0, 64 * 1024));
+    final source = await cache.resolvePlaySource(url, claimPriority: true);
+    expect(source.isProxy, isTrue);
+
+    final req = await HttpClient().getUrl(source.uri!);
+    req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
+    final resp = await req.close();
+    final first = Completer<void>();
+    final sub = resp.listen((chunk) {
+      if (chunk.isNotEmpty && !first.isCompleted) first.complete();
+    });
+    await first.future.timeout(const Duration(seconds: 2));
+    // Proxy may kick a capped prefix Range, but must not register a full-object
+    // inflight job that holds the write lock for the entire 4MiB body.
+    expect(cache.debugHasInflight(id), isFalse,
+        reason: 'proxy path must not start full ensureLocal before progress');
+    release.complete();
+    await sub.cancel();
+  });
 }

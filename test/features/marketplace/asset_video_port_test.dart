@@ -543,4 +543,79 @@ void main() {
     expect(port.audiblePlayingCount, 1);
     await port.release();
   });
+
+  test('listener during in-flight seek does not count seek landing as progress', () async {
+    final controller = ControllableVideoController(_clip)..advanceOnPlay = false;
+    final port = AssetVideoPort(createController: (_) => controller);
+    unawaited(port.warm(_clip));
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(controller.value.isInitialized, isTrue);
+
+    controller.seekGate = Completer<void>();
+    final pending = port.attach(_slotA, _clip);
+    // Wait until seek nudge starts (warm reused decoder, ≥120ms after play).
+    final seekDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (controller.seekCalls == 0 && DateTime.now().isBefore(seekDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(controller.seekCalls, 1);
+    expect(controller.lastSeekTo, const Duration(milliseconds: 32));
+    // Position already at seek target while seekGate holds — must NOT count yet.
+    expect(controller.value.position.inMilliseconds, 32);
+    expect(port.hasVisibleProgress, isFalse);
+    expect(port.playbackEvents.where((e) => e.type == 'first_frame'), isEmpty);
+
+    controller.seekGate!.complete();
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    expect(port.hasVisibleProgress, isFalse,
+        reason: 'seek landing alone is not position progress');
+
+    controller.tickPosition(const Duration(milliseconds: 16));
+    await pending;
+    expect(port.hasVisibleProgress, isTrue);
+    expect(port.lastAttachPhases['seekDoneMs'], isNotNull);
+    await port.release();
+  });
+
+  test('unmute is a single shared op per attempt', () async {
+    final controller = ControllableVideoController(_clip)..advanceOnPlay = true;
+    final port = AssetVideoPort(createController: (_) => controller);
+    await port.attach(_slotA, _clip);
+    expect(port.hasVisibleProgress, isTrue);
+    // setVolume(0) mute-prime + one setVolume(1) arm — never two unmutes.
+    expect(controller.setVolumeCalls, 2);
+    expect(controller.lastVolume, 1);
+    await port.release();
+  });
+
+  test('late unmute of left attempt does not re-arm after A→B', () async {
+    final a = ControllableVideoController('$_clip-a')
+      ..advanceOnPlay = true
+      ..gateAudibleOnly = true
+      ..volumeGate = Completer<void>();
+    final b = ControllableVideoController('$_clip-b')..advanceOnPlay = true;
+    var n = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        n += 1;
+        return n == 1 ? a : b;
+      },
+    );
+    final first = port.attach(_slotA, '$_clip-a');
+    // Mute-prime (volume 0) proceeds; audible arm waits on volumeGate.
+    final armDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (a.setVolumeCalls < 2 && DateTime.now().isBefore(armDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(a.setVolumeCalls, greaterThanOrEqualTo(2));
+    expect(a.value.volume, 0, reason: 'unmute still gated; value not applied yet');
+    await port.attach(_slotB, '$_clip-b');
+    a.volumeGate!.complete();
+    await first;
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(b.lastVolume, 1);
+    expect(a.value.volume, 0, reason: 'stale A unmute must not win after leave');
+    expect(port.audiblePlayingCount, 1);
+    await port.release();
+  });
 }
