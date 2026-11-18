@@ -508,4 +508,39 @@ void main() {
     expect(controller.lastVolume, 1);
     await port.release();
   });
+
+  test('A→image→A: delayed mute of old gen does not mute reattached A', () async {
+    final first = ControllableVideoController(_clip)..advanceOnPlay = true;
+    final second = ControllableVideoController(_clip)..advanceOnPlay = true;
+    var created = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        created += 1;
+        return created == 1 ? first : second;
+      },
+    );
+    await port.attach(_slotA, _clip);
+    expect(first.lastVolume, 1);
+    final genLeaving = port.debugGeneration;
+
+    // Slow mute on the leaving controller (image swipe cut still in flight).
+    first.volumeGate = Completer<void>();
+    final staleCut =
+        port.cutOutgoingAudio(ownerSlot: _slotA, generation: genLeaving);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    // Return to video A before stale cut finishes — attach bumps generation first.
+    final reattach = port.attach(_slotA, _clip);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(port.debugGeneration, greaterThan(genLeaving));
+
+    first.volumeGate!.complete();
+    await staleCut;
+    await reattach;
+
+    expect(port.debugGeneration, greaterThan(genLeaving));
+    expect(second.lastVolume, 1, reason: 'reattached A must stay audible');
+    expect(port.audiblePlayingCount, 1);
+    await port.release();
+  });
 }

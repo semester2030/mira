@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Disk cache for Discover network videos.
@@ -59,9 +60,9 @@ class DiscoverVideoDiskCache {
   final Map<String, int> _trustedLength = {};
 
   /// Serialize all origin writes per mediaId (proxy + prefetch share one GET).
+  /// One waiter queue per id — never re-enter by depth (that allowed a second
+  /// writer to slip in while the holder awaited network).
   final Map<String, Future<void>> _writeLocks = {};
-  /// Re-entrancy depth while the current async stack holds the write lock.
-  final Map<String, int> _writeLockDepth = {};
 
   static String? mediaIdFromUrl(String url) {
     final uri = Uri.tryParse(url);
@@ -120,6 +121,13 @@ class DiscoverVideoDiskCache {
     if (diagnostics.length > 80) {
       diagnostics.removeRange(0, diagnostics.length - 80);
     }
+    // Network vs disk timing — pair with MIRA_DISCOVER_FF via mediaId.
+    debugPrint(
+      'MIRA_DISCOVER_CACHE mediaId=${row.mediaId} source=${row.source} '
+      'reused=${row.bytesReused} dl=${row.bytesDownloaded} '
+      'elapsedMs=${row.elapsedMs} err=${row.error} '
+      'prio=$_priorityMediaId lock=${_writeLocks.containsKey(row.mediaId)}',
+    );
   }
 
   /// Prefer fill for the on-screen clip over background neighbors.
@@ -256,23 +264,8 @@ class DiscoverVideoDiskCache {
   }
 
   Future<T> _withWriteLock<T>(String mediaId, Future<T> Function() fn) async {
-    // Re-enter if this mediaId's lock is already held on the current stack
-    // (e.g. finalize called from inside _ensurePrefix). External waiters still
-    // queue on [_writeLocks] and never busy-spin forever.
-    final held = _writeLockDepth[mediaId] ?? 0;
-    if (held > 0) {
-      _writeLockDepth[mediaId] = held + 1;
-      try {
-        return await fn();
-      } finally {
-        final next = (_writeLockDepth[mediaId] ?? 1) - 1;
-        if (next <= 0) {
-          _writeLockDepth.remove(mediaId);
-        } else {
-          _writeLockDepth[mediaId] = next;
-        }
-      }
-    }
+    // Strict mutex: waiters queue. Nested code under the holder must call
+    // *_Unlocked helpers — never _withWriteLock again for the same mediaId.
     while (_writeLocks.containsKey(mediaId)) {
       try {
         await _writeLocks[mediaId];
@@ -280,17 +273,18 @@ class DiscoverVideoDiskCache {
     }
     final done = Completer<void>();
     _writeLocks[mediaId] = done.future;
-    _writeLockDepth[mediaId] = 1;
     try {
       return await fn();
     } finally {
-      _writeLockDepth.remove(mediaId);
       if (identical(_writeLocks[mediaId], done.future)) {
         _writeLocks.remove(mediaId);
       }
       if (!done.isCompleted) done.complete();
     }
   }
+
+  /// Test/diag: true while a writer holds the lock for [mediaId].
+  bool debugHasWriteLock(String mediaId) => _writeLocks.containsKey(mediaId);
 
   /// True when [total] was recorded from an authoritative HTTP source for [mediaId].
   bool _isTrustedTotal(String mediaId, int total) {
@@ -471,13 +465,9 @@ class DiscoverVideoDiskCache {
         final len = e.value.contentLength;
         final size = await f.length();
         if (size != len || len <= 0) continue;
-        if (_isTrustedTotal(mediaId, len)) {
-          _touch(e.key);
-          return f;
-        }
-        // Untrusted LRU entry (e.g. legacy *_1048576.mp4): require real MP4.
-        if (!await _sniffMp4Complete(f)) continue;
-        _recordTrustedLength(mediaId, len);
+        // Only trusted totals count as complete. ftyp+moov sniff alone can match
+        // a truncated fast-start prefix and must not promote to complete.
+        if (!_isTrustedTotal(mediaId, len)) continue;
         _touch(e.key);
         return f;
       }
@@ -493,51 +483,12 @@ class DiscoverVideoDiskCache {
       if (len <= 0) continue;
       final size = await entity.length();
       if (size != len) continue;
-      if (_isTrustedTotal(mediaId, len)) {
-        final key = name;
-        _rememberComplete(mediaId: mediaId, key: key, dest: entity, total: len);
-        return entity;
-      }
-      // Untrusted legacy name: require ftyp+moov so a truncated prefix is rejected.
-      if (!await _sniffMp4Complete(entity)) continue;
+      if (!_isTrustedTotal(mediaId, len)) continue;
       final key = name;
       _rememberComplete(mediaId: mediaId, key: key, dest: entity, total: len);
       return entity;
     }
     return null;
-  }
-
-  /// Minimal ftyp + moov presence check for legacy complete files.
-  static Future<bool> _sniffMp4Complete(File file) async {
-    try {
-      final len = await file.length();
-      if (len < 32) return false;
-      final raf = await file.open();
-      try {
-        final head = await raf.read(64);
-        if (head.length < 8) return false;
-        final box = String.fromCharCodes(head.sublist(4, 8));
-        if (box != 'ftyp') return false;
-        // Scan a bounded window for moov (same idea as server sniffMedia).
-        final window = math.min(len, 512 * 1024);
-        await raf.setPosition(0);
-        final buf = await raf.read(window);
-        final needle = 'moov'.codeUnits;
-        for (var i = 0; i <= buf.length - 4; i++) {
-          if (buf[i] == needle[0] &&
-              buf[i + 1] == needle[1] &&
-              buf[i + 2] == needle[2] &&
-              buf[i + 3] == needle[3]) {
-            return true;
-          }
-        }
-        return false;
-      } finally {
-        await raf.close();
-      }
-    } catch (_) {
-      return false;
-    }
   }
 
   /// Non-blocking peek: complete file already on disk. Never waits on the write
@@ -805,31 +756,18 @@ class DiscoverVideoDiskCache {
 
   /// Opens a GET while isolating HttpClient's internal zone errors (aborted
   /// Range/stopAfterBytes can otherwise fail the surrounding test/zone).
+  /// Failures stay on this request — never close the shared [_http] (that
+  /// would abort unrelated neighbor downloads mid-flight).
   Future<HttpClientRequest> _openGet(Uri uri) {
     final done = Completer<HttpClientRequest>();
     runZonedGuarded(() async {
       try {
         done.complete(await _http.getUrl(uri));
-        return;
-      } catch (_) {
-        try {
-          _http.close(force: true);
-        } catch (_) {}
-        _http = HttpClient();
-        try {
-          done.complete(await _http.getUrl(uri));
-        } catch (e, st) {
-          if (!done.isCompleted) done.completeError(e, st);
-        }
+      } catch (e, st) {
+        if (!done.isCompleted) done.completeError(e, st);
       }
     }, (e, st) {
-      if (!done.isCompleted) {
-        try {
-          _http.close(force: true);
-        } catch (_) {}
-        _http = HttpClient();
-        _http.getUrl(uri).then(done.complete, onError: done.completeError);
-      }
+      if (!done.isCompleted) done.completeError(e, st);
     });
     return done.future;
   }
@@ -838,16 +776,7 @@ class DiscoverVideoDiskCache {
     try {
       final uri = Uri.tryParse(url);
       if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
-      late final HttpClientRequest head;
-      try {
-        head = await _http.headUrl(uri);
-      } catch (_) {
-        try {
-          _http.close(force: true);
-        } catch (_) {}
-        _http = HttpClient();
-        head = await _http.headUrl(uri);
-      }
+      final head = await _http.headUrl(uri);
       head.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
       final headResp = await head.close().timeout(const Duration(seconds: 8));
       final len = headResp.contentLength >= 0 ? headResp.contentLength : null;

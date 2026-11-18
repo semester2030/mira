@@ -99,9 +99,21 @@ class AssetVideoPort extends PresentationVideoPort {
   AssetVideoPort({
     AssetVideoControllerFactory? createController,
     DiscoverVideoDiskCache? diskCache,
-  })  : _createController = createController,
+    String? sessionId,
+  })  : sessionId = sessionId ??
+            's${DateTime.now().toUtc().microsecondsSinceEpoch.toRadixString(36)}',
+        _createController = createController,
         _diskCache = diskCache ??
             (createController == null ? DiscoverVideoDiskCache.instance : null);
+
+  /// Correlates all swipe/cache/player logs for one Discover video session.
+  final String sessionId;
+
+  /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
+  static const String buildStamp = String.fromEnvironment(
+    'MIRA_BUILD',
+    defaultValue: '2026111709',
+  );
 
   /// When non-null (unit tests), paths are passed straight to this factory and
   /// disk cache is skipped.
@@ -124,6 +136,10 @@ class AssetVideoPort extends PresentationVideoPort {
   final List<Map<String, Object?>> playbackDiagnostics = <Map<String, Object?>>[];
 
   void _recordDiag(Map<String, Object?> row) {
+    row.putIfAbsent('sessionId', () => sessionId);
+    row.putIfAbsent('transitionId', () => _generation);
+    row.putIfAbsent('build', () => buildStamp);
+    row.putIfAbsent('playerId', () => _playerId(_controller));
     playbackDiagnostics.add(row);
     if (playbackDiagnostics.length > 60) {
       playbackDiagnostics.removeRange(0, playbackDiagnostics.length - 60);
@@ -403,6 +419,24 @@ class AssetVideoPort extends PresentationVideoPort {
           'error': '$e',
           'at': DateTime.now().toUtc().toIso8601String(),
         });
+      }
+    }
+    // Ownership may have moved to a newer attach during the mute await.
+    if (generation != null && generation != _generation) {
+      debugPrint(
+        'MIRA_DISCOVER_AUDIO cut_stale_after_wait '
+        'cutGen=$generation live=$_generation',
+      );
+      return;
+    }
+    if (ownerSlot != null) {
+      final activeNow = activeSlot;
+      if (activeNow == null || !activeNow.same(ownerSlot)) {
+        debugPrint(
+          'MIRA_DISCOVER_AUDIO cut_stale_owner_after_wait '
+          'owner=${ownerSlot.slideId}/${ownerSlot.mediaIndex}',
+        );
+        return;
       }
     }
     final audibleAfter = audiblePlayingCount;
@@ -1092,8 +1126,9 @@ class AssetVideoPort extends PresentationVideoPort {
         'at': DateTime.now().toUtc().toIso8601String(),
       });
       debugPrint(
-        'MIRA_DISCOVER_FF mediaId=${_mediaIdOf(assetPath)} '
-        'offer=${slot.slideId} firstFrameMs=$ms '
+        'MIRA_DISCOVER_FF session=$sessionId transition=$_generation '
+        'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
+        'offer=${slot.slideId} playerId=${_playerId(controller)} firstFrameMs=$ms '
         'source=${lastAttachPhases['source']} '
         'cacheSource=${lastAttachPhases['cacheSource']} '
         'cacheBytes=${lastAttachPhases['cacheBytes']} '
@@ -1106,7 +1141,8 @@ class AssetVideoPort extends PresentationVideoPort {
         'seekNudge=${lastAttachPhases['seekNudgeMs']}',
       );
       debugPrint(
-        'MIRA_DISCOVER_SWIPE settle mediaId=${_mediaIdOf(assetPath)} '
+        'MIRA_DISCOVER_SWIPE settle session=$sessionId transition=$_generation '
+        'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
         'offer=${slot.slideId} claim=${lastAttachPhases['source']} '
         'cache=${lastAttachPhases['cacheSource']} bytes=${lastAttachPhases['cacheBytes']} '
         'audioCutMs=${lastAttachPhases['audioCut']} firstFrameMs=$ms '

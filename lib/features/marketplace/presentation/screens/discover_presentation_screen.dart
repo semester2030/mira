@@ -2521,12 +2521,21 @@ class _PresentationPageState extends State<_PresentationPage> {
       if (held != null && port is AssetVideoPort && port.activeSlot?.same(held) == true) {
         final gen = port.debugGeneration;
         // Await cut before detach so late play cannot revive this owner.
+        // Re-check after await: Video A → image → Video A must not release the
+        // new attach when the stale mute finishes.
         // ignore: discarded_futures
         () async {
           await port.cutOutgoingAudio(ownerSlot: held, generation: gen);
-          if (_held != null && _held!.same(held)) {
-            _releaseHeld();
+          if (!mounted) return;
+          if (_held == null || !_held!.same(held)) return;
+          if (widget.playable &&
+              widget.slide.media.isNotEmpty &&
+              widget.slide.media[_media].kind == PresentationMediaKind.video) {
+            return;
           }
+          if (port.debugGeneration != gen) return;
+          if (port.activeSlot?.same(held) != true) return;
+          _releaseHeld();
         }();
         return;
       }
