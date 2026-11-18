@@ -1322,4 +1322,268 @@ void main() {
     expect(nBytes, bodies[neighbor]!.sublist(0, 16 * 1024));
     expect(fullGets[neighbor] ?? 0, 0, reason: 'neighbor must not full-GET');
   });
+
+  test('trusted complete reopens from disk after new cache instance with origin down', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_persist_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(96 * 1024, (i) => i % 256);
+    var gets = 0;
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      gets += 1;
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.contentLength = bytes.length;
+      req.response.add(bytes);
+      await req.response.close();
+    });
+
+    const mediaId = 'f8888888-8888-8888-8888-888888888888';
+    final url =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$mediaId';
+    final cache1 = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    final first = await cache1.ensureLocal(url);
+    expect(first.complete, isTrue);
+    expect(await cache1.peekComplete(url), isNotNull);
+    expect(File('${root.path}/${mediaId}_${bytes.length}.mp4.mira_complete').existsSync(), isTrue);
+    await cache1.disposeProxy();
+
+    await server.close(force: true);
+    server = null;
+
+    final dead = HttpClient();
+    addTearDown(() => dead.close(force: true));
+    final cache2 = DiscoverVideoDiskCache(root: root, httpClient: dead);
+    addTearDown(() async {
+      await cache2.disposeProxy();
+    });
+    final beforeGets = gets;
+    final peek = await cache2.peekComplete(url);
+    expect(peek, isNotNull);
+    expect(await peek!.length(), bytes.length);
+
+    final again = await cache2.ensureLocal(url);
+    expect(again.complete, isTrue);
+    expect(again.fromDisk, isTrue);
+    expect(again.bytesDownloaded, 0);
+    expect(gets, beforeGets, reason: 'no network after restart');
+
+    final source = await cache2.resolvePlaySource(url);
+    expect(source.isFile, isTrue);
+  });
+
+  test('HEAD 404/HTML length is not recorded as video total', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_head_bad_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final ok = List<int>.generate(40 * 1024, (i) => i % 256);
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.statusCode = HttpStatus.notFound;
+        req.response.headers.contentType = ContentType.html;
+        const err = '<html>missing</html>';
+        req.response.contentLength = err.length;
+        await req.response.close();
+        return;
+      }
+      // GET succeeds with Content-Range total — fallback path.
+      req.response.statusCode = HttpStatus.partialContent;
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.headers.set(
+        HttpHeaders.contentRangeHeader,
+        'bytes 0-${ok.length - 1}/${ok.length}',
+      );
+      req.response.add(ok);
+      await req.response.close();
+    });
+
+    const mediaId = 'f9999999-9999-9999-9999-999999999999';
+    final url =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$mediaId';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+    final row = await cache.ensureLocal(url);
+    expect(row.complete, isTrue);
+    expect(row.contentLength, ok.length);
+    expect(row.contentLength, isNot(11), reason: 'must not trust HTML HEAD length');
+  });
+
+  test('untrusted named complete is never used by peek/prefix/proxy paths', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_unify_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    const mediaId = 'faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
+    final claimed = 64 * 1024;
+    final fake = File('${root.path}/${mediaId}_$claimed.mp4');
+    await fake.writeAsBytes(List<int>.generate(claimed, (i) => 7));
+    // No .mira_complete marker.
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+    final url = 'http://127.0.0.1/api/v1/marketplace/media/$mediaId';
+    expect(await cache.peekComplete(url), isNull);
+
+    // Prefix path must not treat fake as complete (would skip .part growth).
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final real = List<int>.generate(claimed, (i) => i % 256);
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = real.length;
+        await req.response.close();
+        return;
+      }
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.contentLength = real.length;
+      req.response.add(real);
+      await req.response.close();
+    });
+    final live =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$mediaId';
+    final got = await cache.ensureLocal(live);
+    expect(got.complete, isTrue);
+    expect(await File('${root.path}/${mediaId}_$claimed.mp4.mira_complete').exists(), isTrue);
+  });
+
+  test('two stopAfterBytes ensureLocal calls serialize writers (not just inflight)', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_two_writers_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final release = Completer<void>();
+    final bytes = List<int>.generate(256 * 1024, (i) => i % 256);
+    var concurrent = 0;
+    var maxConcurrent = 0;
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      concurrent += 1;
+      if (concurrent > maxConcurrent) maxConcurrent = concurrent;
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.contentLength = bytes.length;
+      req.response.add(bytes.sublist(0, 16 * 1024));
+      await req.response.flush();
+      await release.future;
+      concurrent -= 1;
+      try {
+        req.response.add(bytes.sublist(16 * 1024));
+        await req.response.close();
+      } catch (_) {}
+    });
+
+    const mediaId = 'fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    final url =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$mediaId';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+
+    // stopAfterBytes bypasses _inflight join — both enter _withWriteLock.
+    final a = cache.ensureLocal(url, stopAfterBytes: 16 * 1024);
+    final b = cache.ensureLocal(url, stopAfterBytes: 16 * 1024);
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(cache.debugHasWriteLock(mediaId), isTrue);
+    expect(maxConcurrent, 1, reason: 'write lock must serialize independent writers');
+    release.complete();
+    await Future.wait([a, b]);
+    expect(maxConcurrent, 1);
+  });
+
+  test('failed neighbor download does not abort a concurrent visible download', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_fail_peer_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final releaseOk = Completer<void>();
+    final okBytes = List<int>.generate(64 * 1024, (i) => i % 256);
+    server.listen((req) async {
+      final id = req.uri.pathSegments.isNotEmpty ? req.uri.pathSegments.last : '';
+      if (id.startsWith('dead')) {
+        await req.response.detachSocket().then((s) => s.destroy());
+        return;
+      }
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = okBytes.length;
+        await req.response.close();
+        return;
+      }
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.contentLength = okBytes.length;
+      req.response.add(okBytes.sublist(0, 8 * 1024));
+      await req.response.flush();
+      await releaseOk.future;
+      req.response.add(okBytes.sublist(8 * 1024));
+      await req.response.close();
+    });
+
+    const badId = 'deadbeef-dead-dead-dead-deaddeadbeef';
+    const good = 'fccccccc-cccc-cccc-cccc-cccccccccccc';
+    String urlFor(String id) =>
+        'http://${server!.address.host}:${server.port}/api/v1/marketplace/media/$id';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+
+    final goodJob = cache.ensureLocal(urlFor(good));
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    try {
+      await cache.ensureLocal(urlFor(badId));
+    } catch (_) {}
+    releaseOk.complete();
+    final goodRow = await goodJob;
+    expect(goodRow.complete, isTrue);
+    expect(goodRow.bytesOnDisk, okBytes.length);
+  });
 }

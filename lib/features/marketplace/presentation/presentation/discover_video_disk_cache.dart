@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -139,11 +141,14 @@ class DiscoverVideoDiskCache {
   void _kickFill(String origin, String mediaId) {
     if (_priorityMediaId != null && mediaId != _priorityMediaId) {
       // ignore: discarded_futures
-      ensurePlayablePrefix(origin, needBytes: 1024 * 1024).catchError((_) {});
+      ensurePlayablePrefix(origin, needBytes: 1024 * 1024)
+          .catchError((Object _) => 0);
       return;
     }
     // ignore: discarded_futures
-    ensureLocal(origin).catchError((_) {});
+    ensureLocal(origin).catchError(
+      (Object _) => DiscoverCachedVideo.network(url: origin, reason: 'kick_error'),
+    );
   }
 
   /// Fire-and-forget prefetch. Safe to call repeatedly — joins the same download.
@@ -170,7 +175,9 @@ class DiscoverVideoDiskCache {
       return;
     }
     // ignore: discarded_futures
-    ensureLocal(url).catchError((_) => DiscoverCachedVideo.network(url: url, reason: 'prefetch_error'));
+    ensureLocal(url).catchError(
+      (Object _) => DiscoverCachedVideo.network(url: url, reason: 'prefetch_error'),
+    );
   }
 
   /// Ensure at least [needBytes] are on disk (complete file or .part) without
@@ -264,15 +271,16 @@ class DiscoverVideoDiskCache {
   }
 
   Future<T> _withWriteLock<T>(String mediaId, Future<T> Function() fn) async {
-    // Strict mutex: waiters queue. Nested code under the holder must call
-    // *_Unlocked helpers — never _withWriteLock again for the same mediaId.
-    while (_writeLocks.containsKey(mediaId)) {
-      try {
-        await _writeLocks[mediaId];
-      } catch (_) {}
-    }
+    // Chain waiters atomically — a check-then-set loop raced two writers in.
+    // Nested code under the holder must call *_Unlocked helpers.
+    final previous = _writeLocks[mediaId];
     final done = Completer<void>();
     _writeLocks[mediaId] = done.future;
+    if (previous != null) {
+      try {
+        await previous;
+      } catch (_) {}
+    }
     try {
       return await fn();
     } finally {
@@ -286,7 +294,8 @@ class DiscoverVideoDiskCache {
   /// Test/diag: true while a writer holds the lock for [mediaId].
   bool debugHasWriteLock(String mediaId) => _writeLocks.containsKey(mediaId);
 
-  /// True when [total] was recorded from an authoritative HTTP source for [mediaId].
+  /// True when [total] was recorded from an authoritative HTTP source or a
+  /// validated on-disk complete marker for [mediaId].
   bool _isTrustedTotal(String mediaId, int total) {
     if (total <= 0) return false;
     return _trustedLength[mediaId] == total;
@@ -296,6 +305,74 @@ class DiscoverVideoDiskCache {
     if (total <= 0) return;
     _trustedLength[mediaId] = total;
     _knownLength[mediaId] = total;
+  }
+
+  static File _completeMarkerFor(File mp4) => File('${mp4.path}.mira_complete');
+
+  static Future<String> _prefixSha256(File file, {int maxBytes = 64 * 1024}) async {
+    final raf = await file.open();
+    try {
+      final len = await raf.length();
+      final n = math.min(len, maxBytes);
+      if (n <= 0) return '';
+      final buf = await raf.read(n);
+      return sha256.convert(buf).toString();
+    } finally {
+      await raf.close();
+    }
+  }
+
+  /// Persist trusted completeness next to the mp4 so a new cache instance can
+  /// reopen without HEAD/GET. Marker binds mediaId + total + prefix hash.
+  Future<void> _persistCompleteMarker({
+    required String mediaId,
+    required File dest,
+    required int total,
+    String? etag,
+  }) async {
+    final hash = await _prefixSha256(dest);
+    if (hash.isEmpty) return;
+    final payload = <String, Object?>{
+      'v': 1,
+      'mediaId': mediaId,
+      'total': total,
+      'prefixSha256': hash,
+      if (etag != null && etag.isNotEmpty) 'etag': etag,
+    };
+    await _completeMarkerFor(dest).writeAsString(jsonEncode(payload));
+  }
+
+  /// Loads a marker into [_trustedLength] when the file still matches.
+  ///
+  /// In-memory [_trustedLength] alone must NOT validate a pre-existing file —
+  /// a same-sized fake on disk would otherwise pass after HEAD recorded the
+  /// total. Marker + prefix hash is the disk proof.
+  Future<bool> _trustFromCompleteMarker({
+    required String mediaId,
+    required File dest,
+    required int total,
+  }) async {
+    if (total <= 0) return false;
+    final marker = _completeMarkerFor(dest);
+    if (!await marker.exists()) return false;
+    try {
+      final raw = jsonDecode(await marker.readAsString());
+      if (raw is! Map) return false;
+      if (raw['v'] != 1) return false;
+      if (raw['mediaId'] != mediaId) return false;
+      final markedTotal = raw['total'];
+      if (markedTotal is! int || markedTotal != total) return false;
+      final size = await dest.length();
+      if (size != total) return false;
+      final wantHash = raw['prefixSha256'];
+      if (wantHash is! String || wantHash.isEmpty) return false;
+      final haveHash = await _prefixSha256(dest);
+      if (haveHash != wantHash) return false;
+      _recordTrustedLength(mediaId, total);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// If `{mediaId}.part` already holds the full object, promote it to a
@@ -347,8 +424,12 @@ class DiscoverVideoDiskCache {
     if (await dest.exists()) {
       final destLen = await dest.length();
       if (destLen == total) {
-        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
-        return dest;
+        // Same length is not enough — require marker/hash (rejects stale fakes).
+        if (await _trustFromCompleteMarker(mediaId: mediaId, dest: dest, total: total)) {
+          await _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+          return dest;
+        }
+        // Untrusted same-sized file: replace from .part when the part is full.
       }
     }
     final have = await part.length();
@@ -372,14 +453,18 @@ class DiscoverVideoDiskCache {
       if (await dest.exists()) await dest.delete();
       await part.rename(dest.path);
     } on PathNotFoundException {
-      if (await dest.exists() && await dest.length() == total) {
-        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+      if (await dest.exists() &&
+          await dest.length() == total &&
+          await _trustFromCompleteMarker(mediaId: mediaId, dest: dest, total: total)) {
+        await _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
         return dest;
       }
       return null;
     } catch (e) {
-      if (await dest.exists() && await dest.length() == total) {
-        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+      if (await dest.exists() &&
+          await dest.length() == total &&
+          await _trustFromCompleteMarker(mediaId: mediaId, dest: dest, total: total)) {
+        await _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
         return dest;
       }
       _diag(DiscoverVideoDiag(
@@ -392,7 +477,7 @@ class DiscoverVideoDiskCache {
       ));
       return null;
     }
-    _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
+    await _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
     _diag(DiscoverVideoDiag(
       mediaId: mediaId,
       source: 'finalize_part',
@@ -403,12 +488,13 @@ class DiscoverVideoDiskCache {
     return dest;
   }
 
-  void _rememberComplete({
+  Future<void> _rememberComplete({
     required String mediaId,
     required String key,
     required File dest,
     required int total,
-  }) {
+    String? etag,
+  }) async {
     _recordTrustedLength(mediaId, total);
     final drop = <String>[];
     for (final e in _lru.entries) {
@@ -426,6 +512,7 @@ class DiscoverVideoDiskCache {
       bytesOnDisk: total,
     );
     _touch(key);
+    await _persistCompleteMarker(mediaId: mediaId, dest: dest, total: total, etag: etag);
   }
 
   /// Reject HTML/JSON error bodies that were persisted as `.part`.
@@ -455,40 +542,50 @@ class DiscoverVideoDiskCache {
   }
 
   /// Complete `{mediaId}_TOTAL.mp4` on disk without network / without write lock.
+  /// Requires a validated `.mira_complete` marker (not size/name alone).
   Future<File?> _findCompleteOnDiskUnlocked(String mediaId) async {
-    final root = await _ensureRoot();
-    await _indexExisting(root);
-    for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
-      if (e.value.mediaId == mediaId && e.value.complete) {
-        final f = File(e.value.path);
-        if (!await f.exists()) continue;
-        final len = e.value.contentLength;
-        final size = await f.length();
-        if (size != len || len <= 0) continue;
-        // Only trusted totals count as complete. ftyp+moov sniff alone can match
-        // a truncated fast-start prefix and must not promote to complete.
-        if (!_isTrustedTotal(mediaId, len)) continue;
-        _touch(e.key);
-        return f;
+    try {
+      final root = await _ensureRoot();
+      if (!await root.exists()) return null;
+      await _indexExisting(root);
+      for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
+        if (e.value.mediaId == mediaId && e.value.complete) {
+          final f = File(e.value.path);
+          if (!await f.exists()) continue;
+          final len = e.value.contentLength;
+          final size = await f.length();
+          if (size != len || len <= 0) continue;
+          if (!await _trustFromCompleteMarker(mediaId: mediaId, dest: f, total: len)) {
+            continue;
+          }
+          _touch(e.key);
+          return f;
+        }
       }
+      await for (final entity in root.list()) {
+        if (entity is! File) continue;
+        final name = entity.uri.pathSegments.isEmpty
+            ? entity.path.split('/').last
+            : entity.uri.pathSegments.last;
+        final m = RegExp('^${RegExp.escape(mediaId)}_(\\d+)\\.mp4\$').firstMatch(name);
+        if (m == null) continue;
+        final len = int.tryParse(m.group(1)!) ?? 0;
+        if (len <= 0) continue;
+        final size = await entity.length();
+        if (size != len) continue;
+        if (!await _trustFromCompleteMarker(mediaId: mediaId, dest: entity, total: len)) {
+          continue;
+        }
+        final key = name;
+        await _rememberComplete(mediaId: mediaId, key: key, dest: entity, total: len);
+        return entity;
+      }
+      return null;
+    } on PathNotFoundException {
+      return null;
+    } catch (_) {
+      return null;
     }
-    await for (final entity in root.list()) {
-      if (entity is! File) continue;
-      final name = entity.uri.pathSegments.isEmpty
-          ? entity.path.split('/').last
-          : entity.uri.pathSegments.last;
-      final m = RegExp('^${RegExp.escape(mediaId)}_(\\d+)\\.mp4\$').firstMatch(name);
-      if (m == null) continue;
-      final len = int.tryParse(m.group(1)!) ?? 0;
-      if (len <= 0) continue;
-      final size = await entity.length();
-      if (size != len) continue;
-      if (!_isTrustedTotal(mediaId, len)) continue;
-      final key = name;
-      _rememberComplete(mediaId: mediaId, key: key, dest: entity, total: len);
-      return entity;
-    }
-    return null;
   }
 
   /// Non-blocking peek: complete file already on disk. Never waits on the write
@@ -569,12 +666,10 @@ class DiscoverVideoDiskCache {
 
   Future<File> _openBodyFile(String mediaId) async {
     final root = await _ensureRoot();
-    for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
-      if (e.value.mediaId == mediaId && e.value.complete) {
-        final f = File(e.value.path);
-        if (await f.exists()) return f;
-      }
-    }
+    // Same completeness gate as peekComplete — never treat an untrusted LRU
+    // row as a full object for proxy reads.
+    final trusted = await _findCompleteOnDiskUnlocked(mediaId);
+    if (trusted != null) return trusted;
     final part = File('${root.path}/$mediaId.part');
     if (!await part.exists()) {
       await part.create(recursive: true);
@@ -772,6 +867,9 @@ class DiscoverVideoDiskCache {
     return done.future;
   }
 
+  /// Authoritative object size from a successful HEAD only.
+  /// Rejects non-2xx, missing/invalid Content-Length, and HTML/JSON error bodies.
+  /// Callers that need a total after HEAD failure must use Content-Range on GET.
   Future<int?> _headLength(String url) async {
     try {
       final uri = Uri.tryParse(url);
@@ -779,9 +877,26 @@ class DiscoverVideoDiskCache {
       final head = await _http.headUrl(uri);
       head.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
       final headResp = await head.close().timeout(const Duration(seconds: 8));
-      final len = headResp.contentLength >= 0 ? headResp.contentLength : null;
-      await headResp.drain<void>();
-      return len;
+      try {
+        final code = headResp.statusCode;
+        if (code < 200 || code >= 300) {
+          return null;
+        }
+        final len = headResp.contentLength;
+        if (len <= 0) return null;
+        final ctype = headResp.headers.contentType;
+        final mime = ctype?.mimeType.toLowerCase() ?? '';
+        if (mime.contains('text/html') ||
+            mime.contains('application/json') ||
+            mime.contains('text/plain')) {
+          return null;
+        }
+        return len;
+      } finally {
+        try {
+          await headResp.drain<void>();
+        } catch (_) {}
+      }
     } catch (_) {
       return null;
     }
@@ -795,21 +910,17 @@ class DiscoverVideoDiskCache {
     int? knownTotal,
   }) async {
     final root = await _ensureRoot();
-    // Prefer complete file.
-    for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
-      if (e.value.mediaId == mediaId && e.value.complete) {
-        final f = File(e.value.path);
-        if (await f.exists()) {
-          final len = await f.length();
-          return _PrefixFill(
-            file: f,
-            bytesOnDiskBefore: len,
-            bytesReused: len,
-            bytesDownloaded: 0,
-            contentLength: e.value.contentLength,
-          );
-        }
-      }
+    // Prefer trusted complete only (same gate as peekComplete / proxy).
+    final complete = await _findCompleteOnDiskUnlocked(mediaId);
+    if (complete != null) {
+      final len = await complete.length();
+      return _PrefixFill(
+        file: complete,
+        bytesOnDiskBefore: len,
+        bytesReused: len,
+        bytesDownloaded: 0,
+        contentLength: len,
+      );
     }
 
     final part = File('${root.path}/$mediaId.part');
@@ -1047,24 +1158,41 @@ class DiscoverVideoDiskCache {
   Future<void> _indexExisting(Directory root) async {
     // Always merge disk files into the LRU — a non-empty map must not hide
     // complete clips written in a prior session (or by another isolate path).
-    await for (final entity in root.list()) {
-      if (entity is! File) continue;
-      final name = entity.uri.pathSegments.isEmpty ? entity.path.split('/').last : entity.uri.pathSegments.last;
-      final m = RegExp(r'^([0-9a-fA-F-]{36})_(\d+)\.mp4$').firstMatch(name);
-      if (m == null) continue;
-      final len = int.tryParse(m.group(2)!) ?? 0;
-      final size = await entity.length();
-      if (len <= 0 || size != len) continue;
-      final key = m.group(0)!;
-      if (_lru.containsKey(key)) continue;
-      _lru[key] = _CacheMeta(
-        key: key,
-        mediaId: m.group(1)!,
-        contentLength: len,
-        path: entity.path,
-        complete: true,
-        bytesOnDisk: size,
-      );
+    // Only marker-validated (or already trusted) files are complete.
+    if (!await root.exists()) return;
+    try {
+      await for (final entity in root.list()) {
+        if (entity is! File) continue;
+        final name = entity.uri.pathSegments.isEmpty
+            ? entity.path.split('/').last
+            : entity.uri.pathSegments.last;
+        final m = RegExp(r'^([0-9a-fA-F-]{36})_(\d+)\.mp4$').firstMatch(name);
+        if (m == null) continue;
+        final mediaId = m.group(1)!;
+        final len = int.tryParse(m.group(2)!) ?? 0;
+        final size = await entity.length();
+        if (len <= 0 || size != len) continue;
+        final key = m.group(0)!;
+        if (_lru.containsKey(key)) continue;
+        final trusted = await _trustFromCompleteMarker(
+          mediaId: mediaId,
+          dest: entity,
+          total: len,
+        );
+        if (!trusted) continue;
+        _lru[key] = _CacheMeta(
+          key: key,
+          mediaId: mediaId,
+          contentLength: len,
+          path: entity.path,
+          complete: true,
+          bytesOnDisk: size,
+        );
+      }
+    } on PathNotFoundException {
+      return;
+    } catch (_) {
+      return;
     }
   }
 
@@ -1094,7 +1222,13 @@ class DiscoverVideoDiskCache {
       final existing = _lru[key];
       if (existing != null && existing.complete) {
         final f = File(existing.path);
-        if (await f.exists() && await f.length() == contentLength) {
+        if (await f.exists() &&
+            await f.length() == contentLength &&
+            await _trustFromCompleteMarker(
+              mediaId: mediaId,
+              dest: f,
+              total: contentLength,
+            )) {
           _touch(key);
           final row = DiscoverCachedVideo(
             url: url,
