@@ -171,12 +171,13 @@ void main() {
     final localAfterSeed = await cache.bytesOnDiskFor(url);
     expect(localAfterSeed, greaterThanOrEqualTo(prefix));
 
-    // claimPriority seeds to 1MiB then returns proxy over the partial.
-    final source = await cache.resolvePlaySource(url);
+    // claimPriority:false so a background prefix_kick cannot fill the tail
+    // before this test measures proxy Range resume.
+    final source = await cache.resolvePlaySource(url, claimPriority: false);
     expect(source.isProxy, isTrue);
-    expect(source.bytesOnDisk, greaterThanOrEqualTo(1024 * 1024));
+    expect(source.bytesOnDisk, greaterThanOrEqualTo(prefix));
+    expect(source.bytesOnDisk, lessThan(1024 * 1024));
 
-    final seededBytes = source.bytesOnDisk!;
     final beforeRanges = List<int>.from(rangeStarts);
     final beforeFull = fullGets;
 
@@ -205,13 +206,11 @@ void main() {
     final stats = await waitStats();
     expect(stats.bytesFromDisk, greaterThanOrEqualTo(prefix));
     expect(stats.bytesFromNetwork, 0);
-    // After seed, proxy reads must not re-GET any byte already on disk.
-    final afterSeedRanges = rangeStarts.skip(beforeRanges.length).toList();
-    expect(afterSeedRanges.where((s) => s < seededBytes), isEmpty);
+    expect(rangeStarts.skip(beforeRanges.length).where((s) => s < prefix), isEmpty);
     expect(fullGets, beforeFull);
 
-    // Ask past the seeded 1MiB — only the missing tail may be fetched.
-    final needEnd = seededBytes + 4095;
+    // Ask past the saved prefix — only the missing tail may be fetched.
+    final needEnd = prefix + 4095;
     cache.lastServeStats = null;
     final playReq2 = await client.getUrl(source.uri!);
     playReq2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-$needEnd');
@@ -224,13 +223,12 @@ void main() {
     expect(played2, bytes.sublist(0, needEnd + 1));
 
     final stats2 = await waitStats();
-    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(seededBytes));
+    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(prefix));
     expect(stats2.bytesFromNetwork, greaterThan(0));
-    expect(stats2.bytesFromNetwork, lessThanOrEqualTo(needEnd + 1 - seededBytes + 1024));
-    // Origin Range must start at/after the seeded prefix — never byte 0 again.
+    expect(stats2.bytesFromNetwork, lessThanOrEqualTo(needEnd + 1 - prefix + 1024));
     final newRanges = rangeStarts.skip(beforeRanges.length).toList();
     expect(newRanges, isNotEmpty);
-    expect(newRanges.every((s) => s >= seededBytes), isTrue);
+    expect(newRanges.every((s) => s >= prefix), isTrue);
     expect(fullGets, beforeFull);
 
     client.close(force: true);
@@ -323,10 +321,9 @@ void main() {
     expect(localAfter20, localBefore);
 
     final getsBefore = List<int>.from(originGets[firstId] ?? const []);
-    final source = await cache.resolvePlaySource(firstUrl);
+    final source = await cache.resolvePlaySource(firstUrl, claimPriority: false);
     expect(source.isProxy, isTrue);
-    final seededBytes = source.bytesOnDisk!;
-    expect(seededBytes, greaterThanOrEqualTo(1024 * 1024));
+    expect(source.bytesOnDisk, greaterThanOrEqualTo(prefix));
 
     final client = HttpClient();
     final req = await client.getUrl(source.uri!);
@@ -354,23 +351,21 @@ void main() {
     expect(stats.bytesFromNetwork, 0);
 
     final getsAfterFirstPlay = List<int>.from(originGets[firstId] ?? const []);
-    // Seed may Range from the prior stopAfterBytes offset; never re-GET below it.
     final duringResolve = getsAfterFirstPlay.skip(getsBefore.length).toList();
     expect(duringResolve.where((s) => s >= 0 && s < prefix), isEmpty);
 
-    // Extend past seeded prefix — only tail from network.
     final mid = getsAfterFirstPlay.length;
     cache.lastServeStats = null;
     final req2 = await client.getUrl(source.uri!);
-    req2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-${seededBytes + 2047}');
+    req2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-${prefix + 2047}');
     final resp2 = await req2.close();
     await resp2.drain<void>();
     final stats2 = await waitStats();
-    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(seededBytes));
+    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(prefix));
     expect(stats2.bytesFromNetwork, greaterThan(0));
     final tailStarts = (originGets[firstId] ?? []).skip(mid).toList();
     expect(tailStarts.where((s) => s >= 0), isNotEmpty);
-    expect(tailStarts.where((s) => s >= 0).every((s) => s >= seededBytes), isTrue);
+    expect(tailStarts.where((s) => s >= 0).every((s) => s >= prefix), isTrue);
 
     client.close(force: true);
 
@@ -439,11 +434,13 @@ void main() {
     expect(seeded.bytesOnDisk, greaterThanOrEqualTo(prefix));
     expect(seeded.complete, isFalse);
 
+    // Clock covers resolve → first proxy byte (must not hide a 20s seed wait).
+    final sw = Stopwatch()..start();
     final source = await cache.resolvePlaySource(url);
     expect(source.isProxy, isTrue);
+    expect(sw.elapsedMilliseconds, lessThan(2000));
 
     final client = HttpClient();
-    final sw = Stopwatch()..start();
     final req = await client.getUrl(source.uri!);
     req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
     final resp = await req.close();
@@ -461,13 +458,12 @@ void main() {
         sawPrefix = true;
         // Decisive: saved prefix arrived while origin tail is still gated.
         expect(tailGate.isCompleted, isFalse);
-        // ignore: avoid_print
-        print('FIRST_BYTE_MS=${firstByte.isCompleted ? 'pending' : ''}');
       }
     });
 
     final firstByteMs = await firstByte.future.timeout(const Duration(seconds: 5));
-    expect(firstByteMs, greaterThanOrEqualTo(0));
+    expect(firstByteMs, lessThan(2000),
+        reason: 'must not wait out network timeout before local prefix');
     expect(tailGate.isCompleted, isFalse);
     // Wait until at least the local prefix has been delivered.
     final prefixDeadline = DateTime.now().add(const Duration(seconds: 5));
@@ -566,9 +562,10 @@ void main() {
     }
 
     gates.putIfAbsent(firstId, Completer<void>.new);
-    final source = await cache.resolvePlaySource(firstUrl);
-    final client = HttpClient();
     final sw = Stopwatch()..start();
+    final source = await cache.resolvePlaySource(firstUrl);
+    expect(sw.elapsedMilliseconds, lessThan(2000));
+    final client = HttpClient();
     final req = await client.getUrl(source.uri!);
     req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
     final resp = await req.close();
@@ -592,6 +589,8 @@ void main() {
     expect(chunks.length, greaterThanOrEqualTo(prefix));
     expect(gates[firstId]!.isCompleted, isFalse);
     expect(firstByteMs, greaterThanOrEqualTo(0));
+    expect(firstByteMs, lessThan(2000),
+        reason: 'full start clock must not include a 20s seed wait');
     // ignore: avoid_print
     print('AFTER20_FIRST_BYTE_MS=$firstByteMs');
 
@@ -1796,40 +1795,41 @@ void main() {
     expect(goodRow.bytesOnDisk, okBytes.length);
   });
 
-  test('claimPriority resolvePlaySource seeds ≥1MiB before returning proxy', () async {
-    final root = Directory.systemTemp.createTempSync('mira_vid_seed_before_proxy_');
+  test('end-to-end: resolve+proxy serves local prefix before gated tail (full clock)', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_e2e_start_');
     addTearDown(() {
       try {
         root.deleteSync(recursive: true);
       } catch (_) {}
     });
-    HttpServer? server;
+    HttpServer? origin;
     addTearDown(() async {
-      await server?.close(force: true);
+      await origin?.close(force: true);
     });
-    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final bytes = List<int>.generate(2 * 1024 * 1024, (i) => (i * 3) % 256);
-    var rangeGets = 0;
-    server.listen((req) async {
+    origin = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(64 * 1024, (i) => (i * 11) % 256);
+    const prefix = 16 * 1024;
+    final tailGate = Completer<void>();
+    origin.listen((req) async {
       if (req.method == 'HEAD') {
-        req.response.headers.contentType = ContentType('video', 'mp4');
         req.response.contentLength = bytes.length;
+        req.response.headers.set(HttpHeaders.acceptRangesHeader, 'bytes');
         await req.response.close();
         return;
       }
       final range = req.headers.value(HttpHeaders.rangeHeader);
       req.response.headers.contentType = ContentType('video', 'mp4');
       if (range != null && range.startsWith('bytes=')) {
-        rangeGets += 1;
         final start = int.parse(range.substring(6).split('-').first);
-        final endSpec = range.substring(6).split('-').last;
-        final end = endSpec.isEmpty ? bytes.length - 1 : int.parse(endSpec);
+        if (start >= prefix) {
+          await tailGate.future;
+        }
         req.response.statusCode = HttpStatus.partialContent;
         req.response.headers.set(
           HttpHeaders.contentRangeHeader,
-          'bytes $start-$end/${bytes.length}',
+          'bytes $start-${bytes.length - 1}/${bytes.length}',
         );
-        req.response.add(bytes.sublist(start, end + 1));
+        req.response.add(bytes.sublist(start));
       } else {
         req.response.contentLength = bytes.length;
         req.response.add(bytes);
@@ -1837,32 +1837,59 @@ void main() {
       await req.response.close();
     });
 
-    const id = 'fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    const id = 'fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     final url =
-        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
+        'http://${origin.address.host}:${origin.port}/api/v1/marketplace/media/$id';
     final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
     addTearDown(() async {
       await cache.disposeProxy();
     });
 
-    expect(await cache.bytesOnDiskFor(url), 0);
+    await cache.ensureLocal(url, stopAfterBytes: prefix);
+    expect(await cache.bytesOnDiskFor(url), greaterThanOrEqualTo(prefix));
+
+    // Full start clock — includes resolvePlaySource (must not wait on gated tail).
+    final sw = Stopwatch()..start();
     final source = await cache.resolvePlaySource(url, claimPriority: true);
     expect(source.isProxy, isTrue);
-    expect(source.bytesOnDisk, greaterThanOrEqualTo(1024 * 1024));
-    expect(rangeGets, greaterThan(0));
-    final prefixDiags = cache.diagnostics
-        .where((d) => d.source == 'network_to_disk' || d.source == 'disk_resume')
-        .toList();
-    expect(prefixDiags, isNotEmpty);
-    expect(
-      prefixDiags.any((d) => d.elapsedMs > 0),
-      isTrue,
-      reason: 'prefix fill must record real elapsedMs (not 0)',
-    );
+    expect(sw.elapsedMilliseconds, lessThan(2000),
+        reason: 'resolve must not await gated network fill');
+
+    final req = await HttpClient().getUrl(source.uri!);
+    req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
+    final resp = await req.close();
+    final firstByte = Completer<int>();
+    final chunks = <int>[];
+    final sub = resp.listen((chunk) {
+      if (chunk.isEmpty) return;
+      chunks.addAll(chunk);
+      if (!firstByte.isCompleted) {
+        firstByte.complete(sw.elapsedMilliseconds);
+      }
+    });
+
+    final firstByteMs = await firstByte.future.timeout(const Duration(seconds: 3));
+    expect(tailGate.isCompleted, isFalse);
+    expect(firstByteMs, lessThan(2000),
+        reason: 'local prefix must arrive without waiting for gated tail');
+    // ignore: avoid_print
+    print('E2E_START_TO_FIRST_BYTE_MS=$firstByteMs tailGateOpen=${tailGate.isCompleted}');
+
+    final prefixDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while (chunks.length < prefix && DateTime.now().isBefore(prefixDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(chunks.length, greaterThanOrEqualTo(prefix));
+    expect(chunks.sublist(0, prefix), bytes.sublist(0, prefix));
+    expect(tailGate.isCompleted, isFalse);
+
+    tailGate.complete();
+    await sub.asFuture<void>();
+    expect(chunks, bytes);
   });
 
-  test('neighbor resolvePlaySource does not block on 1MiB seed', () async {
-    final root = Directory.systemTemp.createTempSync('mira_vid_neighbor_no_seed_');
+  test('claimPriority resolve returns immediately when origin is stalled', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_stalled_origin_');
     addTearDown(() {
       try {
         root.deleteSync(recursive: true);
@@ -1886,19 +1913,22 @@ void main() {
       req.response.add(bytes);
       await req.response.close();
     });
-    const id = 'fneigh01-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    const id = 'fstall01-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
     final url =
         'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
     final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
     addTearDown(() async {
       await cache.disposeProxy();
     });
+    // Local partial already present.
+    await File('${root.path}/$id.part').writeAsBytes(bytes.sublist(0, 8 * 1024));
     final sw = Stopwatch()..start();
-    final source =
-        await cache.resolvePlaySource(url, claimPriority: false).timeout(const Duration(seconds: 2));
+    final source = await cache
+        .resolvePlaySource(url, claimPriority: true)
+        .timeout(const Duration(seconds: 2));
     expect(sw.elapsedMilliseconds, lessThan(500));
     expect(source.isProxy, isTrue);
-    expect(source.bytesOnDisk, 0);
+    expect(source.bytesOnDisk, greaterThanOrEqualTo(8 * 1024));
     release.complete();
   });
 }

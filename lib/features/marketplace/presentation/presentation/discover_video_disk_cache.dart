@@ -676,30 +676,20 @@ class DiscoverVideoDiskCache {
       return DiscoverPlaySource.file(complete, mediaId: mediaId, bytesOnDisk: len);
     }
 
-    // On-screen clip: seed a playable prefix BEFORE AVPlayer initialize races the
-    // loopback proxy against the write lock (device T41: init≈3.0s while 1MiB fill
-    // held the lock; firstFrameMs=4009). Neighbors stay non-blocking.
-    const seedTarget = 1024 * 1024;
-    var have = await bytesOnDiskFor(url);
-    final knownTotal = _trustedLength[mediaId] ?? _knownLength[mediaId];
-    final seedBytes = (knownTotal != null && knownTotal > 0)
-        ? math.min(seedTarget, knownTotal)
-        : seedTarget;
-    if (claimPriority && have < seedBytes) {
-      final seedSw = Stopwatch()..start();
+    // Never await a fixed byte target here — that blocked resolve for ~20s when
+    // the origin tail was slow/gated (1714 regression) while local prefix bytes
+    // were already servable via the proxy. Kick a non-blocking prefix fill for
+    // the on-screen clip; the proxy serves whatever is already on disk.
+    final have = await bytesOnDiskFor(url);
+    if (claimPriority && have < 1024 * 1024) {
       miraDiscoverLog(
-        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_seed_start '
-        'have=$have need=$seedBytes',
+        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_kick '
+        'have=$have need=${1024 * 1024} blocking=0',
       );
-      await ensurePlayablePrefix(url, needBytes: seedBytes);
-      have = await bytesOnDiskFor(url);
-      miraDiscoverLog(
-        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_seed_end '
-        'have=$have elapsedMs=${seedSw.elapsedMilliseconds}',
-      );
+      // ignore: discarded_futures
+      ensurePlayablePrefix(url, needBytes: 1024 * 1024);
     }
 
-    // Proxy serves the local prefix; callers [prefetch] for background full fill.
     final port = await _ensureProxy();
     final playUrl = Uri.parse('http://127.0.0.1:$port/play/$mediaId');
     return DiscoverPlaySource.proxy(

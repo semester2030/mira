@@ -113,7 +113,7 @@ class AssetVideoPort extends PresentationVideoPort {
   /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
   static const String buildStamp = String.fromEnvironment(
     'MIRA_BUILD',
-    defaultValue: '2026111714',
+    defaultValue: '2026111715',
   );
 
   /// When non-null (unit tests), paths are passed straight to this factory and
@@ -292,10 +292,17 @@ class AssetVideoPort extends PresentationVideoPort {
       return VideoPlayerController.file(source.file!);
     }
     if (source.isProxy && source.uri != null) {
-      // Active clip: full shared fill. Warm/neighbor: prefix only.
-      cache.prefetch(assetPath, lowPriority: !fullFill);
+      // Device T41 (1713): active ensureLocal under the write lock overlapped
+      // AVPlayer.initialize (~3s). Kick prefix-only while the player opens;
+      // full object fill runs after first visible progress (prefetchDisk).
+      cache.prefetch(assetPath, lowPriority: true);
+      if (fullFill) {
+        phases?['fullFillDeferred'] = 1;
+      }
       phases?['cacheSource'] = 4; // loopback proxy over partial/complete fill
-      phases?['cacheBytes'] = source.bytesOnDisk;
+      phases?['cacheBytesAtOpen'] = source.bytesOnDisk;
+      // Keep cacheBytes as the open-time snapshot — never rewrite after the fact.
+      phases?['cacheBytes'] ??= source.bytesOnDisk;
       _recordDiag({
         'mediaId': source.mediaId,
         'source': 'proxy_partial',
@@ -303,6 +310,7 @@ class AssetVideoPort extends PresentationVideoPort {
         'bytesDownloaded': 0,
         'playUrl': source.uri.toString(),
         'fullFill': fullFill ? 1 : 0,
+        'fullFillDeferred': fullFill ? 1 : 0,
       });
       return VideoPlayerController.networkUrl(source.uri!);
     }
@@ -650,9 +658,13 @@ class AssetVideoPort extends PresentationVideoPort {
     await cutOutgoingAudio(nextMediaUrl: assetPath);
     lastAttachPhases['audioCut'] = _msSince(settleStarted);
     lastAttachPhases['prevPlayerId'] = _playerId(previous);
-    // Active clip owns the full GET; neighbors stay prefix-only.
-    prefetchDisk(assetPath);
+    lastAttachPhases['attemptId'] =
+        DateTime.now().toUtc().microsecondsSinceEpoch;
+    // Prioritize BEFORE any kick so this media is not treated as a neighbor.
+    // Prefix-only during open — full ensureLocal under the write lock raced
+    // AVPlayer.initialize on device T41 (~3s init / firstFrameMs=4009).
     _diskCache?.prioritize(assetPath);
+    prefetchDisk(assetPath, lowPriority: true);
     // Promote a finished .part before resolve so return-to-clip opens a file.
     // ignore: discarded_futures
     _diskCache?.finalizePartIfComplete(assetPath);
@@ -812,8 +824,9 @@ class AssetVideoPort extends PresentationVideoPort {
           _notify();
           return;
         }
-        lastAttachPhases['initDone'] = _msSince(settleStarted);
-        lastAttachPhases['firstByteProxy'] = lastAttachPhases['initDone'];
+        // First successful init only — reopen must not rewrite these fields.
+        lastAttachPhases['initDone'] ??= _msSince(settleStarted);
+        lastAttachPhases['firstByteProxy'] ??= lastAttachPhases['initDone'];
         // Still count as warm/parked/prepared source if we reused the controller.
         if (claimSource != 'cold') {
           lastAttachPhases['source'] = switch (claimSource) {
@@ -824,10 +837,10 @@ class AssetVideoPort extends PresentationVideoPort {
           };
         }
       } else {
-        // Already warm/parked — init was paid earlier; still stamp for comparison.
-        lastAttachPhases['initStart'] = lastAttachPhases['warmClaimed'] ?? 0;
-        lastAttachPhases['initDone'] = _msSince(settleStarted);
-        lastAttachPhases['firstByteProxy'] = lastAttachPhases['initDone'];
+        // Already warm/parked — init was paid earlier; stamp once for comparison.
+        lastAttachPhases['initStart'] ??= lastAttachPhases['warmClaimed'] ?? 0;
+        lastAttachPhases['initDone'] ??= _msSince(settleStarted);
+        lastAttachPhases['firstByteProxy'] ??= lastAttachPhases['initDone'];
       }
       if (token != _generation || _released || _controller != controller) {
         await _dropIfStale(controller, token);
@@ -857,7 +870,7 @@ class AssetVideoPort extends PresentationVideoPort {
       }
       // Capture floor before play so parked/rewind clips must advance again after activate.
       _progressFloor = controller.value.position;
-      lastAttachPhases['playStart'] = _msSince(settleStarted);
+      lastAttachPhases['playStart'] ??= _msSince(settleStarted);
       lastAttachPhases['posAtPlayMs'] = controller.value.position.inMilliseconds;
       await controller.play();
       if (token != _generation || _released || _controller != controller) {
@@ -885,35 +898,31 @@ class AssetVideoPort extends PresentationVideoPort {
             'MIRA_DISCOVER_AUDIO unmute_skipped playerId=${_playerId(controller)} '
             'reason=not_active gen=$token live=$_generation '
             'ctrlMatch=${identical(_controller, controller)} '
-            'firstFrameMs=${lastAttachPhases['firstFrame']}',
+            'firstFrameMs=${lastAttachPhases['firstFrame']} '
+            'attempt=${lastAttachPhases['attemptId']}',
           );
           await _dropIfStale(controller, token);
           return;
         }
-        final nextId = _playerId(controller);
-        miraDiscoverLog(
-          'MIRA_DISCOVER_AUDIO unmute_req playerId=$nextId '
-          'at=${DateTime.now().toUtc().toIso8601String()}',
-        );
-        await controller.setVolume(_muted ? 0 : 1);
-        lastAttachPhases['audioArmed'] = _msSince(settleStarted);
-        lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
-        lastAttachPhases['nextPlayerId'] = nextId;
-        _recordDiag({
-          'event': 'audio_armed',
-          'offerId': slot.slideId,
-          'mediaId': wantId,
-          'playerId': nextId,
-          'prevPlayerId': lastAttachPhases['prevPlayerId'],
-          'firstFrameMs': lastAttachPhases['firstFrame'],
-          'audioArmedMs': lastAttachPhases['audioArmed'],
-          'audiblePlaying': audiblePlayingCount,
-        });
-        miraDiscoverLog(
-          'MIRA_DISCOVER_SWIPE audio_armed mediaId=$wantId '
-          'playerId=$nextId firstFrameMs=${lastAttachPhases['firstFrame']} '
-          'audible=$audiblePlayingCount',
-        );
+        // Prefer arming done in _markProgressIfVisible; fill gaps here.
+        if (lastAttachPhases['audioArmed'] == null && !_muted) {
+          final nextId = _playerId(controller);
+          miraDiscoverLog(
+            'MIRA_DISCOVER_AUDIO unmute_req playerId=$nextId '
+            'attempt=${lastAttachPhases['attemptId']} '
+            'at=${DateTime.now().toUtc().toIso8601String()}',
+          );
+          await controller.setVolume(1);
+          lastAttachPhases['audioArmed'] = _msSince(settleStarted);
+          lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
+          lastAttachPhases['nextPlayerId'] = nextId;
+          miraDiscoverLog(
+            'MIRA_DISCOVER_SWIPE audio_armed mediaId=$wantId '
+            'playerId=$nextId firstFrameMs=${lastAttachPhases['firstFrame']} '
+            'audible=$audiblePlayingCount '
+            'attempt=${lastAttachPhases['attemptId']}',
+          );
+        }
       } else if (!_canStart(controller, token)) {
         await _dropIfStale(controller, token);
         return;
@@ -979,7 +988,25 @@ class AssetVideoPort extends PresentationVideoPort {
           final target = (dur > Duration.zero && nudge >= dur)
               ? Duration.zero
               : nudge;
+          miraDiscoverLog(
+            'MIRA_DISCOVER_PHASE mediaId=${_mediaIdOf(assetPath)} '
+            'phase=seek_nudge_req attempt=${lastAttachPhases['attemptId']} '
+            'targetMs=${target.inMilliseconds} kind=${lastAttachPhases['seekNudgeKind']}',
+          );
           await controller.seekTo(target);
+          // Seek itself moves position — raise the floor so firstFrame requires
+          // further playback progress, not the seek landing alone.
+          final afterSeek = controller.value.position;
+          if (afterSeek > _progressFloor) {
+            _progressFloor = afterSeek;
+          }
+          lastAttachPhases['seekDoneMs'] = _msSince(settleStarted);
+          lastAttachPhases['posAfterSeekMs'] = afterSeek.inMilliseconds;
+          miraDiscoverLog(
+            'MIRA_DISCOVER_PHASE mediaId=${_mediaIdOf(assetPath)} '
+            'phase=seek_nudge_done attempt=${lastAttachPhases['attemptId']} '
+            'posMs=${afterSeek.inMilliseconds}',
+          );
           if (token != _generation || _released || _controller != controller) return;
           await controller.play();
           if (token != _generation || _released || _controller != controller) return;
@@ -1029,9 +1056,16 @@ class AssetVideoPort extends PresentationVideoPort {
               }
               await fresh.setLooping(true);
               await fresh.setVolume(0);
-              lastAttachPhases['initDone'] = _msSince(settleStarted);
-              lastAttachPhases['playStart'] = _msSince(settleStarted);
+              // Separate reopen timestamps — do not overwrite the original attempt.
+              lastAttachPhases['reopenInitDone'] = _msSince(settleStarted);
+              lastAttachPhases['reopenPlayStart'] = _msSince(settleStarted);
               lastAttachPhases['reopened'] = 1;
+              lastAttachPhases['reopenPlayerId'] = _playerId(fresh);
+              miraDiscoverLog(
+                'MIRA_DISCOVER_PHASE mediaId=${_mediaIdOf(path)} '
+                'phase=stall_reopen attempt=${lastAttachPhases['attemptId']} '
+                'playerId=${lastAttachPhases['reopenPlayerId']}',
+              );
               await fresh.play();
               _notify();
               _emitPlayback('started', positionMs: 0, offerId: slot.slideId, mediaUrl: path);
@@ -1040,10 +1074,6 @@ class AssetVideoPort extends PresentationVideoPort {
               while (DateTime.now().toUtc().isBefore(reopenDeadline)) {
                 if (token != _generation || _released || _controller != fresh) return;
                 if (_markProgressIfVisible(fresh, token, settleStarted, slot, path)) {
-                  if (_canStart(fresh, token) && _hasVisibleProgress) {
-                    await fresh.setVolume(_muted ? 0 : 1);
-                    lastAttachPhases['audioArmed'] = _msSince(settleStarted);
-                  }
                   return;
                 }
                 await Future<void>.delayed(const Duration(milliseconds: 16));
@@ -1142,27 +1172,61 @@ class AssetVideoPort extends PresentationVideoPort {
       });
       miraDiscoverLog(
         'MIRA_DISCOVER_FF session=$sessionId transition=$_generation '
-        'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
+        'attempt=${lastAttachPhases['attemptId']} build=$buildStamp '
+        'mediaId=${_mediaIdOf(assetPath)} '
         'offer=${slot.slideId} playerId=${_playerId(controller)} firstFrameMs=$ms '
         'source=${lastAttachPhases['source']} '
         'cacheSource=${lastAttachPhases['cacheSource']} '
         'cacheBytes=${lastAttachPhases['cacheBytes']} '
+        'cacheBytesAtOpen=${lastAttachPhases['cacheBytesAtOpen']} '
         'audioCutMs=${lastAttachPhases['audioCut']} '
         'audible=$audiblePlayingCount '
         'initStart=${lastAttachPhases['initStart']} '
         'initDone=${lastAttachPhases['initDone']} '
         'playStart=${lastAttachPhases['playStart']} '
         'resolveMs=${(lastAttachPhases['resolveDone'] ?? 0) - (lastAttachPhases['resolveStart'] ?? 0)} '
-        'seekNudge=${lastAttachPhases['seekNudgeMs']}',
+        'seekNudge=${lastAttachPhases['seekNudgeMs']} '
+        'seekDone=${lastAttachPhases['seekDoneMs']} '
+        'posAfterSeek=${lastAttachPhases['posAfterSeekMs']} '
+        'reopened=${lastAttachPhases['reopened']}',
       );
       miraDiscoverLog(
         'MIRA_DISCOVER_SWIPE settle session=$sessionId transition=$_generation '
-        'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
+        'attempt=${lastAttachPhases['attemptId']} build=$buildStamp '
+        'mediaId=${_mediaIdOf(assetPath)} '
         'offer=${slot.slideId} claim=${lastAttachPhases['source']} '
         'cache=${lastAttachPhases['cacheSource']} bytes=${lastAttachPhases['cacheBytes']} '
         'audioCutMs=${lastAttachPhases['audioCut']} firstFrameMs=$ms '
         'audible=$audiblePlayingCount',
       );
+      // Arm audible on every first-frame path (including stall reopen).
+      if (_canStart(controller, token) && lastAttachPhases['audioArmed'] == null) {
+        // ignore: discarded_futures
+        () async {
+          if (!_canStart(controller, token) || _muted) return;
+          final id = _playerId(controller);
+          miraDiscoverLog(
+            'MIRA_DISCOVER_AUDIO unmute_req playerId=$id '
+            'attempt=${lastAttachPhases['attemptId']} '
+            'at=${DateTime.now().toUtc().toIso8601String()}',
+          );
+          try {
+            await controller.setVolume(1);
+            if (!_canStart(controller, token)) return;
+            lastAttachPhases['audioArmed'] = _msSince(settleStarted);
+            miraDiscoverLog(
+              'MIRA_DISCOVER_SWIPE audio_armed mediaId=${_mediaIdOf(assetPath)} '
+              'playerId=$id firstFrameMs=$ms '
+              'audible=$audiblePlayingCount '
+              'attempt=${lastAttachPhases['attemptId']}',
+            );
+          } catch (e) {
+            miraDiscoverLog(
+              'MIRA_DISCOVER_AUDIO unmute_err playerId=$id err=$e',
+            );
+          }
+        }();
+      }
     }
     return true;
   }
