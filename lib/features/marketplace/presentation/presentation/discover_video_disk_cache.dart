@@ -294,6 +294,17 @@ class DiscoverVideoDiskCache {
   /// Test/diag: true while a writer holds the lock for [mediaId].
   bool debugHasWriteLock(String mediaId) => _writeLocks.containsKey(mediaId);
 
+  /// Test/diag: true when a full [ensureLocal] job is registered for [mediaId].
+  bool debugHasInflight(String mediaId) => _inflight.containsKey(mediaId);
+
+  /// Test-only: awaited under the write lock inside [_ensurePrefix] immediately
+  /// before the `_inflight` join check — lets tests interleave [ensureLocal].
+  Future<void> Function()? debugYieldBeforeInflightJoin;
+
+  /// Test-only: when true, restores the pre-1711 join-on-inflight-under-lock
+  /// path so the deadlock can be reproduced deterministically.
+  bool debugJoinInflightUnderLock = false;
+
   /// True when [total] was recorded from an authoritative HTTP source or a
   /// validated on-disk complete marker for [mediaId].
   bool _isTrustedTotal(String mediaId, int total) {
@@ -939,35 +950,42 @@ class DiscoverVideoDiskCache {
       );
     }
 
-    // Join a full ensureLocal if already downloading the whole file.
-    final pending = _inflight[mediaId];
-    if (pending != null) {
-      // Wait briefly for prefix growth.
-      final deadline = DateTime.now().toUtc().add(const Duration(seconds: 12));
-      while (DateTime.now().toUtc().isBefore(deadline)) {
-        have = await part.exists() ? await part.length() : 0;
-        if (have >= needBytes) {
-          return _PrefixFill(
-            file: part,
-            bytesOnDiskBefore: before,
-            bytesReused: before,
-            bytesDownloaded: have - before,
-            contentLength: knownTotal ?? _knownLength[mediaId],
-          );
+    final yieldHook = debugYieldBeforeInflightJoin;
+    if (yieldHook != null) {
+      await yieldHook();
+    }
+
+    // BUG REPRO PATH (toggled by debugJoinInflightUnderLock): waiting on an
+    // [_inflight] ensureLocal while holding the write lock deadlocks — that
+    // job is queued behind this lock and cannot grow `.part`.
+    if (debugJoinInflightUnderLock) {
+      final pending = _inflight[mediaId];
+      if (pending != null) {
+        final deadline = DateTime.now().toUtc().add(const Duration(seconds: 12));
+        while (DateTime.now().toUtc().isBefore(deadline)) {
+          have = await part.exists() ? await part.length() : 0;
+          if (have >= needBytes) {
+            return _PrefixFill(
+              file: part,
+              bytesOnDiskBefore: before,
+              bytesReused: before,
+              bytesDownloaded: have - before,
+              contentLength: knownTotal ?? _knownLength[mediaId],
+            );
+          }
+          final done = await _findCompleteOnDiskUnlocked(mediaId);
+          if (done != null) {
+            final len = await done.length();
+            return _PrefixFill(
+              file: done,
+              bytesOnDiskBefore: before,
+              bytesReused: before,
+              bytesDownloaded: math.max(0, len - before),
+              contentLength: len,
+            );
+          }
+          await Future<void>.delayed(const Duration(milliseconds: 40));
         }
-        // Complete may have renamed part away — disk read only (no lock wait).
-        final done = await _findCompleteOnDiskUnlocked(mediaId);
-        if (done != null) {
-          final len = await done.length();
-          return _PrefixFill(
-            file: done,
-            bytesOnDiskBefore: before,
-            bytesReused: before,
-            bytesDownloaded: math.max(0, len - before),
-            contentLength: len,
-          );
-        }
-        await Future<void>.delayed(const Duration(milliseconds: 40));
       }
     }
 

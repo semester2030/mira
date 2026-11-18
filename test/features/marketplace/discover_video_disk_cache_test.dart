@@ -1532,6 +1532,256 @@ void main() {
     expect(maxConcurrent, 1);
   });
 
+  test('prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_deadlock_repro_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(128 * 1024, (i) => i % 256);
+    final events = <String>[];
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      events.add('GET ${req.headers.value(HttpHeaders.rangeHeader)}');
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      final range = req.headers.value(HttpHeaders.rangeHeader);
+      if (range != null && range.startsWith('bytes=')) {
+        final spec = range.substring(6);
+        final parts = spec.split('-');
+        final start = int.tryParse(parts[0]) ?? 0;
+        final end = (parts.length > 1 && parts[1].isNotEmpty)
+            ? (int.tryParse(parts[1]) ?? (bytes.length - 1))
+            : (bytes.length - 1);
+        final lo = start.clamp(0, bytes.length - 1);
+        final hi = end.clamp(lo, bytes.length - 1);
+        req.response.statusCode = HttpStatus.partialContent;
+        req.response.headers.set(
+          HttpHeaders.contentRangeHeader,
+          'bytes $lo-$hi/${bytes.length}',
+        );
+        req.response.add(bytes.sublist(lo, hi + 1));
+      } else {
+        req.response.contentLength = bytes.length;
+        req.response.add(bytes);
+      }
+      await req.response.close();
+    });
+
+    const id = 'fdead10c-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    final url =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+
+    // Restore the buggy join path for this repro only.
+    cache.debugJoinInflightUnderLock = true;
+    final prefixInLock = Completer<void>();
+    final allowPrefixPastJoin = Completer<void>();
+    cache.debugYieldBeforeInflightJoin = () async {
+      events.add('prefix_under_lock');
+      if (!prefixInLock.isCompleted) prefixInLock.complete();
+      await allowPrefixPastJoin.future;
+      events.add('prefix_past_yield inflight=${cache.debugHasInflight(id)}');
+    };
+
+    final sw = Stopwatch()..start();
+    final prefixJob = cache.ensurePlayablePrefix(url, needBytes: 8 * 1024);
+    await prefixInLock.future.timeout(const Duration(seconds: 3));
+    expect(cache.debugHasWriteLock(id), isTrue);
+
+    final localJob = cache.ensureLocal(url);
+    // ensureLocal registers _inflight then waits on the write lock.
+    final registered = DateTime.now().add(const Duration(seconds: 2));
+    while (DateTime.now().isBefore(registered)) {
+      if (cache.debugHasInflight(id)) break;
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(cache.debugHasInflight(id), isTrue, reason: 'ensureLocal must register before join');
+    events.add('ensureLocal_inflight_waiting_lock');
+
+    allowPrefixPastJoin.complete();
+    final prefixBytes = await prefixJob.timeout(
+      const Duration(seconds: 15),
+      onTimeout: () => -1,
+    );
+    sw.stop();
+    events.add('prefix_done bytes=$prefixBytes ms=${sw.elapsedMilliseconds}');
+
+    // Bug: prefix waits on inflight that cannot run → ~12s stall.
+    expect(
+      sw.elapsedMilliseconds,
+      greaterThan(10000),
+      reason: 'bug repro must stall near the 12s join deadline; events=$events',
+    );
+    await localJob.timeout(const Duration(seconds: 5));
+  });
+
+  test('prefix holding lock + ensureLocal inflight: Range fill without join (fixed)', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_deadlock_fix_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(128 * 1024, (i) => i % 256);
+    final events = <String>[];
+    var rangeGets = 0;
+    var fullGets = 0;
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      final range = req.headers.value(HttpHeaders.rangeHeader);
+      if (range != null && range.startsWith('bytes=')) {
+        rangeGets += 1;
+        events.add('RANGE $range');
+        final spec = range.substring(6);
+        final parts = spec.split('-');
+        final start = int.tryParse(parts[0]) ?? 0;
+        final end = (parts.length > 1 && parts[1].isNotEmpty)
+            ? (int.tryParse(parts[1]) ?? (bytes.length - 1))
+            : (bytes.length - 1);
+        final lo = start.clamp(0, bytes.length - 1);
+        final hi = end.clamp(lo, bytes.length - 1);
+        req.response.statusCode = HttpStatus.partialContent;
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.headers.set(
+          HttpHeaders.contentRangeHeader,
+          'bytes $lo-$hi/${bytes.length}',
+        );
+        req.response.add(bytes.sublist(lo, hi + 1));
+      } else {
+        fullGets += 1;
+        events.add('FULL');
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        req.response.add(bytes);
+      }
+      await req.response.close();
+    });
+
+    const id = 'ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    final url =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+    cache.debugJoinInflightUnderLock = false; // fixed path
+
+    final prefixInLock = Completer<void>();
+    final allowPrefixContinue = Completer<void>();
+    cache.debugYieldBeforeInflightJoin = () async {
+      events.add('prefix_under_lock');
+      if (!prefixInLock.isCompleted) prefixInLock.complete();
+      await allowPrefixContinue.future;
+      events.add('prefix_past_yield inflight=${cache.debugHasInflight(id)}');
+    };
+
+    final sw = Stopwatch()..start();
+    final prefixJob = cache.ensurePlayablePrefix(url, needBytes: 8 * 1024);
+    await prefixInLock.future.timeout(const Duration(seconds: 3));
+
+    final localJob = cache.ensureLocal(url);
+    final registered = DateTime.now().add(const Duration(seconds: 2));
+    while (DateTime.now().isBefore(registered)) {
+      if (cache.debugHasInflight(id)) break;
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(cache.debugHasInflight(id), isTrue);
+    events.add('ensureLocal_inflight_waiting_lock');
+    allowPrefixContinue.complete();
+
+    final prefixBytes = await prefixJob.timeout(const Duration(seconds: 3));
+    sw.stop();
+    expect(prefixBytes, greaterThanOrEqualTo(8 * 1024));
+    expect(
+      sw.elapsedMilliseconds,
+      lessThan(3000),
+      reason: 'must not hit 12s join; events=$events ms=${sw.elapsedMilliseconds}',
+    );
+    expect(rangeGets, greaterThan(0), reason: 'prefix grows via Range under lock');
+
+    final local = await localJob.timeout(const Duration(seconds: 5));
+    expect(local.complete, isTrue);
+    expect(fullGets + rangeGets, greaterThan(0));
+    events.add('done prefixMs=${sw.elapsedMilliseconds}');
+  });
+
+  test('ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_rev_order_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? server;
+    addTearDown(() async {
+      await server?.close(force: true);
+    });
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final releaseBody = Completer<void>();
+    final bytes = List<int>.generate(96 * 1024, (i) => i % 256);
+    server.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.headers.contentType = ContentType('video', 'mp4');
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.contentLength = bytes.length;
+      req.response.add(bytes.sublist(0, 24 * 1024));
+      await req.response.flush();
+      await releaseBody.future;
+      req.response.add(bytes.sublist(24 * 1024));
+      await req.response.close();
+    });
+
+    const id = 'freverse1-cccc-cccc-cccc-cccccccccccc';
+    final url =
+        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+
+    final full = cache.ensureLocal(url);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(cache.debugHasWriteLock(id), isTrue);
+
+    final sw = Stopwatch()..start();
+    final prefix = cache.ensurePlayablePrefix(url, needBytes: 8 * 1024);
+    // Outside-lock waiter should see growing .part without taking the lock.
+    final have = await prefix.timeout(const Duration(seconds: 3));
+    sw.stop();
+    expect(have, greaterThanOrEqualTo(8 * 1024));
+    expect(sw.elapsedMilliseconds, lessThan(3000));
+    releaseBody.complete();
+    await full;
+  });
+
   test('failed neighbor download does not abort a concurrent visible download', () async {
     final root = Directory.systemTemp.createTempSync('mira_vid_fail_peer_');
     addTearDown(() {
