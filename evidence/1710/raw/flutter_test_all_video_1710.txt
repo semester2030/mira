@@ -1,0 +1,546 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.13.1 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.3.0 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.4 available)
+  video_player_avfoundation 2.12.0 (2.12.4 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+99 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart                                                          00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart                                                          00:01 +0: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uggdmc6 transition=1 build=2026111710 mediaId=null offer=mix-a playerId=426853419 firstFrameMs=5 source=0 cacheSource=0 cacheBytes=null audioCutMs=2 audible=0 initStart=3 initDone=5 playStart=5 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uggdmc6 transition=1 build=2026111710 mediaId=null offer=mix-a claim=0 cache=0 bytes=null audioCutMs=2 firstFrameMs=5 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=426853419 at=2026-11-18T10:24:37.066228Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=426853419 firstFrameMs=5 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=426853419 role=active at=2026-11-18T10:24:37.069599Z
+MIRA_DISCOVER_AUDIO mute_req playerId=426853419 role=active at=2026-11-18T10:24:37.092754Z
+00:01 +1: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=65536 elapsedMs=33 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=disk reused=65536 dl=0 elapsedMs=2 err=null prio=null lock=true
+00:01 +2: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=finalize_part reused=32768 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=network_to_disk reused=0 dl=32768 elapsedMs=92 err=null prio=null lock=true
+00:01 +3: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: reopen after partial prefix: serves local start, Range-fetches only the tail
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=partial reused=0 dl=10240 elapsedMs=3 err=incomplete_10240/49152 prio=null lock=true
+00:01 +4: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f source=network_error reused=0 dl=0 elapsedMs=3 err=non_video_body prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:01 +4: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+LOGICAL_20_IDS localFirst=8192 others=155648 prefix=8192 bodySize=24576
+00:01 +5: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/32768 prio=null lock=true
+FIRST_BYTE_MS=pending
+FIRST_BYTE_MS=3 PREFIX_ARRIVED_BEFORE_TAIL_RELEASE=true
+COMPLETE_MS=8 STATS={mediaId: cccccccc-cccc-cccc-cccc-cccccccccccc, bytesFromDisk: 8192, bytesFromNetwork: 24576, contentLength: 32768, source: proxy_stream, requestStart: 0, requestEnd: 32767, firstByteMs: 1, completeMs: 6} FULL_GETS=1 RANGE_STARTS=[8192]
+00:01 +6: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000001 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000002 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000003 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000004 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_AUDIO mute_req playerId=241744375 role=active at=2026-11-18T10:24:37.458518Z
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000005 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_AUDIO mute_done playerId=241744375 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=241744375 role=active ms=2
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=241744375
+MIRA_DISCOVER_AUDIO mute_req playerId=241744375 role=unknown at=2026-11-18T10:24:37.461337Z
+MIRA_DISCOVER_AUDIO mute_done playerId=241744375 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=241744375 role=unknown ms=0
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000006 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_FF session=sho9uggl1j8 transition=2 build=2026111710 mediaId=null offer=slide-b playerId=575385771 firstFrameMs=5 source=0 cacheSource=0 cacheBytes=null audioCutMs=2 audible=0 initStart=3 initDone=4 playStart=5 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uggl1j8 transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=2 firstFrameMs=5 audible=0
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000007 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_AUDIO unmute_req playerId=575385771 at=2026-11-18T10:24:37.465351Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=575385771 firstFrameMs=5 audible=1
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000008 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000009 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000a source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000b source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000c source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000d source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000e source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000f source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000010 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000011 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000012 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000013 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000014 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+AFTER20_FIRST_BYTE_MS=4
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=finalize_part reused=24576 dl=0 elapsedMs=0 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=disk_resume reused=8192 dl=16384 elapsedMs=19 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+AFTER20_COMPLETE_MS=32 RANGE_STARTS=[-1, 8192] localFirst=24576
+00:01 +7: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: finalizePartIfComplete promotes full .part to complete file         
+MIRA_DISCOVER_CACHE mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+00:01 +8: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach00:01 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 206 prefix fill records Content-Range total and stays incomplete    
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=null lock=true
+00:01 +10: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:01 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 200 ignore-Range aborts body after prefix (networkBytesRead near need)
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=null lock=true
+00:01 +11: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:01 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: lowPriority prefetch grows prefix only — never a full GET          
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+00:01 +12: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:01 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: resolvePlaySource returns while full download holds write lock (no deadlock)
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=f1111111-1111-1111-1111-111111111111 lock=true
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=network_to_disk reused=0 dl=262144 elapsedMs=91 err=null prio=f1111111-1111-1111-1111-111111111111 lock=true
+00:01 +13: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:01 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock    
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=disk_resume reused=24576 dl=106496 elapsedMs=7 err=null prio=null lock=true
+00:02 +14: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=network_to_disk reused=0 dl=262144 elapsedMs=10 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=disk reused=262144 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=network_to_disk reused=0 dl=524288 elapsedMs=8 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=disk reused=524288 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=finalize_part reused=1048576 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=network_to_disk reused=0 dl=1048576 elapsedMs=14 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=disk reused=1048576 dl=0 elapsedMs=1 err=null prio=null lock=true
+00:02 +15: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +16: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +17: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +17: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: write lock serializes writers; peekComplete reads without waiting  
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=network_to_disk reused=0 dl=131072 elapsedMs=90 err=null prio=null lock=true
+00:02 +18: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: one failed origin GET does not close shared client for other media 
+MIRA_DISCOVER_CACHE mediaId=deaddead-dead-dead-dead-deaddeaddead source=network_error reused=0 dl=0 elapsedMs=3 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=finalize_part reused=49152 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=network_to_disk reused=0 dl=49152 elapsedMs=5 err=null prio=null lock=true
+00:02 +19: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor proxy open does not steal priority from visible clip      
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=finalize_part reused=2097152 dl=0 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=network_to_disk reused=0 dl=2097152 elapsedMs=44 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+00:02 +20: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves claimed priority bytes; neighbor stays prefix-only under load
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=524288 elapsedMs=7 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+00:02 +21: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: trusted complete reopens from disk after new cache instance with origin down
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=network_to_disk reused=0 dl=98304 elapsedMs=5 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=disk reused=98304 dl=0 elapsedMs=1 err=null prio=null lock=true
+00:02 +22: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +23: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: video then image detaches the player                                        
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugh4nh2 transition=1 build=2026111710 mediaId=null offer=slide-a playerId=271837479 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugh4nh2 transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=271837479 at=2026-11-18T10:24:38.319104Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=271837479 firstFrameMs=0 audible=1
+00:02 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: HEAD 404/HTML length is not recorded as video total                
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=finalize_part reused=40960 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=network_to_disk reused=0 dl=40960 elapsedMs=5 err=null prio=null lock=true
+00:02 +24: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: untrusted named complete is never used by peek/prefix/proxy paths  
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=network_to_disk reused=0 dl=65536 elapsedMs=4 err=null prio=null lock=true
+00:02 +25: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: video then image detaches the player                                        
+MIRA_DISCOVER_AUDIO mute_req playerId=271837479 role=unknown at=2026-11-18T10:24:38.342962Z
+MIRA_DISCOVER_AUDIO mute_done playerId=271837479 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=271837479 role=unknown ms=0
+00:02 +26: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugh581t transition=1 build=2026111710 mediaId=null offer=slide-a playerId=338464302 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugh581t transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=338464302 at=2026-11-18T10:24:38.345657Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=338464302 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=338464302 role=active at=2026-11-18T10:24:38.368315Z
+MIRA_DISCOVER_AUDIO mute_done playerId=338464302 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=338464302 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=338464302
+MIRA_DISCOVER_AUDIO mute_req playerId=338464302 role=unknown at=2026-11-18T10:24:38.369155Z
+MIRA_DISCOVER_AUDIO mute_done playerId=338464302 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=338464302 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ugh581t transition=2 build=2026111710 mediaId=null offer=slide-b playerId=576456164 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugh581t transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=576456164 at=2026-11-18T10:24:38.371158Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=576456164 firstFrameMs=1 audible=1
+00:02 +27: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +27: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach of A may finish pause after B attach without harming B               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugh6aip transition=1 build=2026111710 mediaId=null offer=slide-a playerId=978213994 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugh6aip transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=978213994 at=2026-11-18T10:24:38.395575Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=978213994 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=978213994 role=unknown at=2026-11-18T10:24:38.395835Z
+MIRA_DISCOVER_AUDIO mute_done playerId=978213994 role=unknown ms=0
+00:02 +27: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: two stopAfterBytes ensureLocal calls serialize writers (not just inflight)
+MIRA_DISCOVER_CACHE mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=partial reused=0 dl=16384 elapsedMs=64 err=incomplete_16384/262144 prio=null lock=true
+00:02 +28: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +28: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach of A may finish pause after B attach without harming B               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugh6aip transition=3 build=2026111710 mediaId=null offer=slide-b playerId=982549824 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugh6aip transition=3 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=982549824 at=2026-11-18T10:24:38.403858Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=982549824 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO pause_done playerId=978213994 role=unknown ms=8
+00:02 +29: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download
+MIRA_DISCOVER_CACHE mediaId=deadbeef-dead-dead-dead-deaddeadbeef source=network_error reused=0 dl=0 elapsedMs=2 err=bad_content_type_text/plain prio=null lock=true
+00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    
+MIRA_DISCOVER_AUDIO mute_req playerId=347621421 role=active at=2026-11-18T10:24:38.438324Z
+MIRA_DISCOVER_AUDIO mute_done playerId=347621421 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=347621421 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=347621421
+MIRA_DISCOVER_AUDIO mute_req playerId=347621421 role=unknown at=2026-11-18T10:24:38.439155Z
+MIRA_DISCOVER_AUDIO mute_done playerId=347621421 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=347621421 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ugh6izy transition=2 build=2026111710 mediaId=null offer=slide-b playerId=174797801 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugh6izy transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=174797801 at=2026-11-18T10:24:38.440173Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=174797801 firstFrameMs=1 audible=1
+00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=65536 elapsedMs=43 err=null prio=null lock=true
+00:02 +30: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +30: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +31: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +31: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: release during init prevents play                                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +32: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +32: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: pause during init leaves player stopped                                     
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +33: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +33: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: init failure then retry succeeds                                            
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughmnvf transition=2 build=2026111710 mediaId=null offer=slide-a playerId=296708354 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughmnvf transition=2 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=296708354 at=2026-11-18T10:24:39.162629Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=296708354 firstFrameMs=0 audible=1
+00:03 +34: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +34: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: repeated init failure stays failed                                          
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +35: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +35: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: runtime error after ready marks failed                                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughnd9z transition=1 build=2026111710 mediaId=null offer=slide-a playerId=349987182 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughnd9z transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+00:03 +36: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +36: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: only one active player and dispose on release                               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughokpo transition=1 build=2026111710 mediaId=null offer=slide-a playerId=292637381 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughokpo transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=292637381 at=2026-11-18T10:24:39.249093Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=292637381 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=292637381 role=active at=2026-11-18T10:24:39.271096Z
+MIRA_DISCOVER_AUDIO mute_done playerId=292637381 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=292637381 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=292637381
+MIRA_DISCOVER_AUDIO mute_req playerId=292637381 role=unknown at=2026-11-18T10:24:39.272648Z
+MIRA_DISCOVER_AUDIO mute_done playerId=292637381 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=292637381 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ughokpo transition=2 build=2026111710 mediaId=null offer=slide-b playerId=817196999 firstFrameMs=2 source=0 cacheSource=0 cacheBytes=null audioCutMs=1 audible=0 initStart=2 initDone=2 playStart=2 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughokpo transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=817196999 at=2026-11-18T10:24:39.274058Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=817196999 firstFrameMs=2 audible=1
+00:03 +37: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +37: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: setVolume that finishes after pause does not play                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +38: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +38: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: mute survives the next attach and stays muted after first frame             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughpqmz transition=1 build=2026111710 mediaId=null offer=slide-a playerId=378033913 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughpqmz transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=378033913 at=2026-11-18T10:24:39.303308Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=378033913 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO mute_req playerId=378033913 role=active at=2026-11-18T10:24:39.304218Z
+MIRA_DISCOVER_AUDIO mute_done playerId=378033913 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=378033913 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=378033913
+MIRA_DISCOVER_AUDIO mute_req playerId=378033913 role=unknown at=2026-11-18T10:24:39.305368Z
+MIRA_DISCOVER_AUDIO mute_done playerId=378033913 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=378033913 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ughpqmz transition=2 build=2026111710 mediaId=null offer=slide-b playerId=96578846 firstFrameMs=2 source=0 cacheSource=0 cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=2 playStart=2 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughpqmz transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=96578846 at=2026-11-18T10:24:39.307369Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=96578846 firstFrameMs=2 audible=0
+00:03 +39: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +39: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: outgoing audio is cut before warm wait; speakers arm only after first frame 
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughpx07 transition=1 build=2026111710 mediaId=null offer=slide-a playerId=1059504682 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughpx07 transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1059504682 at=2026-11-18T10:24:39.311321Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1059504682 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=1059504682 role=active at=2026-11-18T10:24:39.324706Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1059504682 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1059504682 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=1059504682
+MIRA_DISCOVER_AUDIO mute_req playerId=1059504682 role=unknown at=2026-11-18T10:24:39.394947Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1059504682 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1059504682 role=unknown ms=1
+MIRA_DISCOVER_FF session=sho9ughpx07 transition=2 build=2026111710 mediaId=null offer=slide-b playerId=257479711 firstFrameMs=71 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=70 initDone=70 playStart=71 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughpx07 transition=2 build=2026111710 mediaId=null offer=slide-b claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=71 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=257479711 at=2026-11-18T10:24:39.396986Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=257479711 firstFrameMs=71 audible=1
+00:03 +40: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +40: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: ready exposes the view as soon as initialize finishes                       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughrtqb transition=1 build=2026111710 mediaId=null offer=slide-a playerId=712866849 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughrtqb transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=712866849 at=2026-11-18T10:24:39.400407Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=712866849 firstFrameMs=0 audible=1
+00:03 +41: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +41: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: first_frame waits for progressing position after play, not initialize alone 
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughrw9h transition=1 build=2026111710 mediaId=null offer=slide-a playerId=1059656244 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughrw9h transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1059656244 at=2026-11-18T10:24:39.403556Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1059656244 firstFrameMs=0 audible=1
+00:03 +42: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +42: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: settle timer includes warm wait (starts before pending warm completes)      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ughryob transition=1 build=2026111710 mediaId=null offer=slide-a playerId=56057078 firstFrameMs=99 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=99 initDone=99 playStart=99 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ughryob transition=1 build=2026111710 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=99 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=56057078 at=2026-11-18T10:24:39.529202Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=56057078 firstFrameMs=99 audible=1
+00:03 +43: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:03 +43: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE settle_timeout mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 timeoutMs=5002 audible=0
+00:08 +44: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:08 +44: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: park survives while next is warming (swipe-back reuses decoder)             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugku49d transition=1 build=2026111710 mediaId=null offer=slide-a playerId=764488383 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugku49d transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=764488383 at=2026-11-18T10:24:44.546845Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=764488383 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=764488383 role=active at=2026-11-18T10:24:44.547949Z
+MIRA_DISCOVER_AUDIO mute_done playerId=764488383 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=764488383 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=764488383
+MIRA_DISCOVER_AUDIO mute_req playerId=764488383 role=unknown at=2026-11-18T10:24:44.549411Z
+MIRA_DISCOVER_AUDIO mute_done playerId=764488383 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=764488383 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ugku49d transition=2 build=2026111710 mediaId=null offer=slide-b playerId=119694194 firstFrameMs=2 source=0 cacheSource=0 cacheBytes=null audioCutMs=1 audible=0 initStart=2 initDone=2 playStart=2 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugku49d transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=119694194 at=2026-11-18T10:24:44.550694Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=119694194 firstFrameMs=2 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=119694194 role=active at=2026-11-18T10:24:44.582817Z
+MIRA_DISCOVER_AUDIO mute_req playerId=114681407 role=warm at=2026-11-18T10:24:44.583042Z
+MIRA_DISCOVER_AUDIO mute_req playerId=764488383 role=parked at=2026-11-18T10:24:44.583328Z
+MIRA_DISCOVER_AUDIO mute_done playerId=119694194 role=active ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=114681407 role=warm ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=764488383 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=119694194 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=114681407 role=warm ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=764488383 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=119694194
+MIRA_DISCOVER_AUDIO mute_req playerId=119694194 role=unknown at=2026-11-18T10:24:44.584388Z
+MIRA_DISCOVER_AUDIO mute_done playerId=119694194 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=119694194 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ugku49d transition=3 build=2026111710 mediaId=null offer=slide-a playerId=764488383 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugku49d transition=3 build=2026111710 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=764488383 at=2026-11-18T10:24:44.584961Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=764488383 firstFrameMs=1 audible=1
+00:08 +45: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:08 +45: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: reactivating a parked clip requires new progress past prior position        
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugkv0p6 transition=1 build=2026111710 mediaId=null offer=slide-a playerId=716351367 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugkv0p6 transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=716351367 at=2026-11-18T10:24:44.588411Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=716351367 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=716351367 role=unknown at=2026-11-18T10:24:44.588846Z
+MIRA_DISCOVER_AUDIO mute_done playerId=716351367 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=716351367 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=716351367 role=parked at=2026-11-18T10:24:44.589715Z
+MIRA_DISCOVER_AUDIO mute_done playerId=716351367 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=716351367 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugkv0p6 transition=3 build=2026111710 mediaId=null offer=slide-a playerId=716351367 firstFrameMs=42 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugkv0p6 transition=3 build=2026111710 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=42 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=716351367 at=2026-11-18T10:24:44.644446Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=716351367 firstFrameMs=42 audible=1
+00:08 +46: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:08 +46: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach reuses in-flight warm controller instead of disposing it             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugkwb7n transition=1 build=2026111710 mediaId=null offer=slide-a playerId=674939910 firstFrameMs=22 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=22 initDone=22 playStart=22 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugkwb7n transition=1 build=2026111710 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=22 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=674939910 at=2026-11-18T10:24:44.693785Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=674939910 firstFrameMs=22 audible=1
+00:08 +47: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:08 +47: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: buildView stays opaque under cover; progress clears cover gate              
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugkxde3 transition=1 build=2026111710 mediaId=null offer=slide-a playerId=812839927 firstFrameMs=33 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugkxde3 transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=33 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=812839927 at=2026-11-18T10:24:44.733888Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=812839927 firstFrameMs=33 audible=1
+00:08 +48: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:08 +48: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: leaveSection parks sticky clip so return claims prepared                    
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugky8eu transition=1 build=2026111710 mediaId=null offer=slide-a playerId=326322317 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugky8eu transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=326322317 at=2026-11-18T10:24:44.738898Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=326322317 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=326322317 role=active at=2026-11-18T10:24:44.740182Z
+MIRA_DISCOVER_AUDIO mute_done playerId=326322317 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=326322317 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=326322317
+MIRA_DISCOVER_AUDIO mute_req playerId=326322317 role=unknown at=2026-11-18T10:24:44.741413Z
+MIRA_DISCOVER_AUDIO mute_done playerId=326322317 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=326322317 role=unknown ms=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+MIRA_DISCOVER_AUDIO mute_req playerId=326322317 role=parked at=2026-11-18T10:24:44.742741Z
+MIRA_DISCOVER_AUDIO mute_done playerId=326322317 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=326322317 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugky8eu transition=2 build=2026111710 mediaId=null offer=slide-a playerId=326322317 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugky8eu transition=2 build=2026111710 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=326322317 at=2026-11-18T10:24:44.744524Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=326322317 firstFrameMs=1 audible=1
+00:08 +49: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:08 +49: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach without first frame emits left_dark                                  
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE left_dark mediaId=null offer=slide-a dwellMs=42 claim=0 cache=0 bytes=null audible=0
+MIRA_DISCOVER_AUDIO mute_req playerId=871934436 role=unknown at=2026-11-18T10:24:44.791687Z
+MIRA_DISCOVER_AUDIO mute_done playerId=871934436 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=871934436 role=unknown ms=0
+00:08 +50: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:08 +50: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach claims unprimed warm (pos0) without cold reopen                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugkzplr transition=1 build=2026111710 mediaId=null offer=slide-a playerId=510847590 firstFrameMs=41 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugkzplr transition=1 build=2026111710 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=41 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=510847590 at=2026-11-18T10:24:44.922777Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=510847590 firstFrameMs=41 audible=1
+00:09 +51: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:09 +51: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with foreign ownerSlot does not mute active clip           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugl2ale transition=1 build=2026111710 mediaId=null offer=slide-a playerId=92560832 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugl2ale transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=92560832 at=2026-11-18T10:24:44.928270Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=92560832 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO cut_skipped reason=not_owner owner=slide-b/0 active=slide-a/0
+MIRA_DISCOVER_AUDIO mute_req playerId=92560832 role=active at=2026-11-18T10:24:44.929127Z
+MIRA_DISCOVER_AUDIO mute_done playerId=92560832 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=92560832 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=92560832
+00:09 +52: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:09 +52: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with stale generation is skipped                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugl2eux transition=1 build=2026111710 mediaId=null offer=slide-a playerId=438684148 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugl2eux transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=438684148 at=2026-11-18T10:24:44.933557Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=438684148 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO cut_skipped reason=stale_generation cutGen=0 live=1
+00:09 +53: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:09 +53: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: A→image→A: delayed mute of old gen does not mute reattached A               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ugl2hwz transition=1 build=2026111710 mediaId=null offer=slide-a playerId=133168469 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugl2hwz transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=133168469 at=2026-11-18T10:24:44.937437Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=133168469 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=133168469 role=active at=2026-11-18T10:24:44.937893Z
+MIRA_DISCOVER_AUDIO mute_req playerId=133168469 role=active at=2026-11-18T10:24:44.960436Z
+MIRA_DISCOVER_AUDIO mute_done playerId=133168469 role=active ms=45
+MIRA_DISCOVER_AUDIO mute_done playerId=133168469 role=active ms=23
+MIRA_DISCOVER_AUDIO pause_done playerId=133168469 role=active ms=45
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=133168469 role=active ms=23
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=133168469
+MIRA_DISCOVER_AUDIO mute_req playerId=133168469 role=unknown at=2026-11-18T10:24:44.984721Z
+MIRA_DISCOVER_AUDIO mute_done playerId=133168469 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=133168469 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ugl2hwz transition=2 build=2026111710 mediaId=null offer=slide-a playerId=172756593 firstFrameMs=25 source=0 cacheSource=0 cacheBytes=null audioCutMs=24 audible=0 initStart=24 initDone=25 playStart=25 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ugl2hwz transition=2 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=24 firstFrameMs=25 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=172756593 at=2026-11-18T10:24:44.986184Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=172756593 firstFrameMs=25 audible=1
+00:09 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:10 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:11 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:12 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:13 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:14 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:15 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:16 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:17 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:18 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:19 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:20 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:21 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:22 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:23 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:24 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:25 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:26 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:27 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:28 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:29 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:30 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:31 +54: /Users/fayez/Desktop/مراجع ... screen-sync pattern: stale cut after A→image→A does not mute new attach                                                                                      00:31 +54 -1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: screen-sync pattern: stale cut after A→image→A does not mute new attach [E]
+  TimeoutException after 0:00:30.000000: Test timed out after 30 seconds. See https://pub.dev/packages/test#timeouts
+  dart:isolate  _RawReceivePort._handleMessage
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart -p vm --plain-name 'screen-sync pattern: stale cut after A→image→A does not mute new attach'
+00:31 +54 -1: Some tests failed.                                                                                                                                                                       
