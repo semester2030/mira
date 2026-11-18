@@ -1,0 +1,16 @@
+14:09:23  Acquired tunnel connection to device.
+14:09:23  Enabling developer disk image services.
+14:09:23  Acquired usage assertion.
+File received from Device
+/var/folders/x9/m0t84f6n5q79qyfy5z4_8y4c0000gn/T/tmp.YPkP29UOad/mira_discover_device.log
+pulled -> evidence/1713/raw/mira_discover_device_pre_scenarios.log (      10 lines)
+2026-11-18T11:09:21.407216Z MIRA_BUILD_IDENTITY build=2026111713 session=sho9voukj3q api=https://mira-api-n4p3.onrender.com/api/v1 useBackend=true
+2026-11-18T11:09:22.308578Z MIRA_DISCOVER_SWIPE audio_cut prev=null next=71062d9e-622f-4377-bf22-8df75fc63afb audible=0 activePlayerId=0
+2026-11-18T11:09:22.675326Z MIRA_DISCOVER_CACHE mediaId=71062d9e-622f-4377-bf22-8df75fc63afb source=disk reused=40375570 dl=0 elapsedMs=14 err=null prio=71062d9e-622f-4377-bf22-8df75fc63afb lock=true
+2026-11-18T11:09:22.675367Z MIRA_DISCOVER_LOCK wait mediaId=71062d9e-622f-4377-bf22-8df75fc63afb waitedMs=360
+2026-11-18T11:09:23.422267Z MIRA_DISCOVER_FF session=sho9voukj3q transition=3 build=2026111713 mediaId=71062d9e-622f-4377-bf22-8df75fc63afb offer=14260bc3-7960-493f-86ad-2422d96bfa47 playerId=1036249388 firstFrameMs=1113 source=0 cacheSource=3 cacheBytes=40375570 audioCutMs=6 audible=0 initStart=374 initDone=551 playStart=552 resolveMs=368 seekNudge=null
+2026-11-18T11:09:23.422290Z MIRA_DISCOVER_SWIPE settle session=sho9voukj3q transition=3 build=2026111713 mediaId=71062d9e-622f-4377-bf22-8df75fc63afb offer=14260bc3-7960-493f-86ad-2422d96bfa47 claim=0 cache=3 bytes=40375570 audioCutMs=6 firstFrameMs=1113 audible=0
+2026-11-18T11:09:23.429056Z MIRA_DISCOVER_CACHE mediaId=71062d9e-622f-4377-bf22-8df75fc63afb source=disk reused=40375570 dl=0 elapsedMs=2 err=null prio=71062d9e-622f-4377-bf22-8df75fc63afb lock=true
+2026-11-18T11:09:23.429091Z MIRA_DISCOVER_LOCK wait mediaId=71062d9e-622f-4377-bf22-8df75fc63afb waitedMs=6
+2026-11-18T11:09:23.502414Z MIRA_DISCOVER_AUDIO unmute_req playerId=1036249388 at=2026-11-18T11:09:23.502339Z
+2026-11-18T11:09:23.502549Z MIRA_DISCOVER_SWIPE audio_armed mediaId=71062d9e-622f-4377-bf22-8df75fc63afb playerId=1036249388 firstFrameMs=1113 audible=1

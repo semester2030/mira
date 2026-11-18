@@ -1,0 +1,40 @@
+13:56:42  Acquired tunnel connection to device.
+13:56:42  Enabling developer disk image services.
+13:56:42  Acquired usage assertion.
+34 files:
+Name                                                              URL Resources        Size        Modification date     
+---------------------------------------------------------------   ------------------   ---------   ----------------------
+02cb6fc3-1bab-4ce7-a343-7ec3b2c5e967_30345602.mp4                 Writable, Readable   28.9 MB     08/06/1448 AH, 1:56 PM
+02cb6fc3-1bab-4ce7-a343-7ec3b2c5e967_30345602.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:56 PM
+1446e301-404f-4f4d-b501-485df74bc2df_27380718.mp4                 Writable, Readable   26.1 MB     08/06/1448 AH, 1:55 PM
+1446e301-404f-4f4d-b501-485df74bc2df_27380718.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:55 PM
+4cca7f2f-5b9e-4a91-9fcc-9fb371699fc0_28081746.mp4                 Writable, Readable   26.8 MB     08/06/1448 AH, 1:56 PM
+4cca7f2f-5b9e-4a91-9fcc-9fb371699fc0_28081746.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:56 PM
+4fcd2d45-d16d-4c8c-9f68-d5d1b5e679c7_28649785.mp4                 Writable, Readable   27.3 MB     08/06/1448 AH, 1:56 PM
+4fcd2d45-d16d-4c8c-9f68-d5d1b5e679c7_28649785.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:56 PM
+6c403992-80f1-4f6c-a2f4-87a0446bc6e5_10707695.mp4                 Writable, Readable   10.2 MB     08/06/1448 AH, 1:55 PM
+6c403992-80f1-4f6c-a2f4-87a0446bc6e5_10707695.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:55 PM
+6e153366-1351-47fd-a3f5-624018a8fcde_26300070.mp4                 Writable, Readable   25.1 MB     08/06/1448 AH, 1:56 PM
+6e153366-1351-47fd-a3f5-624018a8fcde_26300070.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:56 PM
+71062d9e-622f-4377-bf22-8df75fc63afb_40375570.mp4                 Writable, Readable   38.5 MB     08/06/1448 AH, 1:55 PM
+71062d9e-622f-4377-bf22-8df75fc63afb_40375570.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:55 PM
+73b83163-a5d1-4580-bd70-d2e10f3d71a1_54268983.mp4                 Writable, Readable   51.8 MB     08/06/1448 AH, 1:56 PM
+73b83163-a5d1-4580-bd70-d2e10f3d71a1_54268983.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:56 PM
+73eeeb73-30df-47c3-98fa-2384e42f17f4_12568932.mp4                 Writable, Readable   12 MB       08/06/1448 AH, 1:55 PM
+73eeeb73-30df-47c3-98fa-2384e42f17f4_12568932.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:55 PM
+76dbf34d-a204-4d11-b31a-408d4ef4b908_14083617.mp4                 Writable, Readable   13.4 MB     08/06/1448 AH, 1:55 PM
+76dbf34d-a204-4d11-b31a-408d4ef4b908_14083617.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:55 PM
+9c68017c-ac54-4287-bf7f-2bba17553f2e_1353591.mp4                  Writable, Readable   1.3 MB      08/06/1448 AH, 1:56 PM
+9c68017c-ac54-4287-bf7f-2bba17553f2e_1353591.mp4.mira_complete    Writable, Readable   154 bytes   08/06/1448 AH, 1:56 PM
+9cbed24c-0592-4874-a2fe-f87a0ef3f81f.part                         Writable, Readable   47.1 MB     08/06/1448 AH, 1:56 PM
+9e62959e-c0bc-439f-92d9-c08b1dca62fb_3817215.mp4                  Writable, Readable   3.6 MB      08/06/1448 AH, 1:55 PM
+9e62959e-c0bc-439f-92d9-c08b1dca62fb_3817215.mp4.mira_complete    Writable, Readable   154 bytes   08/06/1448 AH, 1:55 PM
+c325f933-a218-4eea-a134-2768597b7ca8_13761446.mp4                 Writable, Readable   13.1 MB     08/06/1448 AH, 1:56 PM
+c325f933-a218-4eea-a134-2768597b7ca8_13761446.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:56 PM
+caf212f3-48fb-47d1-bde3-8a813e228296.part                         Writable, Readable   15.5 MB     08/06/1448 AH, 1:56 PM
+cdaa3e80-17b5-41cc-8c0d-9cdfbd8cd3f9_19962663.mp4                 Writable, Readable   19 MB       08/06/1448 AH, 1:56 PM
+cdaa3e80-17b5-41cc-8c0d-9cdfbd8cd3f9_19962663.mp4.mira_complete   Writable, Readable   155 bytes   08/06/1448 AH, 1:56 PM
+da9bc429-c031-4140-a17e-6e16686f2de2.part                         Writable, Readable   1 MB        08/06/1448 AH, 1:56 PM
+df8af611-970d-42bd-8fcc-492025f6b5b1.part                         Writable, Readable   57.2 MB     08/06/1448 AH, 1:56 PM
+f8c0535f-f87f-4ef7-86df-7a93d373ead5_8726595.mp4                  Writable, Readable   8.3 MB      08/06/1448 AH, 1:55 PM
+f8c0535f-f87f-4ef7-86df-7a93d373ead5_8726595.mp4.mira_complete    Writable, Readable   154 bytes   08/06/1448 AH, 1:55 PM

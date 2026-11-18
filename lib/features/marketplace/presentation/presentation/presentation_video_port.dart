@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:video_player/video_player.dart';
 
+import 'discover_device_file_log.dart';
 import 'discover_video_disk_cache.dart';
 
 /// Identity of one slide and one media item. The asset path is not enough:
@@ -112,7 +113,7 @@ class AssetVideoPort extends PresentationVideoPort {
   /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
   static const String buildStamp = String.fromEnvironment(
     'MIRA_BUILD',
-    defaultValue: '2026111712',
+    defaultValue: '2026111714',
   );
 
   /// When non-null (unit tests), paths are passed straight to this factory and
@@ -333,19 +334,19 @@ class AssetVideoPort extends PresentationVideoPort {
     final t0 = DateTime.now().toUtc();
     try {
       // Volume first so a late play() tick cannot briefly leak audio.
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_AUDIO mute_req playerId=$id role=$role '
         'at=${t0.toIso8601String()}',
       );
       await controller.setVolume(0);
       final tVol = DateTime.now().toUtc();
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_AUDIO mute_done playerId=$id role=$role '
         'ms=${tVol.difference(t0).inMilliseconds}',
       );
       await controller.pause();
       final tPause = DateTime.now().toUtc();
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_AUDIO pause_done playerId=$id role=$role '
         'ms=${tPause.difference(t0).inMilliseconds}',
       );
@@ -358,7 +359,7 @@ class AssetVideoPort extends PresentationVideoPort {
         'at': t0.toIso8601String(),
       });
     } catch (e) {
-      debugPrint('MIRA_DISCOVER_AUDIO silence_err playerId=$id role=$role err=$e');
+      miraDiscoverLog('MIRA_DISCOVER_AUDIO silence_err playerId=$id role=$role err=$e');
     }
   }
 
@@ -376,7 +377,7 @@ class AssetVideoPort extends PresentationVideoPort {
     if (ownerSlot != null) {
       final active = activeSlot;
       if (active == null || !active.same(ownerSlot)) {
-        debugPrint(
+        miraDiscoverLog(
           'MIRA_DISCOVER_AUDIO cut_skipped reason=not_owner '
           'owner=${ownerSlot.slideId}/${ownerSlot.mediaIndex} '
           'active=${active?.slideId}/${active?.mediaIndex}',
@@ -385,7 +386,7 @@ class AssetVideoPort extends PresentationVideoPort {
       }
     }
     if (generation != null && generation != _generation) {
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_AUDIO cut_skipped reason=stale_generation '
         'cutGen=$generation live=$_generation',
       );
@@ -413,7 +414,7 @@ class AssetVideoPort extends PresentationVideoPort {
       try {
         await Future.wait(futures);
       } catch (e) {
-        debugPrint('MIRA_DISCOVER_AUDIO cut_wait_err err=$e');
+        miraDiscoverLog('MIRA_DISCOVER_AUDIO cut_wait_err err=$e');
         _recordDiag({
           'event': 'audio_cut_error',
           'error': '$e',
@@ -423,7 +424,7 @@ class AssetVideoPort extends PresentationVideoPort {
     }
     // Ownership may have moved to a newer attach during the mute await.
     if (generation != null && generation != _generation) {
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_AUDIO cut_stale_after_wait '
         'cutGen=$generation live=$_generation',
       );
@@ -432,7 +433,7 @@ class AssetVideoPort extends PresentationVideoPort {
     if (ownerSlot != null) {
       final activeNow = activeSlot;
       if (activeNow == null || !activeNow.same(ownerSlot)) {
-        debugPrint(
+        miraDiscoverLog(
           'MIRA_DISCOVER_AUDIO cut_stale_owner_after_wait '
           'owner=${ownerSlot.slideId}/${ownerSlot.mediaIndex}',
         );
@@ -450,7 +451,7 @@ class AssetVideoPort extends PresentationVideoPort {
       'ownerOk': ownerSlot == null ? 1 : (activeSlot?.same(ownerSlot) == true ? 1 : 0),
       'at': DateTime.now().toUtc().toIso8601String(),
     });
-    debugPrint(
+    miraDiscoverLog(
       'MIRA_DISCOVER_SWIPE audio_cut prev=${_mediaIdOf(prevPath)} '
       'next=${_mediaIdOf(nextMediaUrl)} audible=$audibleAfter '
       'activePlayerId=${_playerId(active)}',
@@ -550,7 +551,7 @@ class AssetVideoPort extends PresentationVideoPort {
           'audiblePlaying': audiblePlayingCount,
           'at': DateTime.now().toUtc().toIso8601String(),
         });
-        debugPrint(
+        miraDiscoverLog(
           'MIRA_DISCOVER_SWIPE left_dark mediaId=${_mediaIdOf(path)} '
           'offer=${slot?.slideId} dwellMs=$ms '
           'claim=${lastAttachPhases['source']} cache=${lastAttachPhases['cacheSource']} '
@@ -585,7 +586,7 @@ class AssetVideoPort extends PresentationVideoPort {
         _diskCache?.finalizePartIfComplete(c.dataSource);
       } catch (_) {}
     }
-    debugPrint(
+    miraDiscoverLog(
       'MIRA_DISCOVER_SWIPE leave_section parked=${_mediaIdOf(_parkedPath)} '
       'prepared=${_preparedOrder.length} sticky=${_stickyMediaIds.length}',
     );
@@ -876,13 +877,21 @@ class AssetVideoPort extends PresentationVideoPort {
         mediaUrl: assetPath,
       );
       await _awaitFirstVisibleProgress(controller, token, settleStarted, slot, assetPath);
-      if (!_canStart(controller, token)) {
-        await _dropIfStale(controller, token);
-        return;
-      }
+      // Device T41: firstFrame logged but no unmute_req before next swipe —
+      // always record why arming is skipped (stale generation / swapped controller).
       if (_hasVisibleProgress) {
+        if (!_canStart(controller, token)) {
+          miraDiscoverLog(
+            'MIRA_DISCOVER_AUDIO unmute_skipped playerId=${_playerId(controller)} '
+            'reason=not_active gen=$token live=$_generation '
+            'ctrlMatch=${identical(_controller, controller)} '
+            'firstFrameMs=${lastAttachPhases['firstFrame']}',
+          );
+          await _dropIfStale(controller, token);
+          return;
+        }
         final nextId = _playerId(controller);
-        debugPrint(
+        miraDiscoverLog(
           'MIRA_DISCOVER_AUDIO unmute_req playerId=$nextId '
           'at=${DateTime.now().toUtc().toIso8601String()}',
         );
@@ -900,11 +909,14 @@ class AssetVideoPort extends PresentationVideoPort {
           'audioArmedMs': lastAttachPhases['audioArmed'],
           'audiblePlaying': audiblePlayingCount,
         });
-        debugPrint(
+        miraDiscoverLog(
           'MIRA_DISCOVER_SWIPE audio_armed mediaId=$wantId '
           'playerId=$nextId firstFrameMs=${lastAttachPhases['firstFrame']} '
           'audible=$audiblePlayingCount',
         );
+      } else if (!_canStart(controller, token)) {
+        await _dropIfStale(controller, token);
+        return;
       }
       _notify();
     } catch (error) {
@@ -946,18 +958,21 @@ class AssetVideoPort extends PresentationVideoPort {
       }
       sampleN += 1;
       final sincePlay = DateTime.now().toUtc().difference(playStartedAt);
-      // Parked/warm/prepared reclaim only: a tiny seek past the floor unlocks a
-      // decoded frame without tearing down the controller. Skip on cold opens so
-      // a true stall still surfaces as first_frame_timeout.
+      // Reused decoder OR cold open of a complete local file (device T35:
+      // playStart=145 → firstFrame=607 with cacheSource=3). A tiny seek unlocks
+      // the first decoded frame on iOS without keeping extra players in memory.
       final reusedDecoder = (lastAttachPhases['source'] ?? 0) > 0;
+      final completeDiskCold = (lastAttachPhases['source'] ?? 0) == 0 &&
+          (lastAttachPhases['cacheSource'] ?? 0) == 3;
       if (!seekNudged &&
-          reusedDecoder &&
+          (reusedDecoder || completeDiskCold) &&
           sincePlay.inMilliseconds >= 120 &&
           v.position <= _progressFloor &&
           v.isInitialized &&
           v.size.width > 0) {
         seekNudged = true;
         lastAttachPhases['seekNudgeMs'] = _msSince(settleStarted);
+        lastAttachPhases['seekNudgeKind'] = completeDiskCold ? 2 : 1;
         try {
           final nudge = _progressFloor + const Duration(milliseconds: 32);
           final dur = v.duration;
@@ -1068,7 +1083,7 @@ class AssetVideoPort extends PresentationVideoPort {
         'audiblePlaying': audiblePlayingCount,
         'at': DateTime.now().toUtc().toIso8601String(),
       });
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_SWIPE settle_timeout mediaId=${_mediaIdOf(assetPath)} '
         'offer=${slot.slideId} claim=${lastAttachPhases['source']} '
         'cache=${lastAttachPhases['cacheSource']} bytes=${lastAttachPhases['cacheBytes']} '
@@ -1125,7 +1140,7 @@ class AssetVideoPort extends PresentationVideoPort {
         'audiblePlaying': audiblePlayingCount,
         'at': DateTime.now().toUtc().toIso8601String(),
       });
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_FF session=$sessionId transition=$_generation '
         'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
         'offer=${slot.slideId} playerId=${_playerId(controller)} firstFrameMs=$ms '
@@ -1140,7 +1155,7 @@ class AssetVideoPort extends PresentationVideoPort {
         'resolveMs=${(lastAttachPhases['resolveDone'] ?? 0) - (lastAttachPhases['resolveStart'] ?? 0)} '
         'seekNudge=${lastAttachPhases['seekNudgeMs']}',
       );
-      debugPrint(
+      miraDiscoverLog(
         'MIRA_DISCOVER_SWIPE settle session=$sessionId transition=$_generation '
         'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
         'offer=${slot.slideId} claim=${lastAttachPhases['source']} '
@@ -1207,7 +1222,7 @@ class AssetVideoPort extends PresentationVideoPort {
           'audiblePlaying': audiblePlayingCount,
           'at': DateTime.now().toUtc().toIso8601String(),
         });
-        debugPrint(
+        miraDiscoverLog(
           'MIRA_DISCOVER_SWIPE left_dark mediaId=${_mediaIdOf(path)} '
           'offer=${slot.slideId} dwellMs=$ms '
           'claim=${lastAttachPhases['source']} cache=${lastAttachPhases['cacheSource']} '
@@ -1429,7 +1444,7 @@ class AssetVideoPort extends PresentationVideoPort {
           msg.contains('warm cancelled');
       if (expected) {
         // Expected on fast swipe / reverse — never surface as unhandled.
-        debugPrint('MIRA_DISCOVER_WARM expected_cancel mediaId=${_mediaIdOf(assetPath)}');
+        miraDiscoverLog('MIRA_DISCOVER_WARM expected_cancel mediaId=${_mediaIdOf(assetPath)}');
         if (!initGate.isCompleted) initGate.complete();
         return;
       }
@@ -1447,7 +1462,7 @@ class AssetVideoPort extends PresentationVideoPort {
             await controller?.dispose();
           } catch (_) {}
           _emitPlayback('warm_failed', mediaUrl: assetPath);
-          debugPrint(
+          miraDiscoverLog(
             'MIRA_DISCOVER_WARM failed mediaId=${_mediaIdOf(assetPath)} err=$e',
           );
         }

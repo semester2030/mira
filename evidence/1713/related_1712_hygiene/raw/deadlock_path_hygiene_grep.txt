@@ -1,0 +1,5 @@
+test/features/marketplace/discover_video_disk_cache_test.dart:1536:    // Production no longer contains debugJoinInflightUnderLock. This simulates
+test/features/marketplace/discover_video_disk_cache_test.dart:1639:    cache.debugYieldBeforeInflightJoin = () async {
+lib/features/marketplace/presentation/presentation/discover_video_disk_cache.dart:304:  Future<void> Function()? debugYieldBeforeInflightJoin;
+lib/features/marketplace/presentation/presentation/discover_video_disk_cache.dart:953:    // resumes afterward. Test harness may yield via [debugYieldBeforeInflightJoin].
+lib/features/marketplace/presentation/presentation/discover_video_disk_cache.dart:954:    final yieldHook = debugYieldBeforeInflightJoin;

@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:mirra/core/config/mira_api_config.dart';
 
+import 'discover_device_file_log.dart';
 import 'presentation_video_port.dart';
 
 /// Process-wide Discover video port so parking/prepared decoders survive
@@ -21,7 +21,7 @@ class DiscoverVideoSession {
     if (_port != null) return _port!;
     _port = AssetVideoPort();
     // Runtime identity for device log ↔ source matching (not install records alone).
-    debugPrint(
+    miraDiscoverLog(
       'MIRA_BUILD_IDENTITY build=${AssetVideoPort.buildStamp} '
       'session=${_port!.sessionId} api=${MiraApiConfig.baseUrl} '
       'useBackend=${MiraApiConfig.useBackend}',

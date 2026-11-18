@@ -12,7 +12,7 @@ import 'package:mirra/features/marketplace/domain/entities/catalog_product.dart'
 import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';
 import 'package:mirra/shared/theme/theme.dart';
 
-import 'discover_fonts.dart';
+import '../../helpers/load_discover_fonts.dart';
 
 class _RecordingGateway implements DiscoverCatalogGateway {
   final queries = <DiscoverCatalogQuery>[];

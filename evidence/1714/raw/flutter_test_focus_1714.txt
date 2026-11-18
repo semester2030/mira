@@ -1,0 +1,497 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.13.1 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.3.0 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.4 available)
+  video_player_avfoundation 2.12.0 (2.12.4 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+99 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart                                                              00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart                                                              00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: mediaIdFromUrl extracts marketplace media uuid                      00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: mediaIdFromUrl extracts marketplace media uuid                      00:01 +1: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length 00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mdvyp
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=65536 elapsedMs=32 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mdvyp
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5merlm
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=disk reused=65536 dl=0 elapsedMs=2 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5merlm
+00:01 +2: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length 00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            
+MIRA_DISCOVER_LOCK hold_start mediaId=11111111-2222-3333-4444-555555555555 req=who9w5mf7ji
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=finalize_part reused=32768 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=network_to_disk reused=0 dl=32768 elapsedMs=91 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=11111111-2222-3333-4444-555555555555 req=who9w5mf7ji
+00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            00:01 +3: /Users/fayez/Desktop/مراجع ... reopen after partial prefix: serves local start, Range-fetches only the tail                                                                                  00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: reopen after partial prefix: serves local start, Range-fetches only the tail
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mhmk8
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=partial reused=0 dl=10240 elapsedMs=18 err=incomplete_10240/2097152 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mhmk8
+MIRA_DISCOVER_PHASE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee phase=prefix_seed_start have=10240 need=1048576
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mi6iz
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=disk_resume reused=10240 dl=1038336 elapsedMs=16 err=null prio=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mi6iz
+MIRA_DISCOVER_PHASE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee phase=prefix_seed_end have=1048576 elapsedMs=20
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mixye
+00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: reopen after partial prefix: serves local start, Range-fetches only the tail
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w5mixye
+00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=who9w5mljr5
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 source=partial reused=0 dl=8192 elapsedMs=31 err=incomplete_8192/2097152 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=who9w5mljr5
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 req=who9w5mm96j
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 req=who9w5mm96j
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 req=who9w5mmcig
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 req=who9w5mmcig
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 req=who9w5mmf8x
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 req=who9w5mmf8x
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 req=who9w5mmhpv
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 req=who9w5mmhpv
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 req=who9w5mmk70
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 req=who9w5mmk70
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 req=who9w5mmmjb
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 req=who9w5mmmjb
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 req=who9w5mmopu
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 req=who9w5mmopu
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 req=who9w5mmr1n
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 req=who9w5mmr1n
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 req=who9w5mmt6n
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 req=who9w5mmt6n
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a req=who9w5mmvj9
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a req=who9w5mmvj9
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b req=who9w5mmxxv
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b req=who9w5mmxxv
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c req=who9w5mn03b
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c req=who9w5mn03b
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d req=who9w5mn2q2
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d req=who9w5mn2q2
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e req=who9w5mn4ym
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e req=who9w5mn4ym
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f req=who9w5mn793
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f source=network_error reused=0 dl=0 elapsedMs=2 err=non_video_body prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f req=who9w5mn793
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 req=who9w5mnad5
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 req=who9w5mnad5
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 req=who9w5mnd9j
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 req=who9w5mnd9j
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 req=who9w5mnfkx
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 req=who9w5mnfkx
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 req=who9w5mnhyv
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 req=who9w5mnhyv
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 req=who9w5mnl27
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 req=who9w5mnl27
+MIRA_DISCOVER_PHASE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 phase=prefix_seed_start have=8192 need=1048576
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=who9w5mnu1p
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 source=disk_resume reused=8192 dl=1040384 elapsedMs=12 err=null prio=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=who9w5mnu1p
+MIRA_DISCOVER_PHASE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 phase=prefix_seed_end have=1048576 elapsedMs=16
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=who9w5mobf0
+LOGICAL_20_IDS localFirst=8192 others=155648 prefix=8192 bodySize=2097152
+00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=who9w5mobf0
+00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w5mp4s6
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/32768 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w5mp4s6
+MIRA_DISCOVER_PHASE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc phase=prefix_seed_start have=8192 need=32768
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w5mp9y9
+00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9w5mm471 transition=1 build=2026111714 mediaId=null offer=mix-screen playerId=1033615833 firstFrameMs=157 source=0 cacheSource=0 cacheBytes=null audioCutMs=150 audible=0 initStart=154 initDone=156 playStart=157 resolveMs=3 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9w5mm471 transition=1 build=2026111714 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=150 firstFrameMs=157 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1033615833 at=2026-11-18T11:26:16.312041Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1033615833 firstFrameMs=157 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=1033615833 role=active at=2026-11-18T11:26:16.393138Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1033615833 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1033615833 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=1033615833
+MIRA_DISCOVER_AUDIO mute_req playerId=1033615833 role=unknown at=2026-11-18T11:26:16.394754Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1033615833 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1033615833 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=1033615833 role=parked at=2026-11-18T11:26:16.443701Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1033615833 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1033615833 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9w5mm471 transition=3 build=2026111714 mediaId=null offer=mix-screen playerId=1033615833 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9w5mm471 transition=3 build=2026111714 mediaId=null offer=mix-screen claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1033615833 at=2026-11-18T11:26:16.444872Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1033615833 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=1033615833 role=unknown at=2026-11-18T11:26:16.473152Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1033615833 role=unknown ms=5
+MIRA_DISCOVER_AUDIO pause_done playerId=1033615833 role=unknown ms=6
+00:02 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:02 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9w5mxawy transition=1 build=2026111714 mediaId=null offer=mix-screen playerId=25985239 firstFrameMs=22 source=0 cacheSource=0 cacheBytes=null audioCutMs=21 audible=0 initStart=22 initDone=22 playStart=22 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9w5mxawy transition=1 build=2026111714 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=21 firstFrameMs=22 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=25985239 at=2026-11-18T11:26:16.519283Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=25985239 firstFrameMs=22 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=25985239 role=active at=2026-11-18T11:26:16.530585Z
+MIRA_DISCOVER_AUDIO mute_req playerId=25985239 role=active at=2026-11-18T11:26:16.540467Z
+MIRA_DISCOVER_AUDIO mute_done playerId=25985239 role=active ms=24
+MIRA_DISCOVER_AUDIO mute_done playerId=25985239 role=active ms=15
+MIRA_DISCOVER_AUDIO pause_done playerId=25985239 role=active ms=25
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=25985239 role=active ms=15
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=25985239
+MIRA_DISCOVER_AUDIO mute_req playerId=25985239 role=unknown at=2026-11-18T11:26:16.556708Z
+MIRA_DISCOVER_AUDIO mute_done playerId=25985239 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=25985239 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9w5mxawy transition=2 build=2026111714 mediaId=null offer=mix-screen playerId=270047414 firstFrameMs=16 source=0 cacheSource=0 cacheBytes=null audioCutMs=16 audible=0 initStart=16 initDone=16 playStart=16 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9w5mxawy transition=2 build=2026111714 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=16 firstFrameMs=16 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=270047414 at=2026-11-18T11:26:16.557522Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=270047414 firstFrameMs=16 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=270047414 role=active at=2026-11-18T11:26:16.569794Z
+MIRA_DISCOVER_AUDIO mute_req playerId=25985239 role=parked at=2026-11-18T11:26:16.570012Z
+MIRA_DISCOVER_AUDIO mute_done playerId=270047414 role=active ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=25985239 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=270047414 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=25985239 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=270047414
+MIRA_DISCOVER_AUDIO mute_req playerId=270047414 role=unknown at=2026-11-18T11:26:16.571249Z
+MIRA_DISCOVER_AUDIO mute_done playerId=270047414 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=270047414 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=25985239 role=unknown at=2026-11-18T11:26:16.571858Z
+MIRA_DISCOVER_AUDIO mute_done playerId=25985239 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=25985239 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=270047414 role=parked at=2026-11-18T11:26:16.582381Z
+MIRA_DISCOVER_AUDIO mute_done playerId=270047414 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=270047414 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9w5mxawy transition=4 build=2026111714 mediaId=null offer=mix-screen playerId=270047414 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9w5mxawy transition=4 build=2026111714 mediaId=null offer=mix-screen claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=270047414 at=2026-11-18T11:26:16.583426Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=270047414 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=270047414 role=unknown at=2026-11-18T11:26:16.594849Z
+MIRA_DISCOVER_AUDIO mute_done playerId=270047414 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=270047414 role=unknown ms=1
+00:02 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:03 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:04 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:05 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:06 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:07 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:08 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:09 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:10 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:11 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:12 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:13 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:14 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:15 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:16 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:17 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:18 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:19 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:20 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:21 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:21 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=disk_resume reused=8192 dl=0 elapsedMs=20005 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w5mp9y9
+MIRA_DISCOVER_PHASE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc phase=prefix_seed_end have=8192 elapsedMs=20011
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w5ymb71
+FIRST_BYTE_MS=pending
+FIRST_BYTE_MS=12 PREFIX_ARRIVED_BEFORE_TAIL_RELEASE=true
+COMPLETE_MS=22 STATS={mediaId: cccccccc-cccc-cccc-cccc-cccccccccccc, bytesFromDisk: 8192, bytesFromNetwork: 24576, contentLength: 32768, source: proxy_stream, requestStart: 0, requestEnd: 32767, firstByteMs: 5, completeMs: null} FULL_GETS=1 RANGE_STARTS=[8192, 8192]
+00:21 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:21 +8: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail 00:21 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w5ymb71
+00:21 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=who9w5ymuqy
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=who9w5ymuqy
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000001 req=who9w5ymyot
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000001 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000001 req=who9w5ymyot
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000002 req=who9w5yn1ih
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000002 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000002 req=who9w5yn1ih
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000003 req=who9w5yn47h
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000003 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000003 req=who9w5yn47h
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000004 req=who9w5yn70d
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000004 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000004 req=who9w5yn70d
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000005 req=who9w5yn9cu
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000005 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000005 req=who9w5yn9cu
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000006 req=who9w5ynbrr
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000006 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000006 req=who9w5ynbrr
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000007 req=who9w5yne35
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000007 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000007 req=who9w5yne35
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000008 req=who9w5yngf7
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000008 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000008 req=who9w5yngf7
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000009 req=who9w5ynini
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000009 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000009 req=who9w5ynini
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000a req=who9w5ynkui
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000a source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000a req=who9w5ynkui
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000b req=who9w5ynngx
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000b source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000b req=who9w5ynngx
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000c req=who9w5ynpr6
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000c source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000c req=who9w5ynpr6
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000d req=who9w5ynryk
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000d source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000d req=who9w5ynryk
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000e req=who9w5ynu1i
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000e source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000e req=who9w5ynu1i
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000f req=who9w5ynwas
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000f source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000f req=who9w5ynwas
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000010 req=who9w5ynygy
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000010 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000010 req=who9w5ynygy
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000011 req=who9w5yo0m0
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000011 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000011 req=who9w5yo0m0
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000012 req=who9w5yo34i
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000012 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000012 req=who9w5yo34i
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000013 req=who9w5yo5ra
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000013 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000013 req=who9w5yo5ra
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000014 req=who9w5yo7yo
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000014 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000014 req=who9w5yo7yo
+MIRA_DISCOVER_PHASE mediaId=dddddddd-dddd-dddd-dddd-000000000000 phase=prefix_seed_start have=8192 need=24576
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=who9w5yodbk
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=disk_resume reused=8192 dl=0 elapsedMs=20004 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=who9w5yodbk
+MIRA_DISCOVER_PHASE mediaId=dddddddd-dddd-dddd-dddd-000000000000 phase=prefix_seed_end have=8192 elapsedMs=20011
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=who9w6alg11
+AFTER20_FIRST_BYTE_MS=15
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=finalize_part reused=24576 dl=0 elapsedMs=0 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=disk_resume reused=8192 dl=16384 elapsedMs=22 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=who9w6alg11
+AFTER20_COMPLETE_MS=43 RANGE_STARTS=[-1, 8192, 8192] localFirst=24576
+00:41 +9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail 00:41 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: finalizePartIfComplete promotes full .part to complete file         00:42 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: finalizePartIfComplete promotes full .part to complete file         
+MIRA_DISCOVER_LOCK hold_start mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee req=who9w6amg18
+MIRA_DISCOVER_CACHE mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee req=who9w6amg18
+00:42 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: finalizePartIfComplete promotes full .part to complete file        00:42 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: contentRangeTotal reads TOTAL and rejects star/malformed           00:42 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: contentRangeTotal reads TOTAL and rejects star/malformed           00:42 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 206 prefix fill records Content-Range total and stays incomplete   00:42 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 206 prefix fill records Content-Range total and stays incomplete   
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w6andok
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=1048576 elapsedMs=14 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w6andok
+00:42 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 206 prefix fill records Content-Range total and stays incomplete   00:42 +12: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 200 ignore-Range aborts body after prefix (networkBytesRead near need)    00:42 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 200 ignore-Range aborts body after prefix (networkBytesRead near need)
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=who9w6aoxl3
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=network_to_disk reused=0 dl=1048576 elapsedMs=45 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=who9w6aoxl3
+00:42 +13: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 200 ignore-Range aborts body after prefix (networkBytesRead near need)    00:42 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: lowPriority prefetch grows prefix only — never a full GET          00:42 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: lowPriority prefetch grows prefix only — never a full GET          
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w6aqqw5
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=1048576 elapsedMs=17 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee req=who9w6aqqw5
+00:42 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: lowPriority prefetch grows prefix only — never a full GET          00:42 +14: /Users/fayez/Desktop/مراجع ... resolvePlaySource returns while full download holds write lock (no deadlock)                                                                                 00:42 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: resolvePlaySource returns while full download holds write lock (no deadlock)
+MIRA_DISCOVER_LOCK hold_start mediaId=f1111111-1111-1111-1111-111111111111 req=who9w6arcrg
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=network_to_disk reused=0 dl=262144 elapsedMs=92 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f1111111-1111-1111-1111-111111111111 req=who9w6arcrg
+00:42 +15: /Users/fayez/Desktop/مراجع ... resolvePlaySource returns while full download holds write lock (no deadlock)                                                                                 00:42 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock    00:42 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock    
+MIRA_DISCOVER_LOCK hold_start mediaId=f2222222-2222-2222-2222-222222222222 req=who9w6atg7l
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=disk_resume reused=24576 dl=106496 elapsedMs=7 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f2222222-2222-2222-2222-222222222222 req=who9w6atg7l
+00:42 +16: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock    00:42 +16: /Users/fayez/Desktop/مراجع ... complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET                                                                                  00:42 +16: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000040000 req=who9w6auuzr
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=network_to_disk reused=0 dl=262144 elapsedMs=9 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000040000 req=who9w6auuzr
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000040000 req=who9w6av5jw
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=disk reused=262144 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000040000 req=who9w6av5jw
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000080000 req=who9w6avawr
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=network_to_disk reused=0 dl=524288 elapsedMs=9 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000080000 req=who9w6avawr
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000080000 req=who9w6avksv
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=disk reused=524288 dl=0 elapsedMs=6 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000080000 req=who9w6avksv
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000100000 req=who9w6avvt0
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=finalize_part reused=1048576 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=network_to_disk reused=0 dl=1048576 elapsedMs=11 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000100000 req=who9w6avvt0
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000100000 req=who9w6aw7a1
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=disk reused=1048576 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000100000 req=who9w6aw7a1
+00:42 +17: /Users/fayez/Desktop/مراجع ... complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET                                                                                  00:42 +17: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: truncated prefix named as complete is rejected without trusted total 00:42 +18: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: truncated prefix named as complete is rejected without trusted total 00:42 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: truncated MP4 with early ftyp+moov is not treated as complete      00:42 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: truncated MP4 with early ftyp+moov is not treated as complete      00:42 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: write lock serializes writers; peekComplete reads without waiting  00:42 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: write lock serializes writers; peekComplete reads without waiting  
+MIRA_DISCOVER_LOCK hold_start mediaId=f6666666-6666-6666-6666-666666666666 req=who9w6awpsl
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=network_to_disk reused=0 dl=131072 elapsedMs=90 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f6666666-6666-6666-6666-666666666666 req=who9w6awpsl
+00:42 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: write lock serializes writers; peekComplete reads without waiting  00:42 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: one failed origin GET does not close shared client for other media 00:42 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: one failed origin GET does not close shared client for other media 
+MIRA_DISCOVER_LOCK hold_start mediaId=deaddead-dead-dead-dead-deaddeaddead req=who9w6ayrnn
+MIRA_DISCOVER_CACHE mediaId=deaddead-dead-dead-dead-deaddeaddead source=network_error reused=0 dl=0 elapsedMs=2 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=deaddead-dead-dead-dead-deaddeaddead req=who9w6ayrnn
+MIRA_DISCOVER_LOCK hold_start mediaId=f7777777-7777-7777-7777-777777777777 req=who9w6ayuqj
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=finalize_part reused=49152 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=network_to_disk reused=0 dl=49152 elapsedMs=5 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f7777777-7777-7777-7777-777777777777 req=who9w6ayuqj
+00:42 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: one failed origin GET does not close shared client for other media 00:42 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor proxy open does not steal priority from visible clip      00:42 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor proxy open does not steal priority from visible clip      
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6az2w1
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=who9w6azqtf
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=1048576 elapsedMs=65 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6az2w1
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=finalize_part reused=2097152 dl=0 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=network_to_disk reused=0 dl=2097152 elapsedMs=36 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=who9w6azqtf
+00:42 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor proxy open does not steal priority from visible clip      00:42 +22: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves claimed priority bytes; neighbor stays prefix-only under load00:42 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves claimed priority bytes; neighbor stays prefix-only under load
+MIRA_DISCOVER_PHASE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc phase=prefix_seed_start have=0 need=1048576
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w6b18xa
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=who9w6b18xa
+MIRA_DISCOVER_PHASE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc phase=prefix_seed_end have=524288 elapsedMs=21
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=who9w6b1y4i
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=who9w6b1y4i
+00:42 +23: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves claimed priority bytes; neighbor stays prefix-only under load00:42 +23: /Users/fayez/Desktop/مراجع ... trusted complete reopens from disk after new cache instance with origin down                                                                                 00:42 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: trusted complete reopens from disk after new cache instance with origin down
+MIRA_DISCOVER_LOCK hold_start mediaId=f8888888-8888-8888-8888-888888888888 req=who9w6b2ok7
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=network_to_disk reused=0 dl=98304 elapsedMs=5 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f8888888-8888-8888-8888-888888888888 req=who9w6b2ok7
+MIRA_DISCOVER_LOCK hold_start mediaId=f8888888-8888-8888-8888-888888888888 req=who9w6b2whn
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=disk reused=98304 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f8888888-8888-8888-8888-888888888888 req=who9w6b2whn
+00:42 +24: /Users/fayez/Desktop/مراجع ... trusted complete reopens from disk after new cache instance with origin down                                                                                 00:42 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: HEAD 404/HTML length is not recorded as video total                00:42 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: HEAD 404/HTML length is not recorded as video total                
+MIRA_DISCOVER_LOCK hold_start mediaId=f9999999-9999-9999-9999-999999999999 req=who9w6b30zw
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=finalize_part reused=40960 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=network_to_disk reused=0 dl=40960 elapsedMs=4 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f9999999-9999-9999-9999-999999999999 req=who9w6b30zw
+00:42 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: HEAD 404/HTML length is not recorded as video total                00:42 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: untrusted named complete is never used by peek/prefix/proxy paths  00:42 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: untrusted named complete is never used by peek/prefix/proxy paths  
+MIRA_DISCOVER_LOCK hold_start mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 req=who9w6b38er
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=network_to_disk reused=0 dl=65536 elapsedMs=4 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 req=who9w6b38er
+00:42 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: untrusted named complete is never used by peek/prefix/proxy paths  00:42 +26: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: two stopAfterBytes ensureLocal calls serialize writers (not just inflight)00:42 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: two stopAfterBytes ensureLocal calls serialize writers (not just inflight)
+MIRA_DISCOVER_LOCK hold_start mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6b3ff8
+MIRA_DISCOVER_LOCK wait_start mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6b3fl0
+MIRA_DISCOVER_CACHE mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=partial reused=0 dl=16384 elapsedMs=65 err=incomplete_16384/262144 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6b3ff8
+MIRA_DISCOVER_LOCK wait_end mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6b3fl0 waitedMs=65
+MIRA_DISCOVER_LOCK hold_start mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6b3fl0
+MIRA_DISCOVER_LOCK hold_end mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6b3fl0
+00:42 +27: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: two stopAfterBytes ensureLocal calls serialize writers (not just inflight)00:42 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:43 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:44 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:45 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:46 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:47 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:48 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:49 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:50 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:51 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:52 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:53 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:54 +27: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:54 +28: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:54 +28: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                                  00:54 +28: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: prefix holding lock + ensureLocal inflight: Range fill without join (fixed)
+MIRA_DISCOVER_LOCK hold_start mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6iabyk
+MIRA_DISCOVER_LOCK wait_start mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6iad4d
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=8192 elapsedMs=5 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6iabyk
+MIRA_DISCOVER_LOCK wait_end mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6iad4d waitedMs=4
+MIRA_DISCOVER_LOCK hold_start mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6iad4d
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=disk_resume reused=8192 dl=122880 elapsedMs=6 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=who9w6iad4d
+00:54 +29: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                                  00:54 +29: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                               00:54 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)
+MIRA_DISCOVER_LOCK hold_start mediaId=freverse1-cccc-cccc-cccc-cccccccccccc req=who9w6iap3i
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=98304 elapsedMs=47 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=freverse1-cccc-cccc-cccc-cccccccccccc req=who9w6iap3i
+00:54 +30: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                               00:54 +30: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download00:54 +30: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download
+MIRA_DISCOVER_LOCK hold_start mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc req=who9w6ibspg
+MIRA_DISCOVER_LOCK hold_start mediaId=deadbeef-dead-dead-dead-deaddeadbeef req=who9w6ichqy
+MIRA_DISCOVER_CACHE mediaId=deadbeef-dead-dead-dead-deaddeadbeef source=network_error reused=0 dl=0 elapsedMs=3 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=deadbeef-dead-dead-dead-deaddeadbeef req=who9w6ichqy
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=65536 elapsedMs=40 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc req=who9w6ibspg
+00:54 +31: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download00:54 +31: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolvePlaySource seeds ≥1MiB before returning proxy 00:55 +31: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolvePlaySource seeds ≥1MiB before returning proxy 00:55 +31: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolvePlaySource seeds ≥1MiB before returning proxy 
+MIRA_DISCOVER_PHASE mediaId=fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa phase=prefix_seed_start have=0 need=1048576
+MIRA_DISCOVER_LOCK hold_start mediaId=fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=who9w6id7fp
+MIRA_DISCOVER_CACHE mediaId=fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=network_to_disk reused=0 dl=1048576 elapsedMs=14 err=null prio=fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=who9w6id7fp
+MIRA_DISCOVER_PHASE mediaId=fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa phase=prefix_seed_end have=1048576 elapsedMs=17
+00:55 +32: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolvePlaySource seeds ≥1MiB before returning proxy 00:55 +32: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor resolvePlaySource does not block on 1MiB seed             00:55 +33: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor resolvePlaySource does not block on 1MiB seed             00:55 +33: All tests passed!                                                                                                                                                                           

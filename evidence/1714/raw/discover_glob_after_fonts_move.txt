@@ -1,0 +1,15 @@
+01:00 +147 -9: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                              
+01:00 +147 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: prefix holding lock + ensureLocal inflight: Range fill without join (fixed)
+01:00 +148 -9: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                              
+01:00 +148 -9: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                           
+01:00 +148 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)
+01:00 +149 -9: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                           
+01:00 +149 -9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download 
+01:00 +149 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download
+01:00 +150 -9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download 
+01:00 +150 -9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolvePlaySource seeds ≥1MiB before returning proxy    
+01:00 +150 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolvePlaySource seeds ≥1MiB before returning proxy
+01:00 +151 -9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolvePlaySource seeds ≥1MiB before returning proxy    
+01:00 +151 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor resolvePlaySource does not block on 1MiB seed         
+01:00 +152 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor resolvePlaySource does not block on 1MiB seed         
+01:00 +152 -9: Some tests failed.                                                                                                                                                                      

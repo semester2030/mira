@@ -8,6 +8,8 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'discover_device_file_log.dart';
+
 /// Disk cache for Discover network videos.
 ///
 /// Stable key = mediaId + contentLength (content version). A rotating signed URL
@@ -124,7 +126,7 @@ class DiscoverVideoDiskCache {
       diagnostics.removeRange(0, diagnostics.length - 80);
     }
     // Network vs disk timing — pair with MIRA_DISCOVER_FF via mediaId.
-    debugPrint(
+    miraDiscoverLog(
       'MIRA_DISCOVER_CACHE mediaId=${row.mediaId} source=${row.source} '
       'reused=${row.bytesReused} dl=${row.bytesDownloaded} '
       'elapsedMs=${row.elapsedMs} err=${row.error} '
@@ -276,14 +278,29 @@ class DiscoverVideoDiskCache {
     final previous = _writeLocks[mediaId];
     final done = Completer<void>();
     _writeLocks[mediaId] = done.future;
+    final lockReq = 'w${DateTime.now().toUtc().microsecondsSinceEpoch.toRadixString(36)}';
     if (previous != null) {
+      final waited = Stopwatch()..start();
+      miraDiscoverLog(
+        'MIRA_DISCOVER_LOCK wait_start mediaId=$mediaId req=$lockReq',
+      );
       try {
         await previous;
       } catch (_) {}
+      miraDiscoverLog(
+        'MIRA_DISCOVER_LOCK wait_end mediaId=$mediaId req=$lockReq '
+        'waitedMs=${waited.elapsedMilliseconds}',
+      );
     }
+    miraDiscoverLog(
+      'MIRA_DISCOVER_LOCK hold_start mediaId=$mediaId req=$lockReq',
+    );
     try {
       return await fn();
     } finally {
+      miraDiscoverLog(
+        'MIRA_DISCOVER_LOCK hold_end mediaId=$mediaId req=$lockReq',
+      );
       if (identical(_writeLocks[mediaId], done.future)) {
         _writeLocks.remove(mediaId);
       }
@@ -441,7 +458,15 @@ class DiscoverVideoDiskCache {
         // Untrusted same-sized file: replace from .part when the part is full.
       }
     }
-    final have = await part.length();
+    // exists() then length() can race a concurrent rename/delete of .part.
+    final int have;
+    try {
+      have = await part.length();
+    } on PathNotFoundException {
+      return null;
+    } catch (_) {
+      return null;
+    }
     if (have < total) return null;
     // Sniff HTML / error pages written into .part (Render 502, etc.).
     if (!await _looksLikeMp4(part)) {
@@ -651,9 +676,30 @@ class DiscoverVideoDiskCache {
       return DiscoverPlaySource.file(complete, mediaId: mediaId, bytesOnDisk: len);
     }
 
-    // Proxy serves the local prefix immediately. Callers should [prefetch] for
-    // background fill; the proxy also Range-resumes on demand for missing bytes.
-    final have = await bytesOnDiskFor(url);
+    // On-screen clip: seed a playable prefix BEFORE AVPlayer initialize races the
+    // loopback proxy against the write lock (device T41: init≈3.0s while 1MiB fill
+    // held the lock; firstFrameMs=4009). Neighbors stay non-blocking.
+    const seedTarget = 1024 * 1024;
+    var have = await bytesOnDiskFor(url);
+    final knownTotal = _trustedLength[mediaId] ?? _knownLength[mediaId];
+    final seedBytes = (knownTotal != null && knownTotal > 0)
+        ? math.min(seedTarget, knownTotal)
+        : seedTarget;
+    if (claimPriority && have < seedBytes) {
+      final seedSw = Stopwatch()..start();
+      miraDiscoverLog(
+        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_seed_start '
+        'have=$have need=$seedBytes',
+      );
+      await ensurePlayablePrefix(url, needBytes: seedBytes);
+      have = await bytesOnDiskFor(url);
+      miraDiscoverLog(
+        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_seed_end '
+        'have=$have elapsedMs=${seedSw.elapsedMilliseconds}',
+      );
+    }
+
+    // Proxy serves the local prefix; callers [prefetch] for background full fill.
     final port = await _ensureProxy();
     final playUrl = Uri.parse('http://127.0.0.1:$port/play/$mediaId');
     return DiscoverPlaySource.proxy(
@@ -918,6 +964,7 @@ class DiscoverVideoDiskCache {
     required int needBytes,
     int? knownTotal,
   }) async {
+    final started = DateTime.now().toUtc();
     final root = await _ensureRoot();
     // Prefer trusted complete only (same gate as peekComplete / proxy).
     final complete = await _findCompleteOnDiskUnlocked(mediaId);
@@ -1127,7 +1174,7 @@ class DiscoverVideoDiskCache {
       source: before > 0 ? 'disk_resume' : 'network_to_disk',
       bytesReused: before,
       bytesDownloaded: downloaded,
-      elapsedMs: 0,
+      elapsedMs: DateTime.now().toUtc().difference(started).inMilliseconds,
       error: total == null ? 'total_unknown' : null,
     ));
 

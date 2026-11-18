@@ -13,7 +13,7 @@ import 'package:mirra/features/marketplace/data/repositories/marketplace_reposit
 import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';
 import 'package:mirra/shared/theme/theme.dart';
 
-import 'discover_fonts.dart';
+import '../../helpers/load_discover_fonts.dart';
 
 class _NoopFavorites extends DiscoverFavoriteClient {
   @override

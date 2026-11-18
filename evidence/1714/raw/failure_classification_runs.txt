@@ -1,0 +1,34 @@
+===== test/features/marketplace/discover_activation_test.dart =====
+00:02 +3 -1: discover routes stay closed unless the test define is on [E]                                                                                                                              
+  Expected: <Instance of 'DiscoverHubScreen'>
+    Actual: DiscoverPresentationScreen:<DiscoverPresentationScreen>
+     Which: is not an instance of 'DiscoverHubScreen'
+Expected: exactly one matching candidate
+  Actual: _TextContainingWidgetFinder:<Found 0 widgets with text containing الشراء من متجر: []>
+   Which: means none were found but one was expected
+00:02 +4 -2: product detail treats the store link as an external handoff [E]                                                                                                                           
+00:02 +5 -2: Some tests failed.                                                                                                                                                                        
+===== test/features/marketplace/discover_ad_rc5_test.dart =====
+Expected: at least one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "تعذر تحميل المزيد. النتائج المحملة ما زالت
+   Which: means none were found but some were expected
+00:02 +2 -1: two ads for one original stay distinct and a failed page retries once [E]                                                                                                                 
+00:02 +2 -2: a page that arrives after the query changed is not inserted into the new sequence [E]                                                                                                     
+00:02 +4 -2: Some tests failed.                                                                                                                                                                        
+===== test/features/marketplace/discover_phase2_widget_test.dart =====
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "سيروم فيتامين C": []>
+   Which: means none were found but one was expected
+00:02 +1 -1: server entry shows loading, then the response, and not an older one [E]                                                                                                                   
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "طلب موعد": []>
+   Which: means none were found but one was expected
+00:03 +5 -2: appointment says the operational request is unavailable [E]                                                                                                                               
+00:03 +8 -2: Some tests failed.                                                                                                                                                                        
+===== test/features/marketplace/discover_presentation_test.dart =====
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "أضيفي للسلة": []>
+   Which: means none were found but one was expected
+00:02 +12 -1: product chrome shows buy and store without fake success [E]                                                                                                                              
+00:02 +12 -2: preview buy does not open a transaction [E]                                                                                                                                              
+00:03 +17 -2: Some tests failed.                                                                                                                                                                       
