@@ -1,0 +1,10 @@
+18:41:56  Acquired tunnel connection to device.
+18:41:56  Enabling developer disk image services.
+18:41:56  Acquired usage assertion.
+App installed:
+• bundleID: app.mira.beauty
+• installationURL: file:///private/var/containers/Bundle/Application/CAF6EFF8-3802-4F71-8FF2-5C6C7C02E781/Runner.app/
+• launchServicesIdentifier: unknown
+• databaseUUID: 141A84E5-CC1C-420C-8AFC-0FE0E459F4CB
+• databaseSequenceNumber: 12648
+• options: 

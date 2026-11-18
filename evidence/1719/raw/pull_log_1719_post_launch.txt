@@ -1,0 +1,8 @@
+18:42:26  Acquired tunnel connection to device.
+18:42:26  Enabling developer disk image services.
+18:42:26  Acquired usage assertion.
+ERROR: The specified file could not be transferred. (com.apple.dt.CoreDeviceError error 7000 (0x1B58))
+       NSURL = file:///var/folders/x9/m0t84f6n5q79qyfy5z4_8y4c0000gn/T/tmp.4dktRjoEV7/mira_discover_device.log
+       ----------------------------------------
+           The operation couldn’t be completed. The file service client failed to read data from the network socket because the socket was closed unexpectedly. (NSPOSIXErrorDomain error 60 (0x3C))
+           NSLocalizedFailureReason = The file service client failed to read data from the network socket because the socket was closed unexpectedly.
