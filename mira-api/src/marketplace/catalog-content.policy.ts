@@ -4,6 +4,15 @@ export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 /** Product rule is duration. This ceiling is the JSON upload behind Cloudflare's 100MB body limit. */
 export const VIDEO_MAX_BYTES = 70 * 1024 * 1024;
 export const VIDEO_MAX_DURATION_SECONDS = 300;
+/** Discover main carousel caps (independent). Detail/cover placements are uncapped here. */
+export const MAIN_MAX_VIDEOS = 3;
+export const MAIN_MAX_IMAGES = 10;
+
+export function mainPlacementCapMessage(kind: 'image' | 'video'): string {
+  return kind === 'video'
+    ? `العرض الرئيسي يقبل حتى ${MAIN_MAX_VIDEOS} فيديوهات فقط.`
+    : `العرض الرئيسي يقبل حتى ${MAIN_MAX_IMAGES} صور فقط.`;
+}
 
 export const FIELD_OWNERSHIP = [
   { field: 'priceHalalas', ownerAr: 'تشغيلي (شريك/مصدر)', reviewAr: 'يُحدَّث على الصف المنشور دون مراجعة محتوى' },

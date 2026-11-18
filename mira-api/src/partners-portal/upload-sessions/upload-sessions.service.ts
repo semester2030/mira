@@ -12,6 +12,11 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CatalogMediaStorage } from '../../marketplace/catalog-media.contract';
 import {
+  MAIN_MAX_IMAGES,
+  MAIN_MAX_VIDEOS,
+  mainPlacementCapMessage,
+} from '../../marketplace/catalog-content.policy';
+import {
   IMAGE_MIME,
   VIDEO_MIME,
   UPLOAD_FINALIZE_CONCURRENCY,
@@ -242,27 +247,60 @@ export class UploadSessionsService {
     }
 
     const expiresAt = new Date(uploadNowMs() + UPLOAD_SESSION_TTL_HOURS * 3600 * 1000);
+    const now = new Date(uploadNowMs());
     try {
-      const row = await this.prisma.partnerUploadSession.create({
-        data: {
-          partnerId,
-          ownerKind,
-          ownerId: input.ownerId,
-          clientDraftId: input.clientDraftId || null,
-          clientMediaId: input.clientMediaId,
-          idempotencyKey: input.idempotencyKey,
-          status: 'created',
-          declaredMimeType: mime,
-          declaredByteSize: byteSize,
-          declaredChecksum: input.checksum || null,
-          objectKey,
-          storageUploadId,
-          completedPartsJson: [],
-          partSizeBytes,
-          totalParts,
-          placement,
-          expiresAt,
-        },
+      // Cap check + insert in one transaction so concurrent creates cannot race.
+      const row = await this.prisma.$transaction(async (tx) => {
+        if (placement === 'main') {
+          const mainKind = image ? 'image' : 'video';
+          const mainCount = await tx.catalogMedia.count({
+            where: {
+              ownerKind,
+              ownerId: input.ownerId,
+              kind: mainKind,
+              placement: 'main',
+              pendingRemoval: false,
+            },
+          });
+          // Live sessions only — expired rows must not reserve capacity forever.
+          const inflight = await tx.partnerUploadSession.count({
+            where: {
+              partnerId,
+              ownerKind,
+              ownerId: input.ownerId,
+              placement: 'main',
+              catalogMediaId: null,
+              status: { notIn: ['aborted', 'failed', 'ready'] },
+              expiresAt: { gt: now },
+              declaredMimeType: image ? { in: [...IMAGE_MIME] } : { in: [...VIDEO_MIME] },
+            },
+          });
+          const cap = image ? MAIN_MAX_IMAGES : MAIN_MAX_VIDEOS;
+          if (mainCount + inflight >= cap) {
+            throw new BadRequestException(mainPlacementCapMessage(mainKind));
+          }
+        }
+        return tx.partnerUploadSession.create({
+          data: {
+            partnerId,
+            ownerKind,
+            ownerId: input.ownerId,
+            clientDraftId: input.clientDraftId || null,
+            clientMediaId: input.clientMediaId,
+            idempotencyKey: input.idempotencyKey,
+            status: 'created',
+            declaredMimeType: mime,
+            declaredByteSize: byteSize,
+            declaredChecksum: input.checksum || null,
+            objectKey,
+            storageUploadId,
+            completedPartsJson: [],
+            partSizeBytes,
+            totalParts,
+            placement,
+            expiresAt,
+          },
+        });
       });
       return this.publicSession(row);
     } catch (error) {
@@ -271,6 +309,7 @@ export class UploadSessionsService {
       } catch {
         /* ignore */
       }
+      if (error instanceof BadRequestException) throw error;
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         const again = await this.prisma.partnerUploadSession.findUnique({
           where: { partnerId_idempotencyKey: { partnerId, idempotencyKey: input.idempotencyKey } },

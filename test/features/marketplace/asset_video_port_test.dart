@@ -485,4 +485,27 @@ void main() {
     expect(port.audiblePlayingCount, lessThanOrEqualTo(1));
     await port.release();
   });
+
+  test('cutOutgoingAudio with foreign ownerSlot does not mute active clip', () async {
+    final controller = ControllableVideoController(_clip)..advanceOnPlay = true;
+    final port = AssetVideoPort(createController: (_) => controller);
+    await port.attach(_slotA, _clip);
+    expect(controller.lastVolume, 1);
+    await port.cutOutgoingAudio(ownerSlot: _slotB);
+    expect(controller.lastVolume, 1, reason: 'foreign owner must not cut');
+    expect(port.audiblePlayingCount, 1);
+    await port.cutOutgoingAudio(ownerSlot: _slotA);
+    expect(controller.lastVolume, 0);
+    await port.release();
+  });
+
+  test('cutOutgoingAudio with stale generation is skipped', () async {
+    final controller = ControllableVideoController(_clip)..advanceOnPlay = true;
+    final port = AssetVideoPort(createController: (_) => controller);
+    await port.attach(_slotA, _clip);
+    final stale = port.debugGeneration - 1;
+    await port.cutOutgoingAudio(ownerSlot: _slotA, generation: stale);
+    expect(controller.lastVolume, 1);
+    await port.release();
+  });
 }

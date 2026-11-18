@@ -89,15 +89,17 @@ void main() {
       expect(serum.product!.priceHalalas, 8900);
     });
 
-    test('main stay images-only or single video; details may mix', () {
+    test('main slides respect gallery caps; details may mix', () {
       for (final offer in DiscoverVisualPreviewCatalog.offers) {
         final media = offer.media;
         final kind = CatalogOfferMedia.resolveKind(media, offer.mainOfferKind);
         final main = CatalogOfferMedia.mainSlides(media, kind: kind);
+        expect(main.where((item) => item.kind == 'video').length, lessThanOrEqualTo(CatalogOfferMedia.maxMainVideos));
+        expect(main.where((item) => item.kind == 'image').length, lessThanOrEqualTo(CatalogOfferMedia.maxMainImages));
         if (kind == CatalogMainOfferKind.video) {
           expect(main.where((item) => item.kind == 'video').length, 1);
           expect(main.where((item) => item.kind == 'image'), isEmpty);
-        } else {
+        } else if (kind == CatalogMainOfferKind.images) {
           expect(main.every((item) => item.kind == 'image'), isTrue);
         }
         final details = CatalogOfferMedia.detailMedia(media);

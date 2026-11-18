@@ -171,6 +171,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   bool _foreground = true;
   bool _covered = false;
   bool _released = false;
+  /// Session-scoped horizontal media index per offer slot (survives leave/return in-session).
+  final Map<String, int> _mediaIndexBySlot = <String, int>{};
   final _catalog = MarketplaceRepositoryImpl();
   late final CommerceClient _commerce = widget.commerce ?? ApiCommerceClient();
   final _search = TextEditingController();
@@ -403,12 +405,21 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   void _onVideo() {
     if (!mounted || _released) return;
     _maybeRecordQualifiedView();
-    // After attach claims the current warm slot, start warming the next clip.
+    // After attach claims the current warm slot, start warming neighbors.
+    // Prefer waiting until first visible frame so warm does not steal the decoder
+    // before the active clip proves a frame — then warm vertical + prefetch horizontal.
     final port = _video;
     if (port is AssetVideoPort && _page >= 0 && _page < _slides.length) {
-      final current = _videoPath(_slides[_page]);
+      final slide = _slides[_page];
+      final mediaIdx = _mediaIndexBySlot[slide.slotId] ?? 0;
+      final current = _videoPathAt(slide, mediaIdx) ?? _videoPath(slide);
       if (current != null && port.activePath == current) {
-        _warmAround(_page);
+        if (port.hasVisibleProgress) {
+          _warmAround(_page, mediaIndex: mediaIdx);
+        } else if (port.warmingPath != current) {
+          // Disk-only until first frame; avoid warm(next) replacing current warm claim.
+          _prefetchNeighbors(_page, mediaIndex: mediaIdx);
+        }
       }
     }
     setState(() {});
@@ -622,6 +633,26 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return null;
   }
 
+  String? _videoPathAt(PresentationSlide slide, int mediaIndex) {
+    if (mediaIndex < 0 || mediaIndex >= slide.media.length) return null;
+    final item = slide.media[mediaIndex];
+    if (item.kind == PresentationMediaKind.video && item.assetPath.isNotEmpty) return item.assetPath;
+    return null;
+  }
+
+  /// Next horizontal video in [slide] after [mediaIndex], if any.
+  String? _horizontalNeighborVideo(PresentationSlide slide, int mediaIndex) {
+    for (var i = mediaIndex + 1; i < slide.media.length; i++) {
+      final item = slide.media[i];
+      if (item.kind == PresentationMediaKind.video && item.assetPath.isNotEmpty) return item.assetPath;
+    }
+    for (var i = mediaIndex - 1; i >= 0; i--) {
+      final item = slide.media[i];
+      if (item.kind == PresentationMediaKind.video && item.assetPath.isNotEmpty) return item.assetPath;
+    }
+    return null;
+  }
+
   /// Start warming the next clip while the finger is still dragging (before settle).
   bool _onVerticalScroll(ScrollNotification note) {
     if (note.metrics.axis != Axis.vertical) return false;
@@ -637,15 +668,31 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return false;
   }
 
-  void _warmAround(int index, {bool deferIfCurrentWarm = false}) {
+  void _prefetchNeighbors(int index, {int mediaIndex = 0}) {
+    final port = _video;
+    if (index < 0 || index >= _slides.length || port is! AssetVideoPort) return;
+    final slide = _slides[index];
+    final horiz = _horizontalNeighborVideo(slide, mediaIndex);
+    if (horiz != null) port.prefetchDisk(horiz, lowPriority: true);
+    final nextPath = index + 1 < _slides.length ? _videoPath(_slides[index + 1]) : null;
+    final prevPath = index - 1 >= 0 ? _videoPath(_slides[index - 1]) : null;
+    if (nextPath != null) port.prefetchDisk(nextPath, lowPriority: true);
+    if (prevPath != null) port.prefetchDisk(prevPath, lowPriority: true);
+  }
+
+  void _warmAround(int index, {bool deferIfCurrentWarm = false, int? mediaIndex}) {
     final port = _video;
     if (index < 0 || index >= _slides.length) return;
+    final slide = _slides[index];
+    final mid = mediaIndex ?? _mediaIndexBySlot[slide.slotId] ?? 0;
     if (port is AssetVideoPort) {
-      final current = _videoPath(_slides[index]);
+      final current = _videoPathAt(slide, mid) ?? _videoPath(slide);
+      final horiz = _horizontalNeighborVideo(slide, mid);
       // Disk prefetch for neighbors is cheap and survives warm-controller swaps.
       final nextPath = index + 1 < _slides.length ? _videoPath(_slides[index + 1]) : null;
       final prevPath = index - 1 >= 0 ? _videoPath(_slides[index - 1]) : null;
-      // Visible clip fill wins; neighbors are deferred while it is downloading.
+      // Budget: never prefetch the whole gallery — only adjacent horizontal + vertical.
+      if (horiz != null) port.prefetchDisk(horiz, lowPriority: true);
       if (nextPath != null) port.prefetchDisk(nextPath, lowPriority: true);
       if (prevPath != null) port.prefetchDisk(prevPath, lowPriority: true);
       // Protect the warm slot that still holds the current page's controller.
@@ -656,9 +703,12 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           port.warmingPath == current) {
         return;
       }
-      // Prefer next once current is active (or was never warming).
+      // After first frame: prefer vertical next for decoder warm; horizontal gets disk fill.
+      // If no vertical next video, warm the horizontal neighbor instead.
       if (nextPath != null) {
         port.warm(nextPath);
+      } else if (horiz != null && horiz != current) {
+        port.warm(horiz);
       } else if (prevPath != null) {
         port.warm(prevPath);
       }
@@ -2020,6 +2070,20 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                   return _PresentationPage(
                   key: ValueKey('${_slides[index].slotId}:${_slides[index].media.map((item) => item.assetPath).join('|')}'),
                   slide: _slides[index],
+                  initialMediaIndex: () {
+                    final slot = _slides[index].slotId;
+                    final saved = _mediaIndexBySlot[slot] ?? 0;
+                    final max = _slides[index].media.length;
+                    if (max <= 0) return 0;
+                    return saved.clamp(0, max - 1);
+                  }(),
+                  onMediaIndexChanged: (mediaIndex) {
+                    final slot = _slides[index].slotId;
+                    _mediaIndexBySlot[slot] = mediaIndex;
+                    if (index == _page) {
+                      _warmAround(index, mediaIndex: mediaIndex);
+                    }
+                  },
                   recordAdLink: widget.recordAdLink ?? _catalog.recordAdLinkOpen,
                   linkOutbox: widget.linkOutbox ?? AdLinkOpenOutbox.shared,
                   confirmAdLink: widget.confirmAdLink ?? _catalog.confirmAdLink,
@@ -2364,6 +2428,8 @@ class _PresentationPage extends StatefulWidget {
     required this.epoch,
     required this.video,
     required this.onExit,
+    this.initialMediaIndex = 0,
+    this.onMediaIndexChanged,
     this.catalog,
     this.records,
     this.source,
@@ -2377,6 +2443,8 @@ class _PresentationPage extends StatefulWidget {
   final CommerceClient? commerce;
   final PresentationSlide slide;
   final bool active;
+  final int initialMediaIndex;
+  final ValueChanged<int>? onMediaIndexChanged;
   final _CatalogHooks? catalog;
   final DiscoverCatalogGateway? records;
   final CatalogTransport? source;
@@ -2395,7 +2463,7 @@ class _PresentationPage extends StatefulWidget {
 
 class _PresentationPageState extends State<_PresentationPage> {
   late final PageController _horizontal;
-  int _media = 0;
+  late int _media;
   int _category = 0;
   PresentationSlot? _held;
   bool _linkBusy = false;
@@ -2404,7 +2472,9 @@ class _PresentationPageState extends State<_PresentationPage> {
   @override
   void initState() {
     super.initState();
-    _horizontal = PageController();
+    final max = widget.slide.media.length;
+    _media = max <= 0 ? 0 : widget.initialMediaIndex.clamp(0, max - 1);
+    _horizontal = PageController(initialPage: _media);
     _syncVideo();
   }
 
@@ -2418,10 +2488,11 @@ class _PresentationPageState extends State<_PresentationPage> {
       ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
     }
     if (oldWidget.slide.slotId != widget.slide.slotId) {
-      _media = 0;
+      final max = widget.slide.media.length;
+      _media = max <= 0 ? 0 : widget.initialMediaIndex.clamp(0, max - 1);
       _category = 0;
       if (_horizontal.hasClients) {
-        _horizontal.jumpToPage(0);
+        _horizontal.jumpToPage(_media);
       }
     }
   }
@@ -2443,6 +2514,22 @@ class _PresentationPageState extends State<_PresentationPage> {
     final media = widget.slide.media[_media];
     final slot = PresentationSlot(widget.slide.slotId, _media);
     if (!widget.playable || media.kind != PresentationMediaKind.video) {
+      // Only the page that owns the active slot may cut audio. Adjacent
+      // inactive pages (playable:false) must not mute the visible clip.
+      final held = _held;
+      final port = widget.video;
+      if (held != null && port is AssetVideoPort && port.activeSlot?.same(held) == true) {
+        final gen = port.debugGeneration;
+        // Await cut before detach so late play cannot revive this owner.
+        // ignore: discarded_futures
+        () async {
+          await port.cutOutgoingAudio(ownerSlot: held, generation: gen);
+          if (_held != null && _held!.same(held)) {
+            _releaseHeld();
+          }
+        }();
+        return;
+      }
       _releaseHeld();
       return;
     }
@@ -2479,6 +2566,7 @@ class _PresentationPageState extends State<_PresentationPage> {
             itemCount: slide.media.length,
             onPageChanged: (index) {
               setState(() => _media = index);
+              widget.onMediaIndexChanged?.call(index);
               _syncVideo();
             },
             itemBuilder: (context, index) {

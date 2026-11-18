@@ -31,7 +31,7 @@ class DiscoverVideoDiskCache {
   final Directory? _rootOverride;
   final int maxEntries;
   final int maxBytes;
-  final HttpClient _http;
+  HttpClient _http;
 
   Directory? _root;
   final Map<String, Future<DiscoverCachedVideo>> _inflight = {};
@@ -51,10 +51,17 @@ class DiscoverVideoDiskCache {
   DiscoverPrefixFillStats? lastPrefixStats;
 
   /// Media id currently on screen — fill jobs for this id start before others.
+  /// Only [prioritize] / [resolvePlaySource](claimPriority: true) may set this.
   String? _priorityMediaId;
+
+  /// Authoritative object sizes (Content-Range TOTAL or full-GET Content-Length).
+  /// Never populated from a prefix window / `.part` length alone.
+  final Map<String, int> _trustedLength = {};
 
   /// Serialize all origin writes per mediaId (proxy + prefetch share one GET).
   final Map<String, Future<void>> _writeLocks = {};
+  /// Re-entrancy depth while the current async stack holds the write lock.
+  final Map<String, int> _writeLockDepth = {};
 
   static String? mediaIdFromUrl(String url) {
     final uri = Uri.tryParse(url);
@@ -124,10 +131,11 @@ class DiscoverVideoDiskCache {
   void _kickFill(String origin, String mediaId) {
     if (_priorityMediaId != null && mediaId != _priorityMediaId) {
       // ignore: discarded_futures
-      ensurePlayablePrefix(origin, needBytes: 1024 * 1024);
+      ensurePlayablePrefix(origin, needBytes: 1024 * 1024).catchError((_) {});
       return;
     }
-    prefetch(origin);
+    // ignore: discarded_futures
+    ensureLocal(origin).catchError((_) {});
   }
 
   /// Fire-and-forget prefetch. Safe to call repeatedly — joins the same download.
@@ -135,6 +143,9 @@ class DiscoverVideoDiskCache {
   /// [lowPriority] neighbors only grow a playable prefix (~1 MiB). They must NOT
   /// start or queue a full multi‑10 MB GET — concurrent full downloads starved
   /// the on-screen clip (wedding dress 9cbed24c: 51 MB cold GET under dark cover).
+  ///
+  /// Non-lowPriority full fill never steals [_priorityMediaId]; only [prioritize]
+  /// / claimPriority attach may designate the on-screen owner.
   void prefetch(String url, {bool lowPriority = false}) {
     final id = mediaIdFromUrl(url);
     if (lowPriority) {
@@ -144,11 +155,14 @@ class DiscoverVideoDiskCache {
       ensurePlayablePrefix(url, needBytes: 1024 * 1024);
       return;
     }
-    if (id != null) {
-      _priorityMediaId = id;
+    if (id != null && _priorityMediaId != null && id != _priorityMediaId) {
+      // Visible clip owns full GET — neighbors stay prefix-only.
+      // ignore: discarded_futures
+      ensurePlayablePrefix(url, needBytes: 1024 * 1024);
+      return;
     }
     // ignore: discarded_futures
-    ensureLocal(url);
+    ensureLocal(url).catchError((_) => DiscoverCachedVideo.network(url: url, reason: 'prefetch_error'));
   }
 
   /// Ensure at least [needBytes] are on disk (complete file or .part) without
@@ -159,8 +173,26 @@ class DiscoverVideoDiskCache {
     _originByMediaId[mediaId] = url;
     final complete = await peekComplete(url);
     if (complete != null) return complete.length();
-    final have = await bytesOnDiskFor(url);
+    var have = await bytesOnDiskFor(url);
     if (have >= needBytes) return have;
+
+    // If a writer already holds the lock / full GET is in flight, wait for the
+    // `.part` to grow without taking the write lock (would block behind the
+    // full download and can deadlock via peek→finalize).
+    if (_inflight.containsKey(mediaId) || _writeLocks.containsKey(mediaId)) {
+      final root = await _ensureRoot();
+      final part = File('${root.path}/$mediaId.part');
+      final deadline = DateTime.now().toUtc().add(const Duration(seconds: 12));
+      while (DateTime.now().toUtc().isBefore(deadline)) {
+        have = await part.exists() ? await part.length() : 0;
+        if (have >= needBytes) return have;
+        final done = await _findCompleteOnDiskUnlocked(mediaId);
+        if (done != null) return done.length();
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
+      return have;
+    }
+
     try {
       final fill = await _withWriteLock(
         mediaId,
@@ -168,7 +200,7 @@ class DiscoverVideoDiskCache {
           mediaId: mediaId,
           origin: url,
           needBytes: needBytes,
-          knownTotal: _knownLength[mediaId],
+          knownTotal: _trustedLength[mediaId] ?? _knownLength[mediaId],
         ),
       );
       return await fill.file?.length() ?? 0;
@@ -224,6 +256,23 @@ class DiscoverVideoDiskCache {
   }
 
   Future<T> _withWriteLock<T>(String mediaId, Future<T> Function() fn) async {
+    // Re-enter if this mediaId's lock is already held on the current stack
+    // (e.g. finalize called from inside _ensurePrefix). External waiters still
+    // queue on [_writeLocks] and never busy-spin forever.
+    final held = _writeLockDepth[mediaId] ?? 0;
+    if (held > 0) {
+      _writeLockDepth[mediaId] = held + 1;
+      try {
+        return await fn();
+      } finally {
+        final next = (_writeLockDepth[mediaId] ?? 1) - 1;
+        if (next <= 0) {
+          _writeLockDepth.remove(mediaId);
+        } else {
+          _writeLockDepth[mediaId] = next;
+        }
+      }
+    }
     while (_writeLocks.containsKey(mediaId)) {
       try {
         await _writeLocks[mediaId];
@@ -231,9 +280,11 @@ class DiscoverVideoDiskCache {
     }
     final done = Completer<void>();
     _writeLocks[mediaId] = done.future;
+    _writeLockDepth[mediaId] = 1;
     try {
       return await fn();
     } finally {
+      _writeLockDepth.remove(mediaId);
       if (identical(_writeLocks[mediaId], done.future)) {
         _writeLocks.remove(mediaId);
       }
@@ -241,10 +292,17 @@ class DiscoverVideoDiskCache {
     }
   }
 
-  /// Prefix windows must never be mistaken for the whole object (6e153366 @
-  /// 13:34:31 renamed to `*_1048576.mp4` then raced PathNotFound).
-  static bool _looksLikePrefixCeiling(int total) =>
-      total == 1024 * 1024 || total == 512 * 1024 || total == 256 * 1024;
+  /// True when [total] was recorded from an authoritative HTTP source for [mediaId].
+  bool _isTrustedTotal(String mediaId, int total) {
+    if (total <= 0) return false;
+    return _trustedLength[mediaId] == total;
+  }
+
+  void _recordTrustedLength(String mediaId, int total) {
+    if (total <= 0) return;
+    _trustedLength[mediaId] = total;
+    _knownLength[mediaId] = total;
+  }
 
   /// If `{mediaId}.part` already holds the full object, promote it to a
   /// complete `mediaId_TOTAL.mp4`. Safe under the per-media write lock and
@@ -265,18 +323,30 @@ class DiscoverVideoDiskCache {
     int? knownTotal,
   }) async {
     final root = await _ensureRoot();
+    // Fast path: complete object already on disk — never HEAD / never wait network.
+    final existing = await _findCompleteOnDiskUnlocked(mediaId);
+    if (existing != null) return existing;
+
     final part = File('${root.path}/$mediaId.part');
-    // Prefer a live HEAD over a stale/prefix-sized cache entry.
-    if (url != null && url.isNotEmpty) {
+    if (!await part.exists()) return null;
+
+    // Promote only with a trusted total (caller-known or HEAD). Never use .part
+    // length alone as the object size.
+    var total = knownTotal;
+    if (total != null && total > 0) {
+      _recordTrustedLength(mediaId, total);
+    } else {
+      total = _trustedLength[mediaId];
+    }
+    if ((total == null || total <= 0) && url != null && url.isNotEmpty) {
       final headed = await _headLength(url);
       if (headed != null && headed > 0) {
-        _knownLength[mediaId] = headed;
+        _recordTrustedLength(mediaId, headed);
+        total = headed;
       }
     }
-    final total = knownTotal ?? _knownLength[mediaId];
     if (total == null || total <= 0) return null;
-    // Refuse to promote a 1 MiB (etc.) ceiling as a "complete" object.
-    if (_looksLikePrefixCeiling(total)) return null;
+    if (!_isTrustedTotal(mediaId, total)) return null;
 
     final key = '${mediaId}_$total.mp4';
     final dest = File('${root.path}/$key');
@@ -286,14 +356,6 @@ class DiscoverVideoDiskCache {
         _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
         return dest;
       }
-    }
-    if (!await part.exists()) {
-      // Another finalize already moved .part → complete.
-      if (await dest.exists() && await dest.length() == total) {
-        _rememberComplete(mediaId: mediaId, key: key, dest: dest, total: total);
-        return dest;
-      }
-      return null;
     }
     final have = await part.length();
     if (have < total) return null;
@@ -353,6 +415,7 @@ class DiscoverVideoDiskCache {
     required File dest,
     required int total,
   }) {
+    _recordTrustedLength(mediaId, total);
     final drop = <String>[];
     for (final e in _lru.entries) {
       if (e.value.mediaId == mediaId) drop.add(e.key);
@@ -397,22 +460,28 @@ class DiscoverVideoDiskCache {
     }
   }
 
-  /// Non-blocking peek: complete file already on disk for this URL's media id.
-  Future<File?> peekComplete(String url) async {
-    final mediaId = mediaIdFromUrl(url);
-    if (mediaId == null) return null;
+  /// Complete `{mediaId}_TOTAL.mp4` on disk without network / without write lock.
+  Future<File?> _findCompleteOnDiskUnlocked(String mediaId) async {
     final root = await _ensureRoot();
     await _indexExisting(root);
     for (final e in List<MapEntry<String, _CacheMeta>>.from(_lru.entries)) {
       if (e.value.mediaId == mediaId && e.value.complete) {
         final f = File(e.value.path);
-        if (await f.exists()) {
+        if (!await f.exists()) continue;
+        final len = e.value.contentLength;
+        final size = await f.length();
+        if (size != len || len <= 0) continue;
+        if (_isTrustedTotal(mediaId, len)) {
           _touch(e.key);
           return f;
         }
+        // Untrusted LRU entry (e.g. legacy *_1048576.mp4): require real MP4.
+        if (!await _sniffMp4Complete(f)) continue;
+        _recordTrustedLength(mediaId, len);
+        _touch(e.key);
+        return f;
       }
     }
-    // Filesystem fallback when LRU missed a renamed complete object.
     await for (final entity in root.list()) {
       if (entity is! File) continue;
       final name = entity.uri.pathSegments.isEmpty
@@ -421,22 +490,62 @@ class DiscoverVideoDiskCache {
       final m = RegExp('^${RegExp.escape(mediaId)}_(\\d+)\\.mp4\$').firstMatch(name);
       if (m == null) continue;
       final len = int.tryParse(m.group(1)!) ?? 0;
+      if (len <= 0) continue;
       final size = await entity.length();
-      if (len <= 0 || size != len) continue;
+      if (size != len) continue;
+      if (_isTrustedTotal(mediaId, len)) {
+        final key = name;
+        _rememberComplete(mediaId: mediaId, key: key, dest: entity, total: len);
+        return entity;
+      }
+      // Untrusted legacy name: require ftyp+moov so a truncated prefix is rejected.
+      if (!await _sniffMp4Complete(entity)) continue;
       final key = name;
-      _lru[key] = _CacheMeta(
-        key: key,
-        mediaId: mediaId,
-        contentLength: len,
-        path: entity.path,
-        complete: true,
-        bytesOnDisk: size,
-      );
-      _touch(key);
+      _rememberComplete(mediaId: mediaId, key: key, dest: entity, total: len);
       return entity;
     }
-    // Stuck .part that already equals TOTAL → promote before giving up.
-    return finalizePartIfComplete(url);
+    return null;
+  }
+
+  /// Minimal ftyp + moov presence check for legacy complete files.
+  static Future<bool> _sniffMp4Complete(File file) async {
+    try {
+      final len = await file.length();
+      if (len < 32) return false;
+      final raf = await file.open();
+      try {
+        final head = await raf.read(64);
+        if (head.length < 8) return false;
+        final box = String.fromCharCodes(head.sublist(4, 8));
+        if (box != 'ftyp') return false;
+        // Scan a bounded window for moov (same idea as server sniffMedia).
+        final window = math.min(len, 512 * 1024);
+        await raf.setPosition(0);
+        final buf = await raf.read(window);
+        final needle = 'moov'.codeUnits;
+        for (var i = 0; i <= buf.length - 4; i++) {
+          if (buf[i] == needle[0] &&
+              buf[i + 1] == needle[1] &&
+              buf[i + 2] == needle[2] &&
+              buf[i + 3] == needle[3]) {
+            return true;
+          }
+        }
+        return false;
+      } finally {
+        await raf.close();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Non-blocking peek: complete file already on disk. Never waits on the write
+  /// lock and never promotes `.part` (that would serialize behind ensureLocal).
+  Future<File?> peekComplete(String url) async {
+    final mediaId = mediaIdFromUrl(url);
+    if (mediaId == null) return null;
+    return _findCompleteOnDiskUnlocked(mediaId);
   }
 
   /// Bytes already on disk for [url] (complete file or `.part` prefix).
@@ -538,14 +647,19 @@ class DiscoverVideoDiskCache {
         return;
       }
 
-      _priorityMediaId = mediaId;
-      var total = _knownLength[mediaId];
+      // Never steal on-screen priority from a warm/neighbor proxy open.
+      // Only [prioritize] / claimPriority attach designates the owner.
+      var total = _trustedLength[mediaId] ?? _knownLength[mediaId];
       var file = await _openBodyFile(mediaId);
       var have = await file.length();
 
       if (total == null || total <= 0) {
-        total = await _headLength(origin) ?? (have > 0 ? have : null);
-        if (total != null && total > 0) _knownLength[mediaId] = total;
+        final headed = await _headLength(origin);
+        if (headed != null && headed > 0) {
+          _recordTrustedLength(mediaId, headed);
+          total = headed;
+        }
+        // Do NOT fall back to `have` — a .part length is not the object size.
       }
 
       final range = req.headers.value(HttpHeaders.rangeHeader);
@@ -689,9 +803,51 @@ class DiscoverVideoDiskCache {
     }
   }
 
+  /// Opens a GET while isolating HttpClient's internal zone errors (aborted
+  /// Range/stopAfterBytes can otherwise fail the surrounding test/zone).
+  Future<HttpClientRequest> _openGet(Uri uri) {
+    final done = Completer<HttpClientRequest>();
+    runZonedGuarded(() async {
+      try {
+        done.complete(await _http.getUrl(uri));
+        return;
+      } catch (_) {
+        try {
+          _http.close(force: true);
+        } catch (_) {}
+        _http = HttpClient();
+        try {
+          done.complete(await _http.getUrl(uri));
+        } catch (e, st) {
+          if (!done.isCompleted) done.completeError(e, st);
+        }
+      }
+    }, (e, st) {
+      if (!done.isCompleted) {
+        try {
+          _http.close(force: true);
+        } catch (_) {}
+        _http = HttpClient();
+        _http.getUrl(uri).then(done.complete, onError: done.completeError);
+      }
+    });
+    return done.future;
+  }
+
   Future<int?> _headLength(String url) async {
     try {
-      final head = await _http.headUrl(Uri.parse(url));
+      final uri = Uri.tryParse(url);
+      if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
+      late final HttpClientRequest head;
+      try {
+        head = await _http.headUrl(uri);
+      } catch (_) {
+        try {
+          _http.close(force: true);
+        } catch (_) {}
+        _http = HttpClient();
+        head = await _http.headUrl(uri);
+      }
       head.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
       final headResp = await head.close().timeout(const Duration(seconds: 8));
       final len = headResp.contentLength >= 0 ? headResp.contentLength : null;
@@ -759,10 +915,8 @@ class DiscoverVideoDiskCache {
             contentLength: knownTotal ?? _knownLength[mediaId],
           );
         }
-        // Complete may have renamed part away.
-        final done = await peekComplete(
-          _originByMediaId[mediaId] ?? origin,
-        );
+        // Complete may have renamed part away — disk read only (no lock wait).
+        final done = await _findCompleteOnDiskUnlocked(mediaId);
         if (done != null) {
           final len = await done.length();
           return _PrefixFill(
@@ -781,14 +935,21 @@ class DiscoverVideoDiskCache {
     var downloaded = 0;
     var networkBytesRead = 0;
     while (have < needBytes) {
-      final req = await _http.getUrl(Uri.parse(origin));
-      req.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
-      // Always Range with an explicit end so a prefix fill cannot become a
-      // multi‑10 MB full GET (previous bug: bytes=0- / no Range drained the
-      // whole object into the .part after needBytes).
-      final wantEnd = needBytes - 1;
-      req.headers.set(HttpHeaders.rangeHeader, 'bytes=$have-$wantEnd');
-      final resp = await req.close().timeout(const Duration(seconds: 20));
+      final uri = Uri.tryParse(origin);
+      if (uri == null || !uri.hasScheme || uri.host.isEmpty) break;
+      final HttpClientResponse resp;
+      try {
+        final req = await _openGet(uri);
+        req.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
+        // Always Range with an explicit end so a prefix fill cannot become a
+        // multi‑10 MB full GET (previous bug: bytes=0- / no Range drained the
+        // whole object into the .part after needBytes).
+        final wantEnd = needBytes - 1;
+        req.headers.set(HttpHeaders.rangeHeader, 'bytes=$have-$wantEnd');
+        resp = await req.close().timeout(const Duration(seconds: 20));
+      } catch (_) {
+        break;
+      }
       final status = resp.statusCode;
       if (status != 200 && status != 206) {
         await abortHttpBody(resp);
@@ -801,7 +962,7 @@ class DiscoverVideoDiskCache {
         // this prefix window (never record needBytes as the whole object).
         if (resp.contentLength > needBytes) {
           total = resp.contentLength;
-          _knownLength[mediaId] = resp.contentLength;
+          _recordTrustedLength(mediaId, resp.contentLength);
         }
       } else {
         // 206: ONLY Content-Range TOTAL is authoritative. Never use
@@ -809,9 +970,9 @@ class DiscoverVideoDiskCache {
         final fromRange = contentRangeTotal(
           resp.headers.value(HttpHeaders.contentRangeHeader),
         );
-        if (fromRange != null && !_looksLikePrefixCeiling(fromRange)) {
+        if (fromRange != null && fromRange > 0) {
           total = fromRange;
-          _knownLength[mediaId] = fromRange;
+          _recordTrustedLength(mediaId, fromRange);
         }
         // else: total stays knownTotal/_knownLength or null (unknown).
       }
@@ -918,10 +1079,7 @@ class DiscoverVideoDiskCache {
       contentLength: total,
       complete: total != null && total > 0 && have >= total,
     );
-    if (total != null &&
-        total > 0 &&
-        have >= total &&
-        !_looksLikePrefixCeiling(total)) {
+    if (total != null && total > 0 && have >= total && _isTrustedTotal(mediaId, total)) {
       final dest = await _finalizePartIfCompleteUnlocked(
         mediaId: mediaId,
         url: origin,
@@ -996,10 +1154,10 @@ class DiscoverVideoDiskCache {
     final started = DateTime.now().toUtc();
     _originByMediaId[mediaId] = url;
 
-    int? contentLength = _knownLength[mediaId];
+    int? contentLength = _trustedLength[mediaId] ?? _knownLength[mediaId];
     contentLength ??= await _headLength(url);
     if (contentLength != null && contentLength > 0) {
-      _knownLength[mediaId] = contentLength;
+      _recordTrustedLength(mediaId, contentLength);
     }
 
     if (contentLength != null && contentLength > 0) {
@@ -1050,12 +1208,30 @@ class DiscoverVideoDiskCache {
       );
     }
 
-    final req = await _http.getUrl(Uri.parse(url));
-    req.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
-    if (have > 0) {
-      req.headers.set(HttpHeaders.rangeHeader, 'bytes=$have-');
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      return DiscoverCachedVideo.network(url: url, mediaId: mediaId, reason: 'bad_url');
     }
-    final resp = await req.close().timeout(const Duration(seconds: 20));
+    final HttpClientRequest req;
+    final HttpClientResponse resp;
+    try {
+      req = await _openGet(uri);
+      req.headers.set(HttpHeaders.acceptHeader, 'video/*,*/*');
+      if (have > 0) {
+        req.headers.set(HttpHeaders.rangeHeader, 'bytes=$have-');
+      }
+      resp = await req.close().timeout(const Duration(seconds: 20));
+    } on Object catch (e) {
+      _diag(DiscoverVideoDiag(
+        mediaId: mediaId,
+        source: 'network_error',
+        bytesReused: have,
+        bytesDownloaded: 0,
+        elapsedMs: DateTime.now().toUtc().difference(started).inMilliseconds,
+        error: 'get_url_$e',
+      ));
+      return DiscoverCachedVideo.network(url: url, mediaId: mediaId, reason: 'get_url_error');
+    }
     final status = resp.statusCode;
     if (status != 200 && status != 206) {
       await resp.drain<void>();
@@ -1081,15 +1257,14 @@ class DiscoverVideoDiskCache {
       final fromRange = contentRangeTotal(
         resp.headers.value(HttpHeaders.contentRangeHeader),
       );
-      if (fromRange != null && !_looksLikePrefixCeiling(fromRange)) {
+      if (fromRange != null && fromRange > 0) {
         total = fromRange;
+        _recordTrustedLength(mediaId, fromRange);
       }
     } else if (resp.contentLength > 0 &&
         (stopAfterBytes == null || resp.contentLength > stopAfterBytes)) {
       total = resp.contentLength;
-    }
-    if (total != null && total > 0 && !_looksLikePrefixCeiling(total)) {
-      _knownLength[mediaId] = total;
+      _recordTrustedLength(mediaId, resp.contentLength);
     }
 
     final ctype = resp.headers.contentType?.mimeType ?? '';
@@ -1188,10 +1363,23 @@ class DiscoverVideoDiskCache {
 
     final finalLen = await part.length();
     var expected = total ?? contentLength;
-    if (expected != null && _looksLikePrefixCeiling(expected)) {
+    if (expected != null && !_isTrustedTotal(mediaId, expected)) {
       expected = null;
     }
     if (expected == null || finalLen <= 0) {
+      // Partial prefix is still useful for the proxy; do not claim complete.
+      if (finalLen > 0) {
+        return DiscoverCachedVideo(
+          url: url,
+          mediaId: mediaId,
+          file: part,
+          complete: false,
+          fromDisk: reused > 0 && downloaded == 0,
+          bytesOnDisk: finalLen,
+          bytesDownloaded: downloaded,
+          contentLength: total ?? contentLength,
+        );
+      }
       return DiscoverCachedVideo.network(url: url, mediaId: mediaId, reason: 'unknown_length');
     }
     if (finalLen < expected) {

@@ -348,7 +348,33 @@ class AssetVideoPort extends PresentationVideoPort {
 
   /// Nomas-style hard cut: kill outgoing audio immediately on swipe settle,
   /// before any warm/init await. Awaits mute+pause so overlap can be proven.
-  Future<void> cutOutgoingAudio({String? nextMediaUrl}) async {
+  ///
+  /// [ownerSlot]: when set, refuse to cut unless [activeSlot] still matches —
+  /// adjacent/inactive pages must not mute the visible clip's player.
+  /// [generation]: when set, abort if a newer attach already advanced [_generation].
+  Future<void> cutOutgoingAudio({
+    String? nextMediaUrl,
+    PresentationSlot? ownerSlot,
+    int? generation,
+  }) async {
+    if (ownerSlot != null) {
+      final active = activeSlot;
+      if (active == null || !active.same(ownerSlot)) {
+        debugPrint(
+          'MIRA_DISCOVER_AUDIO cut_skipped reason=not_owner '
+          'owner=${ownerSlot.slideId}/${ownerSlot.mediaIndex} '
+          'active=${active?.slideId}/${active?.mediaIndex}',
+        );
+        return;
+      }
+    }
+    if (generation != null && generation != _generation) {
+      debugPrint(
+        'MIRA_DISCOVER_AUDIO cut_skipped reason=stale_generation '
+        'cutGen=$generation live=$_generation',
+      );
+      return;
+    }
     final prevPath = _activePath;
     final prevOffer = activeSlot?.slideId;
     final futures = <Future<void>>[];
@@ -368,7 +394,16 @@ class AssetVideoPort extends PresentationVideoPort {
       futures.add(_silence(c, role: 'prepared'));
     }
     if (futures.isNotEmpty) {
-      await Future.wait(futures);
+      try {
+        await Future.wait(futures);
+      } catch (e) {
+        debugPrint('MIRA_DISCOVER_AUDIO cut_wait_err err=$e');
+        _recordDiag({
+          'event': 'audio_cut_error',
+          'error': '$e',
+          'at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
     }
     final audibleAfter = audiblePlayingCount;
     _recordDiag({
@@ -378,6 +413,7 @@ class AssetVideoPort extends PresentationVideoPort {
       'nextMediaId': _mediaIdOf(nextMediaUrl),
       'audiblePlaying': audibleAfter,
       'activePlayerId': _playerId(active),
+      'ownerOk': ownerSlot == null ? 1 : (activeSlot?.same(ownerSlot) == true ? 1 : 0),
       'at': DateTime.now().toUtc().toIso8601String(),
     });
     debugPrint(
@@ -1221,6 +1257,9 @@ class AssetVideoPort extends PresentationVideoPort {
 
   /// Path of the active (on-screen) controller, if any.
   String? get activePath => _activePath;
+
+  /// Attach/detach generation — used by owners to ignore stale audio cuts.
+  int get debugGeneration => _generation;
 
   /// True when a warm controller exists for [warmingPath] (ready or still initializing).
   bool get hasWarmSlot => _warm != null && (_warmPath?.isNotEmpty ?? false);
