@@ -309,6 +309,10 @@ export class TaxonomyService implements OnModuleInit {
       ? [...((n as { partnerKindsAllowed?: string[] }).partnerKindsAllowed || [])]
       : undefined;
     const medicalOnly = !!(n as { medicalOnly?: boolean }).medicalOnly;
+    const blockedForNewRegistration = !!(n as { blockedForNewRegistration?: boolean }).blockedForNewRegistration;
+    const linkedSpecialtyIds = Array.isArray((n as { linkedSpecialtyIds?: string[] }).linkedSpecialtyIds)
+      ? [...((n as { linkedSpecialtyIds?: string[] }).linkedSpecialtyIds || [])]
+      : undefined;
     return {
       id: n.id,
       parentId: n.parentId,
@@ -324,6 +328,8 @@ export class TaxonomyService implements OnModuleInit {
       ...(placeModesAllowed ? { placeModesAllowed } : {}),
       ...(partnerKindsAllowed ? { partnerKindsAllowed } : {}),
       ...(medicalOnly ? { medicalOnly: true } : {}),
+      ...(blockedForNewRegistration ? { blockedForNewRegistration: true } : {}),
+      ...(linkedSpecialtyIds && linkedSpecialtyIds.length ? { linkedSpecialtyIds } : {}),
       children: [...(n.children || [])],
       fieldIds: meta.fieldIds,
       filterKeys: meta.filterKeys,
