@@ -237,6 +237,11 @@ export class MceResponseValidatorService {
         priceSar?: number | null;
         inStock?: boolean | null;
       }>;
+      /**
+       * Alternatives / locked discovery replies are already grounded on published catalog rows.
+       * Do not replace them with open-offer serverCommercialTurnReply (fact registry may only hold the open offer).
+       */
+      preserveGroundedAnswer?: boolean;
     },
   ): MceAssistantPayloadV1 {
     const allowed = new Set(factRegistry.map((f) => f.id));
@@ -248,10 +253,19 @@ export class MceResponseValidatorService {
       confidence = 'low';
     }
 
-    const guarded = guardCommercialTurn(String(raw.answerAr ?? ''), factRegistry, userMessage);
-    guarded.text = retainTrustedSkinNumbers(guarded.text, factRegistry);
-    // discoveryEnabled alone does not authorize invented SKUs — only published catalog rows do.
-    guarded.text = stripInventedMiraCatalogClaims(guarded.text, opts?.publishedOffers ?? []);
+    let answerAr: string;
+    if (opts?.preserveGroundedAnswer) {
+      // Keep server-built alternatives/compare prose; still strip any invented Mira SKUs.
+      answerAr = stripInventedMiraCatalogClaims(
+        String(raw.answerAr ?? ''),
+        opts?.publishedOffers ?? [],
+      );
+    } else {
+      const guarded = guardCommercialTurn(String(raw.answerAr ?? ''), factRegistry, userMessage);
+      guarded.text = retainTrustedSkinNumbers(guarded.text, factRegistry);
+      // discoveryEnabled alone does not authorize invented SKUs — only published catalog rows do.
+      answerAr = stripInventedMiraCatalogClaims(guarded.text, opts?.publishedOffers ?? []);
+    }
     const questions = (Array.isArray(raw.suggestedQuestionsAr) ? raw.suggestedQuestionsAr : [])
       .map(String)
       .filter((question) => !isCommercialClaim(question) && !hasUntrustedAmount(question))
@@ -259,14 +273,20 @@ export class MceResponseValidatorService {
     const intent = String(raw.intent ?? 'general');
 
     return {
-      answerAr: guarded.text || 'عذراً، لم أتمكن من صياغة إجابة واضحة.',
+      answerAr: answerAr || 'عذراً، لم أتمكن من صياغة إجابة واضحة.',
       confidence,
       intent: isCommercialClaim(intent) ? 'general' : intent,
       citedFactIds: cited,
       suggestedQuestionsAr: questions,
       blocked: Boolean(raw.blocked),
-      disclaimerAr: needsCareDisclaimer(guarded.text, userMessage) ? this.moderation.disclaimer() : '',
+      disclaimerAr: needsCareDisclaimer(answerAr, userMessage) ? this.moderation.disclaimer() : '',
       replySource: raw.replySource,
+      // Preserve discovery cards through validation — callers own merge policy (e.g. locked alternatives).
+      discoveryOffers: Array.isArray(raw.discoveryOffers) ? raw.discoveryOffers : undefined,
+      discoverySideOffer:
+        raw.discoverySideOffer === undefined ? undefined : raw.discoverySideOffer ?? null,
+      searchFailed: raw.searchFailed,
+      searchErrorAr: raw.searchErrorAr,
     };
   }
 

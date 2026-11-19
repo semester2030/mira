@@ -1,0 +1,3 @@
+BASE_TIP=e3f6ffc29e5bfac9468450a8aee835bebba29a55
+BRANCH=mira/ask-mira-alt-cards-fix
+RESULT=PENDING

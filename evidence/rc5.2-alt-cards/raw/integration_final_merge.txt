@@ -1,0 +1,8 @@
+pass final_merge alt_clean_and_hydrate → hydrate only
+pass final_merge open_only → empty cards
+pass final_merge بكم هذه؟ → 150
+pass final_merge compare → both prices, hydrate card only
+pass final_merge closed_booking → view
+pass final_merge search_failed → empty + flag
+pass final_merge normal_browse keeps cards
+OK rc52-alternatives-final-merge.integration
