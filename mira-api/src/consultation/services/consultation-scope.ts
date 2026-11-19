@@ -523,9 +523,53 @@ export function isOpenOfferIncludesQuestion(message: string): boolean {
   if (/روتين|بشرتي|صباحي|مسائي/.test(text) && !/(الجلسة|هذه الجلسة|الخدمة|العرض|المنتج)/.test(text)) {
     return false;
   }
-  return /تشمل|يشمل|وش في|وش فيه|ماذا تشمل|وش تشمل|ما تشمل|محتوى الجلسة|تفاصيل الجلسة|عن الجلسة|عن المنتج|محتوى المنتج/.test(
+  return /تشمل|يشمل|يحتوي|تحتوي|وش في|وش فيه|ماذا تشمل|وش تشمل|ما تشمل|محتوى الجلسة|تفاصيل الجلسة|عن الجلسة|عن المنتج|محتوى المنتج|وش يحتوي/.test(
     text,
   );
+}
+
+function offerLiveStatusLine(
+  facts: Array<{ id: string; valueAr?: string }>,
+): 'withdrawn' | 'error' | null {
+  const status = facts.find((f) => f.id.startsWith('marketplace.offer.status.'));
+  if (!status?.valueAr) return null;
+  if (status.valueAr.includes('سُحب') || status.valueAr.includes('أوقف من النشر')) return 'withdrawn';
+  if (status.valueAr.includes('تعذّر التحقق')) return 'error';
+  return null;
+}
+
+/** Price ask about the open marketplace offer (not a general catalog price hunt). */
+export function isOpenOfferPriceQuestion(message: string): boolean {
+  const text = message.trim();
+  if (!text) return false;
+  return /كم\s*(?:ال)?سعر|بكم|ما\s*(?:ال)?سعر|سعرها|ثمنها|how much|price/i.test(text);
+}
+
+/** Booking intent about the open service offer (not a catalog search for alternatives). */
+export function isOpenOfferBookingQuestion(message: string): boolean {
+  const text = message.trim();
+  if (!text) return false;
+  // Search-for-alternatives stays with discovery — not the open-offer gate.
+  if (/بدائل|غير هذه|خدمة ثانية|مركز آخر|صالون آخر/.test(text)) return false;
+  return /أقدر\s*أحجز|اقدر\s*احجز|أحجزها|احجزها|احجزيها|احجزي|أبي\s*أحجز|ابي\s*احجز|هل\s*أقدر\s*أحجز|أقدر أحجزها|هل\s*الحجز\s*متاح|الحجز\s*متاح|هل\s*فيه\s*موعد|فيه\s*موعد|أقدر\s*أحجزها|موعد\s*اليوم|احجزي\s*لي/.test(
+    text,
+  );
+}
+
+/** True when the message targets the open offer (includes / price / bookability). */
+export function isOpenOfferLiveAsk(message: string): boolean {
+  return (
+    isOpenOfferIncludesQuestion(message) ||
+    isOpenOfferPriceQuestion(message) ||
+    isOpenOfferBookingQuestion(message)
+  );
+}
+
+function withdrawnOrErrorReply(live: 'withdrawn' | 'error'): string {
+  if (live === 'withdrawn') {
+    return 'هذا العرض لم يعد منشورًا، لذلك لن أعتمد وصفًا أو سعرًا سابقًا ولن أقترح حجزه.';
+  }
+  return 'تعذّر التحقق من العرض المنشور الآن. أعيدي المحاولة بعد لحظات دون الاعتماد على وصف أو سعر قديم.';
 }
 
 /** Local reply when the customer asks what the *open* service/product includes. */
@@ -542,13 +586,8 @@ export function marketplaceOfferIncludesReply(
   if (!text) return null;
   if (!hasOpenMarketplaceOffer(facts)) return null;
   if (!isOpenOfferIncludesQuestion(text)) return null;
-  const status = facts.find((f) => f.id.startsWith('marketplace.offer.status.'));
-  if (status?.valueAr?.includes('سُحب') || status?.valueAr?.includes('أوقف من النشر')) {
-    return 'هذا العرض لم يعد منشورًا، لذلك لن أعتمد وصفًا أو سعرًا سابقًا ولن أقترح حجزه.';
-  }
-  if (status?.valueAr?.includes('تعذّر التحقق')) {
-    return 'تعذّر التحقق من العرض المنشور الآن. أعيدي المحاولة بعد لحظات دون الاعتماد على وصف قديم.';
-  }
+  const live = offerLiveStatusLine(facts);
+  if (live) return withdrawnOrErrorReply(live);
   const desc = facts.find((f) => f.id.startsWith('marketplace.offer.description.'));
   const title = facts.find((f) => f.id.startsWith('marketplace.offer.title.'));
   const kind = facts.find((f) => f.id.startsWith('marketplace.offer.kind.'));
@@ -565,14 +604,90 @@ export function marketplaceOfferIncludesReply(
   return `حسب وصف المقدّم لـ«${name}»: ${desc.valueAr.trim()}${bookingClosed}`;
 }
 
+/**
+ * Price / bookability for the open offer from live facts only.
+ * After withdraw or read error: no stale price, no booking CTA language.
+ */
+export function marketplaceOfferPriceOrBookReply(
+  message: string,
+  facts: Array<{
+    id: string;
+    labelAr?: string;
+    valueAr?: string;
+    commercial?: { subjectAr?: string; priceAmount?: string; currency?: string; availability?: boolean };
+  }> = [],
+): string | null {
+  const text = message.trim();
+  if (!text) return null;
+  if (!hasOpenMarketplaceOffer(facts)) return null;
+  const wantsPrice = isOpenOfferPriceQuestion(text);
+  const wantsBook = isOpenOfferBookingQuestion(text);
+  if (!wantsPrice && !wantsBook) return null;
+
+  const live = offerLiveStatusLine(facts);
+  if (live) return withdrawnOrErrorReply(live);
+
+  const title = facts.find((f) => f.id.startsWith('marketplace.offer.title.'));
+  const kind = facts.find((f) => f.id.startsWith('marketplace.offer.kind.'));
+  const isProduct = kind?.valueAr === 'منتج';
+  const name = title?.valueAr?.trim() || (isProduct ? 'المنتج' : 'الجلسة');
+  const commercial = title?.commercial;
+
+  if (wantsPrice) {
+    if (!commercial?.priceAmount || commercial.currency !== 'SAR') {
+      return `لا أجد سعرًا منشورًا حاليًا لـ«${name}»، لذلك لن أخمن رقمًا.`;
+    }
+    const stock =
+      commercial.availability === true
+        ? isProduct
+          ? '، وهو متوفر للطلب.'
+          : '، والحجز متاح للطلب (بانتظار رد المركز).'
+        : commercial.availability === false
+          ? isProduct
+            ? '، وهو غير متوفر حاليًا.'
+            : '، والحجز غير متاح لهذه الجلسة حاليًا.'
+          : '.';
+    return `سعر «${name}» ${commercial.priceAmount} ريال${stock}`;
+  }
+
+  // Booking ask
+  if (isProduct) {
+    return `«${name}» منتج للطلب وليس جلسة حجز.`;
+  }
+  if (commercial?.availability === false) {
+    return `الحجز غير متاح لـ«${name}» حاليًا — العرض ما زال منشورًا لكن لا يمكن إرسال طلب موعد. لا أجزم بوجود موعد محدد.`;
+  }
+  if (commercial?.availability === true) {
+    // BookingEnabled alone ≠ a concrete open slot — never invent a timed appointment.
+    return `يمكنكِ إرسال طلب موعد لـ«${name}» من التطبيق؛ الطلب يبقى بانتظار رد المركز وليس تأكيدًا فوريًا، ولا أجزم بتوفر ساعة معيّنة من تفعيل الحجز وحده.`;
+  }
+  return `تعذّر الجزم بتوفر الحجز لـ«${name}» من البيانات المنشورة الآن.`;
+}
+
+/** Includes + price + book for the open offer (single entry used by orchestrator). */
+export function marketplaceOfferLiveAskReply(
+  message: string,
+  facts: Array<{
+    id: string;
+    labelAr?: string;
+    valueAr?: string;
+    commercial?: { subjectAr?: string; priceAmount?: string; currency?: string; availability?: boolean };
+  }> = [],
+): string | null {
+  return (
+    marketplaceOfferIncludesReply(message, facts) ??
+    marketplaceOfferPriceOrBookReply(message, facts)
+  );
+}
+
 /** Offline advisor when LLM_API_KEY is missing — facts only, no invented scores. */
 export function buildDegradedAdvisorReply(
   message: string,
   facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
 ): string {
   const text = message.trim();
-  const offerIncludes = marketplaceOfferIncludesReply(text, facts);
-  if (offerIncludes) return offerIncludes;
+  const offerAsk = marketplaceOfferLiveAskReply(text, facts);
+  if (offerAsk) return offerAsk;
   const asksMoisture = /ترطيب/.test(text);
   const asksSunscreen = /واقي.?الشمس|sunscreen|spf/i.test(text);
   const asksProduct = isProductOrCatalogAsk(text);

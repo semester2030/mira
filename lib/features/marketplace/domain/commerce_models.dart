@@ -430,6 +430,52 @@ class CommerceBookingResult {
   final bool idempotentReplay;
 }
 
+class CommerceVisit {
+  const CommerceVisit({
+    required this.id,
+    required this.publicNumber,
+    required this.mode,
+    required this.status,
+    required this.statusLabelAr,
+    required this.branchId,
+    required this.branchLabel,
+    required this.partnerNameAr,
+    required this.bookings,
+  });
+
+  final String id;
+  final String publicNumber;
+  final String mode;
+  final String status;
+  final String statusLabelAr;
+  final String? branchId;
+  final String? branchLabel;
+  final String partnerNameAr;
+  final List<CommerceBooking> bookings;
+
+  factory CommerceVisit.fromJson(Map<String, dynamic> json) => CommerceVisit(
+        id: _str(json['id']),
+        publicNumber: _str(json['publicNumber']),
+        mode: _str(json['mode'], 'consecutive'),
+        status: _str(json['status']),
+        statusLabelAr: _str(json['statusLabelAr'], CommerceLabels.booking(_str(json['status']))),
+        branchId: json['branchId'] as String?,
+        branchLabel: json['branchLabel'] as String?,
+        partnerNameAr: _str(_map(json['partner'])['nameAr']),
+        bookings: (json['bookings'] as List? ?? const [])
+            .whereType<Map>()
+            .map((e) => CommerceBooking.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
+      );
+}
+
+class CommerceVisitResult {
+  const CommerceVisitResult({required this.visit, required this.idempotentReplay});
+
+  final CommerceVisit visit;
+  final bool idempotentReplay;
+}
+
 /// Arabic labels for server statuses. Fulfillment and payment collection stay separate;
 /// a booking `requested` is never described as confirmed.
 abstract final class CommerceLabels {

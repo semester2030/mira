@@ -54,6 +54,8 @@ String newIdempotencyKey() {
 /// Cart, COD orders and service bookings for the signed-in Mira account.
 abstract class CommerceClient {
   bool get signedIn;
+  /// Stable account key for local pending-attempt storage (Firebase uid when available).
+  String? get accountKey;
 
   Future<CommerceCart> getCart();
   Future<CommerceCart> addCartItem({
@@ -91,6 +93,16 @@ abstract class CommerceClient {
     int? travelFeeHalalas,
     Map<String, dynamic>? visitPlan,
   });
+  Future<CommerceVisitResult> createConsecutiveVisit({
+    required String idempotencyKey,
+    required String branchId,
+    required String contactName,
+    required String contactPhone,
+    required List<Map<String, dynamic>> items,
+    String? notes,
+  });
+  Future<CommerceVisit> getVisit(String id);
+  Future<CommerceVisitResult?> getVisitByKey(String idempotencyKey);
   Future<CommercePage<CommerceBooking>> listBookings({String? cursor});
   Future<CommerceBooking> getBooking(String id);
   Future<CommerceBooking> cancelBooking(String id, {String? note});
@@ -115,6 +127,15 @@ class ApiCommerceClient implements CommerceClient {
       return Firebase.apps.isNotEmpty && FirebaseAuth.instance.currentUser != null;
     } catch (_) {
       return false;
+    }
+  }
+
+  @override
+  String? get accountKey {
+    try {
+      return Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser?.uid : null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -276,6 +297,54 @@ class ApiCommerceClient implements CommerceClient {
       booking: CommerceBooking.fromJson(Map<String, dynamic>.from(json['booking'] as Map)),
       idempotentReplay: json['idempotentReplay'] == true,
     );
+  }
+
+  @override
+  Future<CommerceVisitResult> createConsecutiveVisit({
+    required String idempotencyKey,
+    required String branchId,
+    required String contactName,
+    required String contactPhone,
+    required List<Map<String, dynamic>> items,
+    String? notes,
+  }) async {
+    final json = await _send(
+      'POST',
+      '/bookings/visits',
+      headers: {'Idempotency-Key': idempotencyKey},
+      data: {
+        'idempotencyKey': idempotencyKey,
+        'branchId': branchId,
+        'contactName': contactName,
+        'contactPhone': contactPhone,
+        'items': items,
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      },
+    );
+    return CommerceVisitResult(
+      visit: CommerceVisit.fromJson(Map<String, dynamic>.from(json['visit'] as Map)),
+      idempotentReplay: json['idempotentReplay'] == true,
+    );
+  }
+
+  @override
+  Future<CommerceVisit> getVisit(String id) async {
+    final json = await _send('GET', '/bookings/visits/$id');
+    return CommerceVisit.fromJson(Map<String, dynamic>.from(json['visit'] as Map));
+  }
+
+  @override
+  Future<CommerceVisitResult?> getVisitByKey(String idempotencyKey) async {
+    try {
+      final json = await _send('GET', '/bookings/visits/by-key/${Uri.encodeComponent(idempotencyKey)}');
+      return CommerceVisitResult(
+        visit: CommerceVisit.fromJson(Map<String, dynamic>.from(json['visit'] as Map)),
+        idempotentReplay: json['idempotentReplay'] == true,
+      );
+    } on CommerceApiException catch (e) {
+      if (e.status == 404 || e.code == 'VISIT_NOT_FOUND') return null;
+      rethrow;
+    }
   }
 
   @override

@@ -101,6 +101,29 @@ export class CommerceController {
     return this.commerce.createBooking(await this.commerce.customerActor(user), body, idempotencyKey);
   }
 
+  /** Atomic consecutive visit request (exactly two services for RC4). */
+  @Post('bookings/visits')
+  @UseGuards(FirebaseAuthGuard)
+  async createVisit(
+    @CurrentUser() user: RequestUser,
+    @Body() body: unknown,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    return this.commerce.createConsecutiveVisit(await this.commerce.customerActor(user), body, idempotencyKey);
+  }
+
+  @Get('bookings/visits/by-key/:key')
+  @UseGuards(FirebaseAuthGuard)
+  async visitByKey(@CurrentUser() user: RequestUser, @Param('key') key: string) {
+    return this.commerce.getCustomerVisitByKey(await this.commerce.customerActor(user), key);
+  }
+
+  @Get('bookings/visits/:id')
+  @UseGuards(FirebaseAuthGuard)
+  async visit(@CurrentUser() user: RequestUser, @Param('id') id: string) {
+    return this.commerce.getCustomerVisit(await this.commerce.customerActor(user), id);
+  }
+
   @Get('bookings')
   @UseGuards(FirebaseAuthGuard)
   async bookings(@CurrentUser() user: RequestUser, @Query() query: Record<string, unknown>) {

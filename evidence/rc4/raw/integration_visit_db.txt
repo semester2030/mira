@@ -1,0 +1,2 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+{"ok":true,"visitId":"9f6c5e84-c8e4-4c94-88ee-709396ec2605","bookingIds":["69fd967d-5179-4e21-b981-ecedb683f29f","55b47c1b-3bc5-4a5d-98c7-9b03df2357e3"],"beforeVisits":0,"afterCreateVisits":1,"afterReplayVisits":2,"raceWinner":1}

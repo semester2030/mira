@@ -34,7 +34,8 @@ import { ConsultationDialogueService } from './consultation-attachment.service';
 import { answerCacheAllowed, consultationQuarantineApplies, readPinnedAttachmentIds } from './consultation-dialogue';
 import {
   buildDegradedAdvisorReply,
-  marketplaceOfferIncludesReply,
+  isOpenOfferLiveAsk,
+  marketplaceOfferLiveAskReply,
   decideConsultationScope,
   guardScopeAnswer,
   historyForBeautyTurn,
@@ -378,6 +379,11 @@ export class ConsultationOrchestratorService {
     let discoveryPayload: MceAssistantPayloadV1 | null = null;
     let discoverySessionPatch: SessionDiscoveryContext | null | undefined = undefined;
 
+    // Open offer live state wins over discovery for includes/price/book about *this* offer.
+    if (!localReply && !mod.blocked && isOpenOfferLiveAsk(dto.message.trim())) {
+      localReply = marketplaceOfferLiveAskReply(dto.message.trim(), loaded.factRegistry) ?? undefined;
+    }
+
     // Real partner catalog via MarketplaceService.browse — never RC5 fixtures here.
     if (!localReply && !mod.blocked && this.discovery.enabled()) {
       const meta =
@@ -464,11 +470,6 @@ export class ConsultationOrchestratorService {
           searchErrorAr: discoveryTurn.searchErrorAr ?? undefined,
         };
       }
-    }
-
-    // Open marketplace offer: answer «وش تشمل الجلسة؟» from provider description only.
-    if (!localReply && !mod.blocked) {
-      localReply = marketplaceOfferIncludesReply(dto.message.trim(), loaded.factRegistry) ?? undefined;
     }
 
     // Catalog discovery OFF: never invent Mira products via LLM — honest unavailable copy.
