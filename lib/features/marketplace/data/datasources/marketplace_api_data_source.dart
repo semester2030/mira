@@ -141,12 +141,14 @@ class MarketplaceApiDataSource {
       priceHalalas: CatalogPrice.read(json).halalas,
       priceLabel: json['priceLabel'] as String? ?? '',
       priceKnown: CatalogPrice.read(json).known,
-      externalUrl: json['externalUrl'] as String,
+      externalUrl: json['externalUrl'] as String? ?? '',
       stepAr: json['stepAr'] as String?,
       contactPhone: json['contactPhone'] as String?,
       matchScore: (json['matchScore'] as num?)?.toInt() ?? 0,
       matchKnown: json.containsKey('matchScore'),
       category: json['category'] as String?,
+      subcategory: json['subcategory'] as String?,
+      profileId: json['profileId'] as String?,
       concernTags: (json['concernTags'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -155,10 +157,38 @@ class MarketplaceApiDataSource {
       mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
       optionGroups: CatalogOptionJson.groups(json['optionsJson']),
       variants: CatalogOptionJson.variants(json['variantsJson']),
+      traits: _productTraits(json),
       purchaseMode: CatalogPurchaseMode.parse(json['purchaseMode']),
       stockQty: (json['stockQty'] as num?)?.toInt(),
       deliveryFeeHalalas: (json['deliveryFeeHalalas'] as num?)?.toInt(),
     );
+  }
+
+  /// Flatten published attributes into display traits. Skips nested/complex values
+  /// and never invents merchant fields that were not provided.
+  Map<String, String> _productTraits(Map<String, dynamic> json) {
+    final out = <String, String>{};
+    final rawTraits = json['traits'];
+    if (rawTraits is Map) {
+      for (final e in rawTraits.entries) {
+        final v = e.value?.toString().trim() ?? '';
+        if (v.isNotEmpty) out[e.key.toString()] = v;
+      }
+    }
+    final attrs = json['attributesJson'];
+    if (attrs is Map) {
+      for (final e in attrs.entries) {
+        final key = e.key.toString();
+        if (key == 'linkedServiceIds' || key == 'videoScope') continue;
+        final value = e.value;
+        if (value == null) continue;
+        if (value is Map || value is List) continue;
+        final text = value.toString().trim();
+        if (text.isEmpty) continue;
+        out.putIfAbsent(key, () => text);
+      }
+    }
+    return out;
   }
 
   CatalogService _parseService(Map<String, dynamic> json) {
@@ -440,6 +470,8 @@ class MarketplaceApiDataSource {
         externalUrl: json['externalUrl'] as String? ?? '',
         contactPhone: json['contactPhone'] as String?,
         category: json['category'] as String?,
+        subcategory: json['subcategory'] as String?,
+        profileId: json['profileId'] as String?,
         media: _media(json),
         mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
         stepAr: json['stepAr'] as String?,
@@ -447,6 +479,7 @@ class MarketplaceApiDataSource {
         concernTags: (json['concernTags'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
         optionGroups: CatalogOptionJson.groups(json['optionsJson']),
         variants: CatalogOptionJson.variants(json['variantsJson']),
+        traits: _productTraits(json),
         purchaseMode: CatalogPurchaseMode.parse(json['purchaseMode']),
         stockQty: (json['stockQty'] as num?)?.toInt(),
         deliveryFeeHalalas: (json['deliveryFeeHalalas'] as num?)?.toInt(),
