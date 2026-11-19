@@ -59,6 +59,20 @@ for (const leaf of writeLeaves) {
   }
 }
 
+// Public beauty rail = four provider circles only (no specialty orbs at root).
+const beautyRoot = requireNode('beauty');
+assert.deepEqual(beautyRoot.children, [
+  'beauty.salons',
+  'beauty.skin_centers',
+  'beauty.spa',
+  'beauty.experts',
+]);
+assert.equal(requireNode('beauty.salons').labelAr, 'الصالونات');
+assert.equal(requireNode('beauty.skin_centers').labelAr, 'مراكز العناية بالبشرة');
+assert.equal(requireNode('beauty.spa').labelAr, 'السبا والاسترخاء');
+assert.equal(requireNode('beauty.experts').labelAr, 'خبيرات الجمال');
+assert.equal(requireNode('beauty.spa').parentId, 'beauty');
+
 // Salon tree must not contain laser/teeth medical parents.
 const salons = requireNode('beauty.salons');
 assert.ok(!salons.children.includes('beauty.clinic.laser'));
@@ -69,6 +83,7 @@ const clinics = requireNode('beauty.clinics');
 assert.equal(clinics.medicalOnly, true);
 assert.ok(clinics.children.includes('beauty.clinic.laser'));
 assert.ok(clinics.children.includes('beauty.clinic.teeth'));
+assert.ok(!beautyRoot.children.includes('beauty.clinics'));
 
 const laser = requireNode('beauty.clinic.laser');
 assert.equal(laser.medicalOnly, true);

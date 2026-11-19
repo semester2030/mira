@@ -276,11 +276,17 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 24),
-            PremiumButton(
-              label: service.bookingEnabled ? 'طلب الموعد' : 'الحجز غير متاح',
-              icon: Icons.event_available_outlined,
-              variant: PremiumButtonVariant.gold,
+            FilledButton.icon(
               onPressed: service.bookingEnabled ? () => _requestAppointment(context) : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brandBurgundy,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.brandBurgundy.withValues(alpha: 0.4),
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              icon: const Icon(Icons.event_available_outlined),
+              label: Text(service.bookingEnabled ? 'طلب الموعد' : 'الحجز غير متاح'),
             ),
             if (service.bookingEnabled && !service.id.startsWith('preview-')) ...[
               const SizedBox(height: 8),
@@ -322,11 +328,14 @@ class ServiceDetailScreen extends StatelessWidget {
             if (!service.id.startsWith('preview-')) ...[
               const SizedBox(height: 12),
               AskMiraEntry(
-                contextLine: 'اسألي ميرا عن «${service.nameAr}» من بيانات المقدّم',
+                compact: false,
+                contextLine: 'اسألي ميرا: مساعدتك الذكية',
+                subtitle: 'اسألي عن «${service.nameAr}» من بيانات المقدّم.',
                 suggestions: const [
                   'وش تشمل الجلسة؟',
                   'كم مدة الجلسة؟',
                   'وين تكون الجلسة؟',
+                  'قارنيها بخدمة أخرى',
                 ],
                 routeArgs: (question) => AdvisorRouteArgs.marketplaceOffer(
                   offerId: service.id,

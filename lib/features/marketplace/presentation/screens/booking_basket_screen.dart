@@ -58,7 +58,7 @@ class _BookingBasketScreenState extends State<BookingBasketScreen> {
     final unsent = _unsent;
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: const MiraAppBar(pageTitle: 'حجزك'),
+      appBar: const MiraAppBar(pageTitle: 'رتّبي زيارتك'),
       body: SafeArea(
         child: items.isEmpty
             ? Center(
@@ -158,6 +158,11 @@ class _BookingBasketScreenState extends State<BookingBasketScreen> {
                     ],
                     FilledButton(
                       key: const Key('basket_start_consecutive'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.brandBurgundy,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(48),
+                      ),
                       onPressed: () => _openConsecutive(context, unsent),
                       child: const Text('خططي الزيارة المتتابعة'),
                     ),

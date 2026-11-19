@@ -15,8 +15,10 @@ import 'screens/checkout_screen.dart';
 import 'screens/discover_hub_screen.dart';
 import 'screens/discover_presentation_screen.dart';
 import 'screens/favorites_screen.dart';
+import 'screens/my_occasion_screen.dart';
 import 'screens/order_detail_screen.dart';
 import 'screens/orders_list_screen.dart';
+import 'screens/venue_package_screen.dart';
 
 /// Discover routes. The code default keeps [MiraFeatures.marketplaceEnabled] false.
 /// The committed iOS production build file turns it on.
@@ -36,6 +38,8 @@ abstract final class MarketplaceRoutes {
         name == AppRoutes.myBookings ||
         name == AppRoutes.bookingRequest ||
         name == AppRoutes.favorites ||
+        name == AppRoutes.myOccasion ||
+        name == AppRoutes.venuePackage ||
         parseDiscoverDeepLink(name) != null;
   }
 
@@ -123,6 +127,19 @@ abstract final class MarketplaceRoutes {
       case AppRoutes.bookingRequest:
       case AppRoutes.favorites:
         return _commerce(settings);
+      case AppRoutes.myOccasion:
+        if (!MiraFeatures.marketplaceEnabled) {
+          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+        }
+        final title = settings.arguments is String ? settings.arguments! as String : 'مناسبتي';
+        return PremiumPageRoute(page: MyOccasionScreen(initialTitleAr: title), settings: settings);
+      case AppRoutes.venuePackage:
+        if (!MiraFeatures.marketplaceEnabled) {
+          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+        }
+        final service = settings.arguments;
+        if (service is! CatalogService) return null;
+        return PremiumPageRoute(page: VenuePackageScreen(service: service), settings: settings);
       default:
         return null;
     }

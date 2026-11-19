@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/colors.dart';
@@ -10,6 +11,7 @@ import '../../domain/entities/catalog_product.dart';
 import '../widgets/marketplace_data_banner.dart';
 import 'product_detail_screen.dart';
 import 'service_detail_screen.dart';
+import 'venue_package_screen.dart';
 
 class CatalogRecordPage extends StatefulWidget {
   const CatalogRecordPage({
@@ -93,7 +95,8 @@ class _CatalogRecordPageState extends State<CatalogRecordPage> {
             body: Center(child: Text('هذا العنصر غير متاح أو لم يعد منشورًا', style: AppTypography.bodyLarge, textAlign: TextAlign.center)),
           );
         }
-        final banner = result.transport == null || result.contentMark == null
+        // Diagnostic transport banner — developers only (never on customer Release builds).
+        final banner = !kDebugMode || result.transport == null || result.contentMark == null
             ? null
             : MarketplaceDataBanner(transport: result.transport!, contentMark: result.contentMark!);
         final product = result.product;
@@ -131,8 +134,17 @@ class _CatalogRecordPageState extends State<CatalogRecordPage> {
           );
         }
         final service = result.service!;
+        final matched = widget.matchKnown ? service.withKnownMatch(widget.matchScore) : service;
+        final cat = (matched.category ?? '').toLowerCase();
+        final isOccasionPackage = cat.startsWith('occasions') ||
+            matched.partnerType == 'event_planner' ||
+            (matched.profile.templateId ?? '').contains('occasion') ||
+            (matched.profile.templateId ?? '').contains('venue');
+        if (isOccasionPackage) {
+          return VenuePackageScreen(service: matched);
+        }
         return ServiceDetailScreen(
-          service: widget.matchKnown ? service.withKnownMatch(widget.matchScore) : service,
+          service: matched,
           provenance: banner,
           bookingDateKey: widget.bookingDateKey ?? widget.availabilityContext?.availableOn,
           bookingBranchId: widget.bookingBranchId ?? widget.availabilityContext?.branchId,

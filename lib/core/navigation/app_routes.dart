@@ -52,6 +52,8 @@ abstract final class AppRoutes {
   static const myBookings = '/my-bookings';
   static const bookingRequest = '/booking-request';
   static const favorites = '/favorites';
+  static const myOccasion = '/my-occasion';
+  static const venuePackage = '/venue-package';
 
   /// Internal Owner Preview — Fashion Icon System (not production migration).
   static const fashionIconSystemPreview = '/dev/fashion-icon-system-preview';

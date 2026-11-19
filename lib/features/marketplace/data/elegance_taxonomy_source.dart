@@ -207,6 +207,16 @@ abstract final class EleganceTaxonomySource {
       }
     }
     if (parent == null) return const [];
+    // Provider circles only: specialties (شعر/رموش/…) live inside the center detail, not as Discover orbs.
+    const providerCircles = {
+      'beauty.salons',
+      'beauty.skin_centers',
+      'beauty.spa',
+      'beauty.experts',
+    };
+    if (providerCircles.contains(parentId)) {
+      return const [];
+    }
     final kids = <DiscoverCategoryDef>[];
     for (final id in parent.children) {
       EleganceTaxonomyNode? n;
@@ -217,14 +227,22 @@ abstract final class EleganceTaxonomySource {
         }
       }
       if (n == null || !n.active) continue;
+      // Medical clinics stay off the public beauty rail (compat node only).
+      if (n.id == 'beauty.clinics' || n.medicalOnly == true && parentId == 'beauty') continue;
       // Browse filters (home_visit / bridal_prep) stay selectable chips — not «الكل».
       final isBrowseFilter =
           n.browseOnly && (n.id == 'beauty.home_visit' || n.id == 'beauty.bridal_prep');
       final venueType = n.id == 'beauty.salons'
           ? 'salon'
-          : n.id == 'beauty.clinics'
+          : n.id == 'beauty.skin_centers'
               ? 'clinic'
-              : null;
+              : n.id == 'beauty.spa'
+                  ? 'spa'
+                  : n.id == 'beauty.experts'
+                      ? 'independent'
+                      : n.id == 'beauty.clinics'
+                          ? 'clinic'
+                          : null;
       // Legacy service.category still uses hair/makeup/… for older rows.
       final legacyStored = legacyBeautyCategoryFor(n.id) ?? n.id;
       kids.add(
