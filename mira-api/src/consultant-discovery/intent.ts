@@ -88,6 +88,7 @@ export interface ConsultantSignals {
   refusedOrganizer: boolean;
   giftNotForSelf: boolean;
   laserExplicit: boolean;
+  teethExplicit: boolean;
   makeupService: boolean;
   makeupProductPurchase: boolean;
   moisturizerFragranceFree: boolean;
@@ -297,6 +298,9 @@ export function extractSignals(
     refusedOrganizer: /لا ابي منظ|لا ابغى منظ|مو منظ|مو منسق|الفيت الحفل|الغيت الحفل|الحفل خلاص/.test(n),
     giftNotForSelf: /هديه مو لي|لوالدتي|لاختي|لمولود|لوالدتي/.test(n),
     laserExplicit: /ليزر/.test(n) && /ابي|ابغى|حجز/.test(n),
+    teethExplicit:
+      (/تبييض\s*اسنان|تبييض\s*الأسنان|اسنان|أسنان|عياده\s*اسنان|عيادة\s*أسنان/.test(n) &&
+        /ابي|ابغى|حجز|استشار/.test(n)),
     makeupService,
     makeupProductPurchase,
     moisturizerFragranceFree: /مرطب/.test(n) && /(بدون عطر|بلا عطر|خالي من العطر)/.test(n),
@@ -1039,24 +1043,23 @@ export function decideIntent(
     });
   }
 
-  if (signals.laserExplicit) {
+  if (signals.laserExplicit || signals.teethExplicit) {
     return base({
-      kind: 'direct_service_search',
-      ruleIds: ['R077'],
-      sourceId: 'beauty.clinic_laser',
-      targetIds: ['beauty.clinic_laser', 'service.clinic_laser'],
-      lane: 'beauty',
-      kindFilter: 'service',
-      q: 'ليزر',
-      city: signals.city,
-      replyAr: 'أبحث عن جهات تقدّم خدمة ليزر مطابقة إن توفّرت — دون وعد بنتيجة علاجية.',
+      kind: 'clarify',
+      ruleIds: ['gate.medical_out_of_scope'],
+      replyAr: signals.teethExplicit
+        ? 'خدمات الأسنان وتبييضها خارج نطاق ميرا. أقدر أساعد في عناية تجميلية غير طبية مثل جلسات البشرة أو المكياج إن رغبتِ.'
+        : 'خدمات الليزر الطبي خارج نطاق ميرا. أقدر أساعد في عناية تجميلية غير طبية مثل إزالة الشعر بالشمع أو جلسات العناية بالبشرة إن رغبتِ.',
+      blockers: ['medical_service_blocked'],
+      saveAsPersonalPreference: false,
       sessionPatch: {
-        q: 'ليزر',
         kindFilter: 'service',
         lane: 'beauty',
-        targetIds: ['beauty.clinic_laser'],
+        targetIds: signals.teethExplicit
+          ? ['beauty.face_care', 'beauty.makeup']
+          : ['beauty.hair_removal', 'beauty.face_care'],
         city: signals.city,
-        ruleIds: ['R077'],
+        ruleIds: ['gate.medical_out_of_scope'],
       },
     });
   }

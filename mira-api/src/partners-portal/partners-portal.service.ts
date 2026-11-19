@@ -97,13 +97,12 @@ const SERVICE_CATEGORIES = new Set([
   'hair_removal',
   'henna',
   'care',
-  'laser',
-  'teeth',
   'occasions',
   // Beauty taxonomy parents (lane=beauty) — leaves stored in subcategory.
   'beauty',
   'beauty.salons',
-  'beauty.clinics',
+  'beauty.skin_centers',
+  'beauty.experts',
   'beauty.hair',
   'beauty.makeup',
   'beauty.nails',
@@ -112,13 +111,14 @@ const SERVICE_CATEGORIES = new Set([
   'beauty.hair_removal',
   'beauty.henna',
   'beauty.spa',
-  'beauty.clinic.derm',
-  'beauty.clinic.laser',
-  'beauty.clinic.teeth',
-  // Selectable beauty leaves (activity grants bind here).
+  // Selectable beauty leaves (activity grants bind here). Cosmetic only — no teeth/laser medical.
   'beauty.makeup.bridal',
   'beauty.makeup.occasion',
   'beauty.makeup.everyday',
+  'beauty.makeup.soft',
+  'beauty.makeup.evening',
+  'beauty.makeup.bridal_trial',
+  'beauty.makeup.touchup',
   'beauty.hair.cut',
   'beauty.hair.blowdry',
   'beauty.hair.color',
@@ -126,6 +126,20 @@ const SERVICE_CATEGORIES = new Set([
   'beauty.hair.updo',
   'beauty.hair.braids',
   'beauty.hair.care',
+  'beauty.face_care.cleanse',
+  'beauty.face_care.hydrate',
+  'beauty.face_care.peel',
+  'beauty.face_care.pre_makeup',
+]);
+
+/** Categories blocked for create / update / new publish. Existing rows stay readable. */
+const MEDICAL_SERVICE_BLOCKED = new Set([
+  'laser',
+  'teeth',
+  'beauty.clinics',
+  'beauty.clinic.derm',
+  'beauty.clinic.laser',
+  'beauty.clinic.teeth',
   'beauty.clinic.derm.consult',
   'beauty.clinic.derm.skin_eval',
   'beauty.clinic.derm.hair_eval',
@@ -1217,10 +1231,15 @@ export class PartnersPortalService implements OnModuleInit {
     const nameAr = dto.nameAr.trim();
     // Validate category before any availability side effects.
     const category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
+    const subcategoryEarly =
+      typeof (dto as { subcategory?: string }).subcategory === 'string'
+        ? (dto as { subcategory?: string }).subcategory!.trim()
+        : null;
+    this.assertCosmeticServiceCategory(category, subcategoryEarly);
     const profileIdEarly =
       typeof dto.profileId === 'string' && dto.profileId.trim() ? dto.profileId.trim() : null;
     const gate = await this.enforceActivityWrite(partnerId, 'service', {
-      subcategory: category,
+      subcategory: subcategoryEarly || category,
       category,
       profileId: profileIdEarly,
       title: nameAr,
@@ -1405,7 +1424,10 @@ export class PartnersPortalService implements OnModuleInit {
       if (dto.durationMin !== undefined) data.durationMin = dto.durationMin;
       if (dto.priceHalalas !== undefined) data.priceHalalas = dto.priceHalalas;
       if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
-      if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
+      if (dto.category !== undefined) {
+        data.category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
+        this.assertCosmeticServiceCategory(data.category, null);
+      }
       if (dto.bookingEnabled !== undefined) data.bookingEnabled = dto.bookingEnabled === true;
       if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : locked.payMode;
       if (dto.placeMode !== undefined) {
@@ -1572,6 +1594,22 @@ export class PartnersPortalService implements OnModuleInit {
     if (!category) return null;
     if (!allowed.has(category)) throw new BadRequestException('التصنيف غير معروف');
     return category;
+  }
+
+  /** Rejects medical / dental / laser categories for new writes. Does not delete historical rows. */
+  private assertCosmeticServiceCategory(category: string | null | undefined, subcategory?: string | null) {
+    const keys = [category, subcategory]
+      .map((v) => (v || '').trim())
+      .filter(Boolean);
+    for (const key of keys) {
+      if (MEDICAL_SERVICE_BLOCKED.has(key) || key.includes('clinic.laser') || key.includes('clinic.teeth')) {
+        throw new BadRequestException({
+          message: 'هذه الخدمة الطبية خارج نطاق ميرا ولا يمكن إنشاؤها أو نشرها من جديد',
+          messageAr: 'هذه الخدمة الطبية خارج نطاق ميرا ولا يمكن إنشاؤها أو نشرها من جديد',
+          code: 'MEDICAL_SERVICE_BLOCKED',
+        });
+      }
+    }
   }
 
   private async assertProductOwner(partnerId: string, productId: string) {

@@ -41,8 +41,9 @@ assert.equal(matchSaudiCityAr('بالرياض'), 'الرياض');
   assert.equal(s.city, 'جدة');
   assert.equal(s.laserExplicit, true);
   const i = decideIntent(s);
-  assert.equal(i.city, 'جدة');
-  assert.equal(i.kind, 'direct_service_search');
+  assert.equal(s.city, 'جدة');
+  assert.equal(i.kind, 'clarify');
+  assert.ok(Array.isArray(i.blockers) && i.blockers.includes('medical_service_blocked'));
   console.log('pass city_jeddah_laser');
 }
 

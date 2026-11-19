@@ -277,12 +277,14 @@
     addLink('orders', 'الطلبات');
     addLink('bookings', 'الحجوزات');
     addLink('settings', 'الإعدادات');
-    // Salon/clinic: Discover main ad is separate from «خدماتي». Brands keep celebrity ads label.
-    addLink(
-      'ads',
-      partnerType === 'salon' || partnerType === 'clinic' ? 'إعلاني الرئيسي' : 'إعلانات المشاهير',
-    );
-    if (partnerType === 'salon' || partnerType === 'clinic') {
+    // Salon/clinic/developer (manages venues): Discover main ad is separate from «خدماتي».
+    // Developer keeps this as «إعلاني الرئيسي» so center ads are not only under celebrity copy.
+    var mainAdLabel =
+      partnerType === 'salon' || partnerType === 'clinic' || partnerType === 'developer' || partnerType === 'spa'
+        ? 'إعلاني الرئيسي'
+        : 'إعلانات المشاهير';
+    addLink('ads', mainAdLabel);
+    if (mainAdLabel === 'إعلاني الرئيسي') {
       VIEWS.ads.title = 'إعلاني الرئيسي';
     }
 

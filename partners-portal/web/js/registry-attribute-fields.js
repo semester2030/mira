@@ -1558,12 +1558,70 @@
   function subcategoriesFromTaxonomy(taxonomyDoc, categoryId) {
     var nodes = (taxonomyDoc && (taxonomyDoc.nodes || taxonomyDoc.tree)) || [];
     if (!Array.isArray(nodes)) return [];
+    var byId = {};
+    nodes.forEach(function (n) {
+      if (n && n.id) byId[n.id] = n;
+    });
+    function isMedical(n) {
+      if (!n) return true;
+      var id = String(n.id || '');
+      if (n.medicalOnly || n.blockedForNewRegistration) return true;
+      if (id === 'laser' || id === 'teeth' || id === 'beauty.clinics') return true;
+      if (id.indexOf('clinic.laser') >= 0 || id.indexOf('clinic.teeth') >= 0) return true;
+      return false;
+    }
+    function writableLeavesUnder(rootId) {
+      var root = byId[rootId];
+      var queue = [];
+      if (root && Array.isArray(root.children) && root.children.length) {
+        root.children.forEach(function (cid) {
+          queue.push(cid);
+        });
+      } else {
+        nodes.forEach(function (n) {
+          if (n && n.parentId === rootId) queue.push(n.id);
+        });
+      }
+      var out = [];
+      var seen = {};
+      while (queue.length) {
+        var id = queue.shift();
+        if (!id || seen[id]) continue;
+        seen[id] = true;
+        var n = byId[id];
+        if (!n || n.browseOnly || n.grantOnly || isMedical(n)) continue;
+        if (Array.isArray(n.children) && n.children.length) {
+          n.children.forEach(function (cid) {
+            queue.push(cid);
+          });
+          continue;
+        }
+        if (n.writeEnabled === false) continue;
+        out.push({
+          value: n.id,
+          label: n.labelAr || n.label || n.id,
+          profileId: n.profileId || null,
+          writeEnabled: true,
+        });
+      }
+      return out;
+    }
+    // Beauty provider circles: collect writable leaves under the whole subtree.
+    if (
+      categoryId === 'beauty.salons' ||
+      categoryId === 'beauty.skin_centers' ||
+      categoryId === 'beauty.spa' ||
+      categoryId === 'beauty.experts'
+    ) {
+      return writableLeavesUnder(categoryId);
+    }
     return nodes
       .filter(function (n) {
         if (!n || !n.id || !n.parentId) return false;
         if (n.browseOnly) return false;
         if (n.grantOnly) return false;
         if (n.writeEnabled === false) return false;
+        if (isMedical(n)) return false;
         if (categoryId && n.parentId !== categoryId) return false;
         return true;
       })

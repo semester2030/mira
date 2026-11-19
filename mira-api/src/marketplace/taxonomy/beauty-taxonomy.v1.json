@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "lane": "beauty",
-  "definitionsVersion": 2,
+  "definitionsVersion": 3,
   "compatMinAppBuild": 1,
   "status": "IMPLEMENTED",
   "publicBrowse": true,
@@ -116,7 +116,8 @@
       ],
       "medicalOnly": true,
       "publicBrowse": false,
-      "browseOnly": false
+      "browseOnly": false,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.hair",
@@ -1211,7 +1212,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.derm.consult",
@@ -1221,7 +1223,7 @@
       "active": true,
       "imageKey": "beauty.clinic.derm.consult",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_consult",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1230,7 +1232,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.derm.skin_eval",
@@ -1240,7 +1243,7 @@
       "active": true,
       "imageKey": "beauty.clinic.derm.skin_eval",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_skin",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1249,7 +1252,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.derm.hair_eval",
@@ -1259,7 +1263,7 @@
       "active": true,
       "imageKey": "beauty.clinic.derm.hair_eval",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_consult",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1268,7 +1272,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.derm.procedures",
@@ -1278,7 +1283,7 @@
       "active": true,
       "imageKey": "beauty.clinic.derm.procedures",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_skin",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1287,7 +1292,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.laser",
@@ -1305,7 +1311,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.laser.hair",
@@ -1315,7 +1322,7 @@
       "active": true,
       "imageKey": "beauty.clinic.laser.hair",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_laser",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1324,7 +1331,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.laser.skin_eval",
@@ -1334,7 +1342,7 @@
       "active": true,
       "imageKey": "beauty.clinic.laser.skin_eval",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_laser",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1343,7 +1351,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.teeth",
@@ -1363,7 +1372,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.teeth.consult",
@@ -1373,7 +1383,7 @@
       "active": true,
       "imageKey": "beauty.clinic.teeth.consult",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_teeth",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1382,7 +1392,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.teeth.clean",
@@ -1392,7 +1403,7 @@
       "active": true,
       "imageKey": "beauty.clinic.teeth.clean",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_teeth",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1401,7 +1412,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.teeth.whitening",
@@ -1411,7 +1423,7 @@
       "active": true,
       "imageKey": "beauty.clinic.teeth.whitening",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_teeth",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1420,7 +1432,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.clinic.teeth.veneers_eval",
@@ -1430,7 +1443,7 @@
       "active": true,
       "imageKey": "beauty.clinic.teeth.veneers_eval",
       "children": [],
-      "writeEnabled": true,
+      "writeEnabled": false,
       "profileId": "service.clinic_teeth",
       "offerKind": "service",
       "placeModesAllowed": [
@@ -1439,7 +1452,8 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "blockedForNewRegistration": true
     },
     {
       "id": "beauty.skin_centers",
@@ -1471,7 +1485,11 @@
       "sort": 40,
       "active": true,
       "imageKey": "beauty.makeup",
-      "children": [],
+      "children": [
+        "beauty.makeup",
+        "beauty.lashes_brows",
+        "beauty.henna"
+      ],
       "writeEnabled": false,
       "offerKind": "service",
       "partnerKindsAllowed": [
@@ -1482,7 +1500,8 @@
         "مستقلة",
         "خبيرة",
         "متخصصة"
-      ]
+      ],
+      "notes": "تخصصات الخبيرة تظهر داخل التفاصيل (مكياج، رموش، حناء) — ليست دوائر رئيسية إضافية."
     }
   ]
 }
