@@ -67,6 +67,13 @@ import {
   opsSlaMs,
   orderOpsHint,
 } from './commerce.ops';
+import {
+  consecutiveStartsAlign,
+  encodeVisitPlanNote,
+  extractVisitPlanFromNotes,
+  parseVisitPlan,
+  type VisitPlanInput,
+} from './visit-plan';
 
 /** Trimmed non-empty string capped at `max` chars, else null. */
 function optionalText(value: unknown, max: number): string | null {
@@ -1555,7 +1562,10 @@ export class CommerceService {
     const startsAt = new Date(data.startsAt);
     if (Number.isNaN(startsAt.getTime())) throw badRequest('STARTS_AT_INVALID', 'وقت الحجز غير صالح');
     const contact = parseContact(data);
-    const notes = parseOptionalNotes(data.notes);
+    const humanNotes = parseOptionalNotes(data.notes);
+    const visitPlan = parseVisitPlan(data.visitPlan);
+    // Appointment requests stay `requested` until the partner confirms — never label as confirmed.
+    const notes = visitPlan ? encodeVisitPlanNote(visitPlan, humanNotes) : humanNotes;
     const resourceId = normalizeResourceId(data.resourceId);
     const startsAtIso = startsAt.toISOString();
     const rawPlace =
@@ -1563,6 +1573,19 @@ export class CommerceService {
     const rawBranchId = optionalText(data.branchId, 64);
     const rawVisitCityId = optionalText(data.visitCityId ?? data.coverageCityId, 64);
     const rawVisitAddress = optionalText(data.visitAddress, 300);
+    if (visitPlan?.mode === 'consecutive') {
+      if (!rawBranchId && rawPlace !== 'home') {
+        throw badRequest('VISIT_BRANCH_REQUIRED', 'الزيارة المتتابعة تتطلب فرعًا واحدًا لكل البنود', {
+          field: 'branchId',
+        });
+      }
+      if (visitPlan.expectedStartsAt) {
+        const expected = new Date(visitPlan.expectedStartsAt);
+        if (!Number.isNaN(expected.getTime()) && Math.abs(expected.getTime() - startsAt.getTime()) > 60_000) {
+          throw unprocessable('VISIT_START_MISMATCH', 'وقت بدء البند لا يطابق خطة الزيارة المتتابعة');
+        }
+      }
+    }
     const requestFingerprint = bookingRequestFingerprint({
       serviceId,
       startsAt: startsAtIso,
@@ -1806,6 +1829,16 @@ export class CommerceService {
           }
         }
 
+        if (visitPlan?.mode === 'consecutive' && visitPlan.sequence > 1) {
+          await this.assertConsecutiveVisitPeer(tx, {
+            actorUserId: actor.userId,
+            partnerId: service.partnerId,
+            plan: visitPlan,
+            startsAt,
+            branchId: placeData.branchId,
+          });
+        }
+
         const knownResources = new Set(resourceIdsFromAvailabilityDocument(service.availabilityJson));
         if (resourceId) {
           // Document association (weekly OR special). Date-specific open/closed is checkSlot's job.
@@ -1893,6 +1926,60 @@ export class CommerceService {
         }
       }
       throw error;
+    }
+  }
+
+  /**
+   * Consecutive visit: peer sequence N must follow sequence N-1 end time on the same
+   * partner + branch. Creates linked *requests* — partner still confirms each row.
+   */
+  private async assertConsecutiveVisitPeer(
+    tx: Prisma.TransactionClient,
+    args: {
+      actorUserId: string;
+      partnerId: string;
+      plan: VisitPlanInput;
+      startsAt: Date;
+      branchId: string | null;
+    },
+  ) {
+    const priorSeq = args.plan.sequence - 1;
+    const recent = await tx.commerceBooking.findMany({
+      where: {
+        userId: args.actorUserId,
+        partnerId: args.partnerId,
+        status: { in: [...ACTIVE_BOOKING_STATUSES] },
+        notes: { contains: args.plan.groupId },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    const prior = recent.find((row) => {
+      const plan = extractVisitPlanFromNotes(row.notes);
+      return plan?.groupId === args.plan.groupId && plan.sequence === priorSeq;
+    });
+    if (!prior) {
+      throw unprocessable(
+        'VISIT_PEER_MISSING',
+        'لا يوجد بند سابق في خطة الزيارة المتتابعة. أكملي البند الأول أولًا أو اختاري مواعيد منفصلة',
+        { groupId: args.plan.groupId, expectedSequence: priorSeq },
+      );
+    }
+    if (args.branchId && prior.branchId && prior.branchId !== args.branchId) {
+      throw unprocessable('VISIT_BRANCH_MISMATCH', 'الزيارة المتتابعة تتطلب نفس الفرع لكل البنود', {
+        priorBranchId: prior.branchId,
+        branchId: args.branchId,
+      });
+    }
+    if (!consecutiveStartsAlign(prior.endsAt, args.startsAt)) {
+      throw unprocessable(
+        'VISIT_NOT_CONSECUTIVE',
+        'وقت الخدمة التالية يجب أن يبدأ مباشرة بعد انتهاء السابقة في نفس الزيارة',
+        {
+          priorEndsAt: prior.endsAt.toISOString(),
+          startsAt: args.startsAt.toISOString(),
+        },
+      );
     }
   }
 

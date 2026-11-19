@@ -531,12 +531,24 @@ export function isOpenOfferIncludesQuestion(message: string): boolean {
 /** Local reply when the customer asks what the *open* service/product includes. */
 export function marketplaceOfferIncludesReply(
   message: string,
-  facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
+  facts: Array<{
+    id: string;
+    labelAr?: string;
+    valueAr?: string;
+    commercial?: { availability?: boolean };
+  }> = [],
 ): string | null {
   const text = message.trim();
   if (!text) return null;
   if (!hasOpenMarketplaceOffer(facts)) return null;
   if (!isOpenOfferIncludesQuestion(text)) return null;
+  const status = facts.find((f) => f.id.startsWith('marketplace.offer.status.'));
+  if (status?.valueAr?.includes('سُحب') || status?.valueAr?.includes('أوقف من النشر')) {
+    return 'هذا العرض لم يعد منشورًا، لذلك لن أعتمد وصفًا أو سعرًا سابقًا ولن أقترح حجزه.';
+  }
+  if (status?.valueAr?.includes('تعذّر التحقق')) {
+    return 'تعذّر التحقق من العرض المنشور الآن. أعيدي المحاولة بعد لحظات دون الاعتماد على وصف قديم.';
+  }
   const desc = facts.find((f) => f.id.startsWith('marketplace.offer.description.'));
   const title = facts.find((f) => f.id.startsWith('marketplace.offer.title.'));
   const kind = facts.find((f) => f.id.startsWith('marketplace.offer.kind.'));
@@ -546,7 +558,11 @@ export function marketplaceOfferIncludesReply(
     return `لا يوجد وصف منشور من المقدّم لـ${noun} حالياً، لذلك لن أخمن المحتوى.`;
   }
   const name = title?.valueAr?.trim() || noun;
-  return `حسب وصف المقدّم لـ«${name}»: ${desc.valueAr.trim()}`;
+  const bookingClosed =
+    title?.commercial?.availability === false && !isProduct
+      ? ' الحجز غير متاح لهذه الجلسة حاليًا.'
+      : '';
+  return `حسب وصف المقدّم لـ«${name}»: ${desc.valueAr.trim()}${bookingClosed}`;
 }
 
 /** Offline advisor when LLM_API_KEY is missing — facts only, no invented scores. */

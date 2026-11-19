@@ -368,19 +368,68 @@ export class ConsultationSessionService {
     };
   }
 
-  /** Live re-read of the open offer so description/pause edits apply mid-chat. */
-  async refreshMarketplaceOfferFacts(session: {
+  /**
+   * Live re-read of the open offer so description/pause/withdraw apply mid-chat.
+   * Distinguishes ok | booking_closed | withdrawn | error — never leaves stale facts on withdraw.
+   */
+  async refreshMarketplaceOfferState(session: {
     metadataJson?: unknown;
-  }): Promise<MceFactEntry[] | null> {
+  }): Promise<{
+    status: 'none' | 'ok' | 'booking_closed' | 'withdrawn' | 'error';
+    facts: MceFactEntry[];
+  }> {
     const meta =
       session.metadataJson && typeof session.metadataJson === 'object' && !Array.isArray(session.metadataJson)
         ? (session.metadataJson as Record<string, unknown>)
         : null;
-    const offerId = typeof meta?.marketplaceOfferId === 'string' ? meta.marketplaceOfferId : '';
-    if (!offerId) return null;
+    const offerId = typeof meta?.marketplaceOfferId === 'string' ? meta.marketplaceOfferId.trim() : '';
+    if (!offerId) return { status: 'none', facts: [] };
     const kind = meta?.marketplaceOfferKind === 'product' ? 'product' : 'service';
-    const loaded = await this.loadMarketplaceOfferFacts(offerId, kind);
-    return loaded?.facts ?? null;
+    try {
+      const loaded = await this.loadMarketplaceOfferFacts(offerId, kind);
+      if (!loaded) {
+        return {
+          status: 'withdrawn',
+          facts: [
+            {
+              id: `marketplace.offer.status.${offerId}`,
+              labelAr: 'حالة العرض',
+              valueAr: 'سُحب أو أوقف من النشر — لا أعتمد وصفًا أو سعرًا سابقًا',
+              confidence: 'high',
+            },
+          ],
+        };
+      }
+      const avail = loaded.facts
+        .find((f) => f.id.startsWith('marketplace.offer.title.'))
+        ?.commercial?.availability;
+      const bookingClosed = kind === 'service' && avail === false;
+      return {
+        status: bookingClosed ? 'booking_closed' : 'ok',
+        facts: loaded.facts,
+      };
+    } catch {
+      return {
+        status: 'error',
+        facts: [
+          {
+            id: `marketplace.offer.status.${offerId}`,
+            labelAr: 'حالة العرض',
+            valueAr: 'تعذّر التحقق من العرض المنشور الآن — لن أجزم بالسحب ولن أعيد وصفًا قديمًا',
+            confidence: 'low',
+          },
+        ],
+      };
+    }
+  }
+
+  /** @deprecated prefer refreshMarketplaceOfferState */
+  async refreshMarketplaceOfferFacts(session: {
+    metadataJson?: unknown;
+  }): Promise<MceFactEntry[] | null> {
+    const state = await this.refreshMarketplaceOfferState(session);
+    if (state.status === 'none') return null;
+    return state.facts;
   }
 
   toDto(

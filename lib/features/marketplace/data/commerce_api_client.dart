@@ -89,6 +89,7 @@ abstract class CommerceClient {
     String? visitCityId,
     String? visitAddress,
     int? travelFeeHalalas,
+    Map<String, dynamic>? visitPlan,
   });
   Future<CommercePage<CommerceBooking>> listBookings({String? cursor});
   Future<CommerceBooking> getBooking(String id);
@@ -249,6 +250,7 @@ class ApiCommerceClient implements CommerceClient {
     String? visitCityId,
     String? visitAddress,
     int? travelFeeHalalas,
+    Map<String, dynamic>? visitPlan,
   }) async {
     final json = await _send(
       'POST',
@@ -267,6 +269,7 @@ class ApiCommerceClient implements CommerceClient {
         if (visitCityId != null && visitCityId.trim().isNotEmpty) 'visitCityId': visitCityId.trim(),
         if (visitAddress != null && visitAddress.trim().isNotEmpty) 'visitAddress': visitAddress.trim(),
         if (travelFeeHalalas != null) 'travelFeeHalalas': travelFeeHalalas,
+        if (visitPlan != null) 'visitPlan': visitPlan,
       },
     );
     return CommerceBookingResult(

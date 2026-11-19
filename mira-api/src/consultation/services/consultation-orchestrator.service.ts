@@ -312,11 +312,12 @@ export class ConsultationOrchestratorService {
       sessionId,
       dto.contextSnapshotId ?? session.activeSnapshotId ?? undefined,
     );
-    // Re-read open marketplace offer on every turn (description edits / pause).
-    const liveOfferFacts = await this.sessions.refreshMarketplaceOfferFacts(session);
-    if (liveOfferFacts?.length) {
+    // Re-read open marketplace offer every turn. On withdraw/error, strip stale offer facts.
+    const offerState = await this.sessions.refreshMarketplaceOfferState(session);
+    if (offerState.status !== 'none') {
       const withoutStale = loaded.factRegistry.filter((f) => !f.id.startsWith('marketplace.offer.'));
-      loaded.factRegistry = [...withoutStale, ...liveOfferFacts];
+      loaded.factRegistry = [...withoutStale, ...offerState.facts];
+      (loaded as { marketplaceOfferLiveStatus?: string }).marketplaceOfferLiveStatus = offerState.status;
     }
 
     const mod = this.moderation.preCheck(dto.message, loaded.snapshot.user.isMinor);

@@ -262,30 +262,40 @@ class ServiceDetailScreen extends StatelessWidget {
             ),
             if (service.bookingEnabled && !service.id.startsWith('preview-')) ...[
               const SizedBox(height: 8),
-              OutlinedButton.icon(
-                key: const Key('add_to_booking_basket'),
-                onPressed: () {
-                  final added = BookingBasket.instance.add(service);
-                  final msg = added
-                      ? 'أُضيفت إلى حجزك (${BookingBasket.instance.length})'
-                      : 'هذه الخدمة في حجزك مسبقاً أو السلة ممتلئة';
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-                },
-                icon: const Icon(Icons.add_circle_outline),
-                label: const Text('أضيفي لحجزك'),
-              ),
-              if (BookingBasket.instance.length >= 1)
-                TextButton(
-                  key: const Key('open_booking_basket'),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const BookingBasketScreen(),
+              ListenableBuilder(
+                listenable: BookingBasket.instance,
+                builder: (context, _) {
+                  final basket = BookingBasket.instance;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      OutlinedButton.icon(
+                        key: const Key('add_to_booking_basket'),
+                        onPressed: () {
+                          final result = basket.tryAdd(service);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(BookingBasket.messageFor(result, service))),
+                          );
+                        },
+                        icon: const Icon(Icons.add_circle_outline),
+                        label: const Text('أضيفي لحجزك'),
                       ),
-                    );
-                  },
-                  child: Text('افتحي حجزك (${BookingBasket.instance.length})'),
-                ),
+                      if (basket.length >= 1)
+                        TextButton(
+                          key: const Key('open_booking_basket'),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const BookingBasketScreen(),
+                              ),
+                            );
+                          },
+                          child: Text('افتحي حجزك (${basket.length})'),
+                        ),
+                    ],
+                  );
+                },
+              ),
             ],
             if (!service.id.startsWith('preview-')) ...[
               const SizedBox(height: 12),
@@ -301,12 +311,8 @@ class ServiceDetailScreen extends StatelessWidget {
                   offerKind: 'service',
                   partnerId: service.partnerId,
                   initialQuestion: question ?? 'وش تشمل الجلسة؟',
-                  discussionFocus: [
-                    'خدمة: ${service.nameAr}',
-                    if ((service.descriptionAr ?? '').trim().isNotEmpty)
-                      'وصف المقدّم: ${service.descriptionAr!.trim()}',
-                    'المركز: ${service.partnerNameAr}',
-                  ].join(' · '),
+                  // Never embed the description here — live offer facts come from the API.
+                  discussionFocus: 'خدمة: ${service.nameAr} · المركز: ${service.partnerNameAr}',
                 ),
               ),
             ],
