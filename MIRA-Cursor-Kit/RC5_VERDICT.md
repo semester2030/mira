@@ -2,7 +2,7 @@
 
 **الأساس (commit):** `a0dce8d698331ef6f2f329e8506e2a0802f67839` (RC3؛ حزمة RC4 كانت فوقه دون commit سابق)  
 **بصمة patch RC4 المرجعية:** `b769f46a7a52724f79ef0f3d591c8c6e07cd89dfa6aa5e1ea8cbf1984e035dfa`  
-**النتيجة (commit):** انظر `evidence/rc5/raw/ids.txt`  
+**النتيجة (commit):** `f7fa162b16b01e1987d1bcf81959d5218144b6fe`  
 **الفرع:** `mira/catalog-provider-rc1` — لا دمج main / لا إنتاج  
 **البيئة:** `mira_p1_rc7_test@localhost` + Flutter على المضيف
 
