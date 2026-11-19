@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import {
+  ALTERNATIVES_SEARCH_FAILED_AR,
   buildAlternativesConsultationTurn,
   isAlternativesOrCompareAsk,
   isAlternativesPriceOrCompareAsk,
@@ -150,6 +151,32 @@ assert.match(turnClosedAlt!.answerAr, /الحجز غير متاح|عرض الت�
 assert.equal(turnClosedAlt!.discoveryOffers[0].action, 'view');
 assert.equal(turnClosedAlt!.discoveryOffers[0].inStock, false);
 assert.equal(turnClosedAlt!.discoveryOffers[0].priceSar, 120);
+
+// Search failed → distinct retry copy, empty cards (not «أي بديل تقصدين؟»).
+const turnSearchFail = buildAlternativesConsultationTurn('بكم البديل؟', live, [hydrateAlt], {
+  discoveryEnabled: true,
+  searchFailed: true,
+});
+assert.ok(turnSearchFail);
+assert.equal(turnSearchFail!.answerAr, ALTERNATIVES_SEARCH_FAILED_AR);
+assert.equal(turnSearchFail!.discoveryOffers.length, 0);
+assert.equal(turnSearchFail!.searchFailed, true);
+assert.ok(turnSearchFail!.suggestedQuestionsAr.includes('أعيدي البحث'));
+
+// Withdrawn alternative → omit from text and cards (unlike booking-closed).
+const withdrawnHydrate = {
+  ...hydrateAlt,
+  liveStatus: 'withdrawn' as const,
+  inStock: false,
+  bookingEnabled: false,
+};
+const turnWithdrawnAlt = buildAlternativesConsultationTurn('بكم البديل؟', live, [withdrawnHydrate], {
+  discoveryEnabled: true,
+});
+assert.ok(turnWithdrawnAlt);
+assert.equal(turnWithdrawnAlt!.discoveryOffers.length, 0);
+assert.doesNotMatch(turnWithdrawnAlt!.answerAr, /120|ترطيب/);
+assert.doesNotMatch(turnWithdrawnAlt!.answerAr, /تعذّر عليّ البحث الآن/);
 
 // Discovery OFF after withdraw → clarify, empty cards, no stale 150 as alternative price.
 const turnOffWithdrawn = buildAlternativesConsultationTurn('بكم خدمة ثانية؟', withdrawn, [], {

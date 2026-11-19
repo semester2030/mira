@@ -45,7 +45,7 @@ function card(partial: Partial<ConsultantOfferCard> & Pick<ConsultantOfferCard, 
     branchId: partial.branchId ?? 'br-1',
     inStock: partial.inStock ?? true,
     openPath: partial.openPath ?? `/${kind}/${partial.id}`,
-    liveStatus: partial.liveStatus ?? 'published',
+    liveStatus: partial.liveStatus ?? (partial.inStock === false && partial.action === 'view' ? 'published' : 'published'),
   };
 }
 
@@ -320,7 +320,7 @@ async function main(): Promise<void> {
     console.log('pass final_merge closed_booking → view');
   }
 
-  // Search failed → no bookable stale alt; clarify unverifiable.
+  // Search failed → distinct retry copy (not «أي بديل تقصدين؟»).
   {
     const h = createAltHarness({
       discoveryOffers: [],
@@ -331,8 +331,34 @@ async function main(): Promise<void> {
     const payload = (turn.assistantMessage.payload ?? h.getLastPayload()) as Record<string, unknown>;
     assert.deepEqual(offerIds(payload), []);
     assert.equal(payload.searchFailed, true);
-    assert.match(String(turn.assistantMessage.contentAr), /بديل|حددي|تعذّر/);
-    console.log('pass final_merge search_failed → empty + flag');
+    assert.match(String(turn.assistantMessage.contentAr), /تعذّر عليّ البحث الآن/);
+    assert.doesNotMatch(String(turn.assistantMessage.contentAr), /أي بديل تقصدين/);
+    const chips = payload.suggestedQuestionsAr;
+    assert.ok(Array.isArray(chips) && chips.some((c) => String(c).includes('أعيدي البحث')));
+    console.log('pass final_merge search_failed → retry copy');
+  }
+
+  // Withdrawn hydrate must vanish; closed (published) hydrate stays as view.
+  {
+    const withdrawnHydrate = card({
+      id: 'svc-hydrate',
+      titleAr: 'ترطيب',
+      kind: 'service',
+      priceSar: 120,
+      action: 'view',
+      inStock: false,
+      liveStatus: 'withdrawn',
+    });
+    const h = createAltHarness({
+      discoveryOffers: [cleanCard, withdrawnHydrate],
+      discoveryClaimsTurn: true,
+    });
+    const turn = await h.orchestrator.sendMessage({} as never, 's-alt', { message: 'بكم البديل؟' });
+    const payload = (turn.assistantMessage.payload ?? h.getLastPayload()) as Record<string, unknown>;
+    assert.deepEqual(offerIds(payload), []);
+    assert.doesNotMatch(String(turn.assistantMessage.contentAr), /120|ترطيب/);
+    assert.match(String(turn.assistantMessage.contentAr), /أي بديل|لن أستخدم سعر/);
+    console.log('pass final_merge withdrawn → omitted');
   }
 
   // Normal browse path still attaches discovery cards (not locked).

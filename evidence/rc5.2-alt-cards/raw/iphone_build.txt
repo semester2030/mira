@@ -1,0 +1,3 @@
+CFBundleVersion=202611191720
+APP=/Users/fayez/Desktop/mira-wt-alt-cards-fix/build/ios/iphoneos/Runner.app
+codesign=required (built --no-codesign)

@@ -391,6 +391,7 @@ export class ConsultationOrchestratorService {
     if (!localReply && !mod.blocked && altPriceAsk && !this.discovery.enabled()) {
       const turn = buildAlternativesConsultationTurn(askText, loaded.factRegistry, [], {
         discoveryEnabled: false,
+        searchFailed: false,
       });
       if (turn) localReply = turn.answerAr;
     }
@@ -497,18 +498,21 @@ export class ConsultationOrchestratorService {
     // never leave an open-offer price answer for these asks.
     // This path owns the final card list (including intentional empty) — lock against attachDiscoveryCards.
     if (!mod.blocked && altPriceAsk) {
+      const searchFailed = discoveryTurn?.searchFailed === true;
       const published = (discoveryTurn?.offers ?? []).map((o) => ({
         id: o.id,
         titleAr: o.titleAr,
         kind: o.kind,
         priceSar: o.priceSar ?? null,
         inStock: o.inStock ?? null,
+        liveStatus: o.liveStatus ?? null,
         // Derive from card action — ConsultantOfferCard does not expose bookingEnabled.
         bookingEnabled:
           o.kind === 'service' ? o.action === 'book' : o.kind === 'product' ? o.action === 'buy' : null,
       }));
       const turn = buildAlternativesConsultationTurn(askText, loaded.factRegistry, published, {
         discoveryEnabled: this.discovery.enabled(),
+        searchFailed,
       });
       if (turn) {
         localReply = turn.answerAr;
@@ -521,14 +525,16 @@ export class ConsultationOrchestratorService {
           confidence: 'high',
           intent: 'general',
           citedFactIds: [],
-          suggestedQuestionsAr: [],
+          suggestedQuestionsAr: turn.suggestedQuestionsAr,
           blocked: false,
           disclaimerAr: '',
           replySource: turn.replySource,
           discoveryOffers: lockedOffers,
           discoverySideOffer: null,
-          searchFailed: discoveryTurn?.searchFailed ?? false,
-          searchErrorAr: discoveryTurn?.searchErrorAr ?? undefined,
+          searchFailed: turn.searchFailed,
+          searchErrorAr: searchFailed
+            ? discoveryTurn?.searchErrorAr ?? turn.answerAr
+            : discoveryTurn?.searchErrorAr ?? undefined,
         };
         discoveryCardsLocked = true;
       }
