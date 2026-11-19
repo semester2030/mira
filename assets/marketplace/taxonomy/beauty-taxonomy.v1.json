@@ -1496,6 +1496,12 @@
         "مستقلة",
         "خبيرة",
         "متخصصة"
+      ],
+      "notes": "تخصصات الخبيرة (مكياج/رموش/حناء) تُعرض عبر خريطة البوابة دون تغيير parentId للتخصصات المشتركة مع الصالونات.",
+      "linkedSpecialtyIds": [
+        "beauty.makeup",
+        "beauty.lashes_brows",
+        "beauty.henna"
       ]
     }
   ]
