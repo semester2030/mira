@@ -7,7 +7,7 @@
 | **FEATURE RC5 (معلَن)** | `f7fa162b16b01e1987d1bcf81959d5218144b6fe` | نتيجة الميزة RC5؛ سلف رأس الفرع |
 | **TIP قبل RC5.1** | `c14a84aec8b33037b64313773d304b4258622957` | رأس الفرع في البيان الداخلي عند البدء (docs freeze) |
 | **BASE لتطبيق الـpatch** | `c14a84aec8b33037b64313773d304b4258622957` | طُبّقت RC5.1 فوق الرأس الفعلي لا فوق FEATURE وحده |
-| **RESULT RC5.1** | انظر `evidence/rc5.1/raw/ids.txt` و`mira-catalog-provider-rc5.1.SHA256.txt` | commit التسليم بعد التغليف |
+| **RESULT RC5.1** | `7a00e305a5e2cc62ba252804026942b42d7e82ea` (كود) · TIP `7220f8baeb1546656cddd5fbcb36dc7df7a6bad4` (بيان)
 
 **الفرع:** `mira/catalog-provider-rc1` — لا دمج main / لا إنتاج  
 **البيئة المحلية:** `mira_p1_rc7_test@localhost` + Flutter على المضيف
