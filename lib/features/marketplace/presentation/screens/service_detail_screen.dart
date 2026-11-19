@@ -213,19 +213,41 @@ class ServiceDetailScreen extends StatelessWidget {
             ],
             if (details.isNotEmpty) ...[
               const SizedBox(height: 20),
-              _sectionTitle('الصور والفيديو', Icons.photo_library_outlined),
+              _sectionTitle('المعرض', Icons.photo_library_outlined),
               const SizedBox(height: 8),
               CatalogDetailMediaSection(media: details),
             ],
-            const SizedBox(height: 16),
-            Text(
-              service.id.startsWith('preview-')
-                  ? 'موقع المعاينة: ${service.city}. هذا ليس موقعك ولا فرعًا بإحداثيات، ولا تُحسب مسافة.'
-                  : (service.city.isEmpty
-                      ? 'لا توجد مدينة منشورة'
-                      : 'المدينة المسجّلة: ${service.city}. هذا ليس موقع فرع بإحداثيات.'),
-              style: AppTypography.bodyMedium,
-              textAlign: TextAlign.center,
+            const SizedBox(height: 20),
+            _sectionTitle('عن المركز', Icons.storefront_outlined),
+            const SizedBox(height: 8),
+            PremiumCard(
+              key: const Key('service_about_center'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(service.partnerNameAr, style: AppTypography.titleSmall, textAlign: TextAlign.right),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$typeLabel · ${service.city.isEmpty ? 'مدينة غير منشورة' : service.city}',
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    textAlign: TextAlign.right,
+                  ),
+                  if (phone.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text('للتواصل: $phone', style: AppTypography.bodyMedium, textAlign: TextAlign.right),
+                  ],
+                  const SizedBox(height: 8),
+                  Text(
+                    service.id.startsWith('preview-')
+                        ? 'موقع المعاينة: ${service.city}. هذا ليس موقعك ولا فرعًا بإحداثيات، ولا تُحسب مسافة.'
+                        : (service.city.isEmpty
+                            ? 'لا توجد مدينة منشورة'
+                            : 'المدينة المسجّلة: ${service.city}. هذا ليس موقع فرع بإحداثيات.'),
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary),
+                    textAlign: TextAlign.right,
+                  ),
+                ],
+              ),
             ),
             if (service.id.startsWith('preview-'))
               Text(

@@ -1075,6 +1075,12 @@ export class MarketplaceService implements OnModuleInit {
           orderBy: { sortOrder: 'asc' },
         }),
       );
+      const attributesJson =
+        product.attributesJson &&
+        typeof product.attributesJson === 'object' &&
+        !Array.isArray(product.attributesJson)
+          ? (product.attributesJson as Record<string, unknown>)
+          : null;
       return {
         kind: 'product',
         id: product.id,
@@ -1090,6 +1096,11 @@ export class MarketplaceService implements OnModuleInit {
         priceLabel: this.formatPrice(product.priceHalalas),
         externalUrl: product.externalUrl,
         category: product.category,
+        // Same taxonomy fields as browse — required so old ads open the correct detail family
+        // without re-publish. Missing optional attrs stay null (never invented).
+        subcategory: product.subcategory ?? null,
+        profileId: (product as { profileId?: string | null }).profileId ?? null,
+        attributesJson,
         concernTags: product.concernTags,
         ...publicProductCommerce(product),
         media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),

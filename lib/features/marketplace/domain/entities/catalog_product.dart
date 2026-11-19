@@ -43,6 +43,10 @@ class CatalogProduct {
   final int matchScore;
   final bool matchKnown;
   final String? category;
+  /// Taxonomy leaf when published (may be null on older rows).
+  final String? subcategory;
+  /// Portal profile id when published (e.g. product.clothes / product.jewelry).
+  final String? profileId;
   final List<String> concernTags;
   final List<CatalogMediaLink> media;
   final CatalogMainOfferKind? mainOfferKind;
@@ -92,6 +96,8 @@ class CatalogProduct {
       matchScore: score,
       matchKnown: true,
       category: category,
+      subcategory: subcategory,
+      profileId: profileId,
       concernTags: concernTags,
       media: media,
       mainOfferKind: mainOfferKind,
@@ -121,6 +127,8 @@ class CatalogProduct {
     required this.matchScore,
     this.matchKnown = false,
     this.category,
+    this.subcategory,
+    this.profileId,
     this.concernTags = const [],
     this.media = const [],
     this.mainOfferKind,
