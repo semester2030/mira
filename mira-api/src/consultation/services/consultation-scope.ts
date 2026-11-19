@@ -576,9 +576,18 @@ export function isOpenOfferBookingQuestion(message: string): boolean {
   );
 }
 
+export type AlternativesPublishedOffer = {
+  id: string;
+  titleAr: string;
+  kind?: string;
+  priceSar?: number | null;
+  inStock?: boolean | null;
+};
+
 /**
- * When discovery is off (or before search): clarify alternatives/compare without
- * attributing the open offer price to a second service.
+ * When discovery is off (or before/after search): clarify alternatives/compare without
+ * attributing the open offer price to a second service. If published alternatives are
+ * provided, list each with its own price — never the open-offer price.
  */
 export function marketplaceAlternativesOrCompareReply(
   message: string,
@@ -588,6 +597,7 @@ export function marketplaceAlternativesOrCompareReply(
     valueAr?: string;
     commercial?: { subjectAr?: string; priceAmount?: string; currency?: string; availability?: boolean };
   }> = [],
+  publishedAlternatives: AlternativesPublishedOffer[] = [],
 ): string | null {
   const text = message.trim();
   if (!text || !isAlternativesOrCompareAsk(text)) return null;
@@ -608,19 +618,44 @@ export function marketplaceAlternativesOrCompareReply(
     if (!named || /سعرها|بكم|هذه|العرض/.test(named)) {
       return `للمقارنة أحتاج مصدرين معروفين بأسعارهما المنشورة. حددي الخدمة الثانية بالاسم — ولن أنسب سعر «${openName}» لبديل غير محدد.`;
     }
-    if (live === 'withdrawn') {
+    const match = publishedAlternatives.find((o) => o.titleAr.includes(named) || named.includes(o.titleAr));
+    if (live === 'withdrawn' && !match) {
       return `العرض المفتوح لم يعد منشورًا، ولا أملك سعرًا منشورًا موثوقًا لـ«${named}» هنا — لن أخترع مقارنة ولن أعيد سعرًا قديمًا.`;
     }
-    if (live === 'error') {
+    if (live === 'error' && !match) {
       return `تعذّر التحقق من العرض المنشور الآن، ولا أجد سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أخمن مقارنة.`;
     }
-    if (!openPrice) {
-      return `لا أجد سعرًا منشورًا لـ«${openName}»، ولا سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أخترع مقارنة.`;
+    if (match) {
+      if (match.priceSar == null || !Number.isFinite(match.priceSar)) {
+        return `وجدتُ «${match.titleAr}» منشورة لكن بلا سعر منشور — لن أخترع رقمًا ولن أنسب سعر «${openName}» لها.`;
+      }
+      if (openPrice && live !== 'withdrawn' && live !== 'error') {
+        return `مقارنة منشورة: «${openName}» ${openPrice} ريال مقابل «${match.titleAr}» ${match.priceSar} ريال — كل سعر من مصدره، دون خلط.`;
+      }
+      return `سعر «${match.titleAr}» المنشور ${match.priceSar} ريال. لا أستخدم سعر العرض المفتوح بديلًا عنه.`;
+    }
+    if (!openPrice || live === 'withdrawn' || live === 'error') {
+      return `لا أجد سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أخترع مقارنة ولن أعيد سعرًا قديمًا لـ«${openName}».`;
     }
     return `أعرف سعر «${openName}» المنشور (${openPrice} ريال) لكن لا أجد سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أنسب سعر «${openName}» لها ولن أخترع رقمًا.`;
   }
 
   // «بكم خدمة ثانية؟» / «كم سعر البدائل؟»
+  const priced = publishedAlternatives.filter((o) => o.titleAr.trim());
+  if (priced.length) {
+    const lines = priced.map((o) => {
+      if (o.priceSar == null || !Number.isFinite(o.priceSar)) {
+        return `• «${o.titleAr}»: لا سعر منشور`;
+      }
+      return `• «${o.titleAr}»: ${o.priceSar} ريال`;
+    });
+    const prefix =
+      live === 'withdrawn'
+        ? `العرض المفتوح سُحب من النشر. بدائل منشورة بأسعارها الخاصة (ليس سعرًا قديمًا لـ«${openName}»):`
+        : `بدائل منشورة بأسعارها الخاصة — ولن أستخدم سعر «${openName}»${openPrice ? ` (${openPrice} ريال)` : ''} لأي منها:`;
+    return `${prefix}\n${lines.join('\n')}`;
+  }
+
   if (live === 'withdrawn') {
     return `العرض المفتوح سُحب من النشر. أي بديل تقصدين؟ لن أعتمد سعرًا قديمًا لـ«${openName}» كسعر لخدمة ثانية، ولن أخترع أسعار بدائل غير منشورة.`;
   }
@@ -628,6 +663,56 @@ export function marketplaceAlternativesOrCompareReply(
     return `تعذّر التحقق من العرض المنشور الآن. حددي أي بديل تقصدين — ولن أنسب رقمًا غير متحقق لخدمة ثانية.`;
   }
   return `أي بديل أو خدمة ثانية تقصدين؟ لن أستخدم سعر «${openName}»${openPrice ? ` (${openPrice} ريال)` : ''} كسعر لبديل. إن وُجدت بدائل منشورة سأعرض كل واحدة بسعرها الخاص بعد تحديدها.`;
+}
+
+/**
+ * Consultation-entry turn for alternatives/compare: answer + cards (no invented prices).
+ * Used by schema/orchestrator so acceptance is on the final payload, not function text alone.
+ */
+export function buildAlternativesConsultationTurn(
+  message: string,
+  facts: Array<{
+    id: string;
+    labelAr?: string;
+    valueAr?: string;
+    commercial?: { subjectAr?: string; priceAmount?: string; currency?: string; availability?: boolean };
+  }> = [],
+  publishedAlternatives: AlternativesPublishedOffer[] = [],
+  opts?: { discoveryEnabled?: boolean },
+): {
+  answerAr: string;
+  replySource: 'discovery' | 'dialogue';
+  discoveryOffers: Array<Record<string, unknown>>;
+  discoveryEnabled: boolean;
+} | null {
+  const answerAr = marketplaceAlternativesOrCompareReply(message, facts, publishedAlternatives);
+  if (!answerAr) return null;
+  const discoveryEnabled = opts?.discoveryEnabled === true;
+  const discoveryOffers: Array<Record<string, unknown>> = [];
+  for (const o of publishedAlternatives) {
+    const id = String(o.id ?? '').trim();
+    const titleAr = String(o.titleAr ?? '').trim();
+    if (!id || !titleAr) continue;
+    const kind = o.kind === 'service' ? 'service' : 'product';
+    const priceSar = o.priceSar != null && Number.isFinite(o.priceSar) ? o.priceSar : null;
+    discoveryOffers.push({
+      id,
+      kind,
+      titleAr,
+      priceSar,
+      priceLabelAr: priceSar != null ? `${priceSar} ر.س` : 'السعر غير مذكور في الكتالوج',
+      inStock: o.inStock ?? null,
+      action: kind === 'service' ? 'book' : 'buy',
+      actionLabelAr: kind === 'service' ? 'احجزي' : 'اطلبي',
+      openPath: `/${kind}/${id}`,
+    });
+  }
+  return {
+    answerAr,
+    replySource: discoveryOffers.length ? 'discovery' : 'dialogue',
+    discoveryOffers,
+    discoveryEnabled,
+  };
 }
 
 /** True when the message targets the open offer (includes / price / bookability). */

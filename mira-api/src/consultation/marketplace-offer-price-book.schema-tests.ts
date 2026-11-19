@@ -5,6 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import {
+  buildAlternativesConsultationTurn,
   isAlternativesOrCompareAsk,
   isAlternativesPriceOrCompareAsk,
   isOpenOfferLiveAsk,
@@ -77,6 +78,49 @@ const altAfterWithdraw = String(marketplaceAlternativesOrCompareReply('كم سع
 assert.match(altAfterWithdraw, /سُحب|لم يعد/);
 assert.doesNotMatch(altAfterWithdraw, /سعر «تنظيف» 150|150 ريال كسعر لبديل/);
 assert.match(altAfterWithdraw, /لن أعتمد سعرًا قديمًا|لن أخترع/);
+
+// Final consultation turn (reply + cards) — not function text alone.
+const hydrateAlt = {
+  id: 'svc-hydrate',
+  titleAr: 'ترطيب',
+  kind: 'service',
+  priceSar: 120,
+  inStock: true,
+};
+
+// Discovery ON + published alternatives → cards with each offer's own price.
+const turnOn = buildAlternativesConsultationTurn('كم سعر البدائل؟', live, [hydrateAlt], {
+  discoveryEnabled: true,
+});
+assert.ok(turnOn);
+assert.match(turnOn!.answerAr, /ترطيب/);
+assert.match(turnOn!.answerAr, /120/);
+assert.doesNotMatch(turnOn!.answerAr, /سعر «تنظيف» 150 ريال/);
+assert.equal(turnOn!.discoveryOffers.length, 1);
+assert.equal(turnOn!.discoveryOffers[0].priceSar, 120);
+assert.equal(turnOn!.discoveryOffers[0].titleAr, 'ترطيب');
+assert.equal(turnOn!.replySource, 'discovery');
+assert.equal(turnOn!.discoveryEnabled, true);
+
+// Discovery OFF after withdraw → clarify, empty cards, no stale 150 as alternative price.
+const turnOffWithdrawn = buildAlternativesConsultationTurn('بكم خدمة ثانية؟', withdrawn, [], {
+  discoveryEnabled: false,
+});
+assert.ok(turnOffWithdrawn);
+assert.match(turnOffWithdrawn!.answerAr, /سُحب|بديل/);
+assert.doesNotMatch(turnOffWithdrawn!.answerAr, /سعر «تنظيف» 150/);
+assert.equal(turnOffWithdrawn!.discoveryOffers.length, 0);
+assert.equal(turnOffWithdrawn!.discoveryEnabled, false);
+
+// Compare with a published second source → both prices, no attribution swap.
+const turnCompare = buildAlternativesConsultationTurn('قارني سعرها بخدمة الترطيب', live, [hydrateAlt], {
+  discoveryEnabled: true,
+});
+assert.ok(turnCompare);
+assert.match(turnCompare!.answerAr, /150/);
+assert.match(turnCompare!.answerAr, /120/);
+assert.match(turnCompare!.answerAr, /ترطيب/);
+assert.equal(turnCompare!.discoveryOffers[0].priceSar, 120);
 
 const errored = [
   {

@@ -37,7 +37,7 @@ import {
   isAlternativesOrCompareAsk,
   isAlternativesPriceOrCompareAsk,
   isOpenOfferLiveAsk,
-  marketplaceAlternativesOrCompareReply,
+  buildAlternativesConsultationTurn,
   marketplaceOfferLiveAskReply,
   decideConsultationScope,
   guardScopeAnswer,
@@ -383,9 +383,14 @@ export class ConsultationOrchestratorService {
     let discoverySessionPatch: SessionDiscoveryContext | null | undefined = undefined;
 
     const askText = dto.message.trim();
-    // Price-of-alternatives / compare: always before open-offer price and before discovery.
-    if (!localReply && !mod.blocked && isAlternativesPriceOrCompareAsk(askText)) {
-      localReply = marketplaceAlternativesOrCompareReply(askText, loaded.factRegistry) ?? undefined;
+    const altPriceAsk = isAlternativesPriceOrCompareAsk(askText);
+    // Alternatives/compare must never hit open-offer price. When discovery is OFF, clarify now.
+    // When discovery is ON, search first then build the final turn (reply + cards) below.
+    if (!localReply && !mod.blocked && altPriceAsk && !this.discovery.enabled()) {
+      const turn = buildAlternativesConsultationTurn(askText, loaded.factRegistry, [], {
+        discoveryEnabled: false,
+      });
+      if (turn) localReply = turn.answerAr;
     }
 
     // Open offer live state wins over discovery for includes/price/book about *this* offer only.
@@ -482,6 +487,38 @@ export class ConsultationOrchestratorService {
             : null,
           searchFailed: discoveryTurn.searchFailed,
           searchErrorAr: discoveryTurn.searchErrorAr ?? undefined,
+        };
+      }
+    }
+
+    // Alternatives/compare final turn: prefer published discovery cards with *their* prices;
+    // never leave an open-offer price answer for these asks.
+    if (!mod.blocked && altPriceAsk) {
+      const published = (discoveryTurn?.offers ?? []).map((o) => ({
+        id: o.id,
+        titleAr: o.titleAr,
+        kind: o.kind,
+        priceSar: o.priceSar ?? null,
+        inStock: o.inStock ?? null,
+      }));
+      const turn = buildAlternativesConsultationTurn(askText, loaded.factRegistry, published, {
+        discoveryEnabled: this.discovery.enabled(),
+      });
+      if (turn) {
+        localReply = turn.answerAr;
+        discoveryPayload = {
+          answerAr: turn.answerAr,
+          confidence: 'high',
+          intent: 'general',
+          citedFactIds: [],
+          suggestedQuestionsAr: [],
+          blocked: false,
+          disclaimerAr: '',
+          replySource: turn.replySource,
+          discoveryOffers: turn.discoveryOffers,
+          discoverySideOffer: null,
+          searchFailed: discoveryTurn?.searchFailed ?? false,
+          searchErrorAr: discoveryTurn?.searchErrorAr ?? undefined,
         };
       }
     }
