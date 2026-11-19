@@ -5,7 +5,7 @@
 | دور | Commit | ملاحظة |
 |---|---|---|
 | **BASE / رأس RC5.1** | `87376ececffdbc7f226f0c745db41aeb73a714e0` | بداية فرع الاختبار RC5.2 |
-| **RESULT RC5.2 (كود+أدلة داخل المستودع)** |  | انظر evidence/rc5.2/raw/ids.txt |
+| **RESULT RC5.2 (كود+أدلة داخل المستودع)** | `652203d00f025da2a17d1362ce618f6584ac554b` | انظر evidence/rc5.2/raw/ids.txt |
 | **TIP التسليم الخارجي** | `mira-catalog-provider-rc5.2.SHA256.txt` على سطح المكتب | خارج الـcommit — لا دجاجة-بيضة |
 
 **الفرع:** `mira/catalog-provider-rc5.2` — لا دمج main / لا إنتاج  
