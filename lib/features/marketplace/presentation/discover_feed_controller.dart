@@ -129,18 +129,40 @@ class DiscoverFeedController extends ChangeNotifier {
     );
     _notify();
     DiscoverBrowseResponse response;
-    try {
-      response = await _gateway.browse(query);
-    } catch (_) {
-      if (_disposed || generation != _queryGeneration) return;
-      state = DiscoverFeedState(
-        phase: DiscoverFeedPhase.failed,
-        query: query,
-        loadError: 'تعذر تحميل الكتالوج',
-        replacement: state.replacement + 1,
-      );
-      _notify();
-      return;
+    Object? lastError;
+    var attempt = 0;
+    while (true) {
+      try {
+        response = await _gateway.browse(query);
+        break;
+      } catch (error) {
+        lastError = error;
+        attempt += 1;
+        // ignore: avoid_print
+        print(
+          'MIRA_DISCOVER_CATALOG attempt=$attempt lane=${query.lane?.name} '
+          'category=${query.categoryId} error=$error',
+        );
+        // Up to 2 retries for transient transport blips (jewelry open).
+        if (attempt >= 3) {
+          if (_disposed || generation != _queryGeneration) return;
+          // ignore: avoid_print
+          print(
+            'MIRA_DISCOVER_CATALOG fail lane=${query.lane?.name} '
+            'category=${query.categoryId} last=$lastError',
+          );
+          state = DiscoverFeedState(
+            phase: DiscoverFeedPhase.failed,
+            query: query,
+            loadError: 'تعذر تحميل الكتالوج',
+            replacement: state.replacement + 1,
+          );
+          _notify();
+          return;
+        }
+        await Future<void>.delayed(Duration(milliseconds: 300 * attempt));
+        if (_disposed || generation != _queryGeneration) return;
+      }
     }
     if (_disposed || generation != _queryGeneration) return;
     DiscoverAdFeed ads = DiscoverAdFeed.empty;
@@ -219,6 +241,13 @@ class DiscoverFeedController extends ChangeNotifier {
 
   void _applyFirstPage(DiscoverCatalogQuery query, DiscoverBrowseResponse response, DiscoverAdFeed ads) {
     if (!response.succeeded || response.transport == null || response.contentMark == null) {
+      // ignore: avoid_print
+      print(
+        'MIRA_DISCOVER_CATALOG apply_fail lane=${query.lane?.name} '
+        'category=${query.categoryId} failed=${response.failed} '
+        'invalidCursor=${response.invalidCursor} transport=${response.transport} '
+        'contentMark=${response.contentMark} items=${response.items.length}',
+      );
       state = DiscoverFeedState(
         phase: DiscoverFeedPhase.failed,
         query: query,

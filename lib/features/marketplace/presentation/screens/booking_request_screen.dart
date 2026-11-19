@@ -27,6 +27,8 @@ class BookingRequestScreen extends StatefulWidget {
     this.initialBranchId,
     this.availabilityContext,
     this.discoverLane,
+    this.visitPlan,
+    this.popResultOnSuccess = false,
   });
 
   final CatalogService service;
@@ -42,6 +44,12 @@ class BookingRequestScreen extends StatefulWidget {
   final String? initialBranchId;
   final DiscoverAvailabilityContext? availabilityContext;
   final DiscoverLane? discoverLane;
+
+  /// Optional multi-service visit plan (consecutive / separate) — server validated.
+  final Map<String, dynamic>? visitPlan;
+
+  /// When true, pop `true` after a successful request instead of replacing with my bookings.
+  final bool popResultOnSuccess;
 
   @override
   State<BookingRequestScreen> createState() => _BookingRequestScreenState();
@@ -229,11 +237,17 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
         visitCityId: visitCityId,
         visitAddress: visitAddress,
         travelFeeHalalas: travelFee,
+        visitPlan: widget.visitPlan,
       );
+      // Keep key on network ambiguity — only clear after a definite server accept.
       _idempotencyKey = null;
       _keySignature = null;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(MarketplaceCopy.bookingRequested)));
+      if (widget.popResultOnSuccess) {
+        Navigator.of(context).pop(true);
+        return;
+      }
       await Navigator.of(context).pushReplacementNamed(AppRoutes.myBookings, arguments: result.booking.id);
     } on CommerceAuthException {
       if (mounted) setState(() => _needsLogin = true);

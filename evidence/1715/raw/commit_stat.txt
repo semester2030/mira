@@ -1,0 +1,30 @@
+commit d3aed5ab45768155eb84ff5edb4006dc6735ad17
+Author: FAYEZ2030 <semester-2030@outlook.com>
+Date:   Wed Nov 18 14:47:50 2026 +0300
+
+    fix(discover): stop blocking prefix seed; defer full fill until after open
+    
+    1714 awaited a 1MiB ensurePlayablePrefix inside resolvePlaySource and hid ~20s behind FIRST_BYTE_MS. Return the proxy immediately with a non-blocking kick, prioritize before prefix prefetch, and keep full ensureLocal until after first visible progress. Seek nudge now raises the progress floor so seek landing alone cannot count as firstFrame.
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+ evidence/1715/ANALYSIS_T41_CAUSAL.md               |   32 +
+ evidence/1715/FAILURE_CLASSIFICATION.md            |   15 +
+ evidence/1715/SCENARIOS.md                         |   16 +
+ evidence/1715/VERDICT.md                           |   30 +
+ evidence/1715/raw/attempt_accounting_1713.txt      |    3 +
+ .../raw/failed_attempts_from_expanded_1713_log.txt |   24 +
+ .../raw/flutter_test_asset_video_port_1715.txt     |  467 +++++
+ .../1715/raw/flutter_test_discover_suite_1715.txt  | 1154 ++++++++++++
+ evidence/1715/raw/flutter_test_focus_1715.txt      |  474 +++++
+ .../1715/raw/flutter_test_player_related_1715.txt  |  577 ++++++
+ evidence/1715/src/discover_device_file_log.dart    |   75 +
+ evidence/1715/src/discover_video_disk_cache.dart   | 1758 ++++++++++++++++++
+ .../1715/src/discover_video_disk_cache_test.dart   | 1934 ++++++++++++++++++++
+ evidence/1715/src/load_discover_fonts.dart         |   23 +
+ evidence/1715/src/presentation_video_port.dart     | 1598 ++++++++++++++++
+ .../presentation/discover_video_disk_cache.dart    |   30 +-
+ .../presentation/presentation_video_port.dart      |  158 +-
+ pubspec.yaml                                       |    2 +-
+ .../discover_video_disk_cache_test.dart            |  150 +-
+ 19 files changed, 8392 insertions(+), 128 deletions(-)

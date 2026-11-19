@@ -1,0 +1,8 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+npm warn exec The following package was not found and will be installed: ts-node@10.9.2
+pass http both_bookable
+pass http booking_closed view
+pass http withdrawn omitted
+pass http search_failed retry
+pass http بكم هذه؟ 150
+OK rc52-alt-cards-live-http

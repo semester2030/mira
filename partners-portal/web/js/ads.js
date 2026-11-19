@@ -21,7 +21,15 @@ function renderAds(items, statusNode) {
   const list = document.getElementById('adsList');
   const form = document.getElementById('adsForm');
   if (!notice || !list || !form) return;
-  notice.textContent = 'السعر والتوفر والجهة تُقرأ من الأصل. العد غير مفعّل. فتح الرابط ليس شراءً مكتملًا، وطلب الموعد ليس حجزًا مؤكدًا. لا يُسند الإعلان إلى ناشر آخر.';
+  const partnerType = String(document.body.dataset.partnerType || '').toLowerCase();
+  const adsHeading = document.querySelector('#adsSection > h2');
+  if (adsHeading && (partnerType === 'salon' || partnerType === 'clinic')) {
+    adsHeading.textContent = 'إعلاني الرئيسي';
+  }
+  notice.textContent =
+    partnerType === 'salon' || partnerType === 'clinic'
+      ? 'إعلان اكتشفي مستقل عن قائمة خدماتك. غلاف الإعلان لا يستبدل غلاف أي خدمة. السعر والتوفر يُقرآن من الأصل المنشور.'
+      : 'السعر والتوفر والجهة تُقرأ من الأصل. العد غير مفعّل. فتح الرابط ليس شراءً مكتملًا، وطلب الموعد ليس حجزًا مؤكدًا. لا يُسند الإعلان إلى ناشر آخر.';
   list.replaceChildren();
   if (!items.length) {
     const empty = document.createElement('p');

@@ -58,16 +58,19 @@ export function discoveryCardFromOffer(offer: PublishedCatalogOffer): DiscoveryC
   if (!id || !titleAr) return null;
   const kind = String(offer.kind ?? 'product');
   const isService = kind === 'service';
+  const available = offer.inStock === true ? true : offer.inStock === false ? false : null;
+  // Unavailable or unverified → details only; never advertise book/buy without stock/booking proof.
+  const canTransact = available === true;
   return {
     id,
     kind,
     titleAr,
-    action: isService ? 'book' : 'buy',
-    actionLabelAr: isService ? 'احجزي' : 'اطلبي',
+    action: canTransact ? (isService ? 'book' : 'buy') : 'view',
+    actionLabelAr: canTransact ? (isService ? 'احجزي' : 'اطلبي') : 'عرض التفاصيل',
     openPath: `/${kind}/${id}`,
     priceSar: offer.priceSar ?? null,
     priceLabelAr: publishedPriceLabelAr(offer),
-    inStock: offer.inStock ?? null,
+    inStock: available,
   };
 }
 

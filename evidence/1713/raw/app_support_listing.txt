@@ -1,0 +1,21 @@
+14:09:23  Acquired tunnel connection to device.
+14:09:23  Enabling developer disk image services.
+14:09:23  Acquired usage assertion.
+15 files:
+Name                                                                            URL Resources                   Size        Modification date     
+-----------------------------------------------------------------------------   -----------------------------   ---------   ----------------------
+firestore                                                                       Writable, Readable, Directory   96 bytes    08/06/1448 AH, 1:55 PM
+firestore/__FIRAPP_DEFAULT                                                      Writable, Readable, Directory   96 bytes    08/06/1448 AH, 1:55 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e                                          Writable, Readable, Directory   96 bytes    08/06/1448 AH, 1:55 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main                                     Writable, Readable, Directory   288 bytes   08/06/1448 AH, 2:09 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main/000005.ldb                          Writable, Readable              2 KB        08/06/1448 AH, 2:09 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main/000006.log                          Writable, Readable              728 bytes   08/06/1448 AH, 2:09 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main/CURRENT                             Writable, Readable              16 bytes    08/06/1448 AH, 2:09 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main/LOCK                                Writable, Readable              Zero KB     08/06/1448 AH, 1:55 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main/LOG                                 Writable, Readable              305 bytes   08/06/1448 AH, 2:09 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main/LOG.old                             Writable, Readable              56 bytes    08/06/1448 AH, 1:55 PM
+firestore/__FIRAPP_DEFAULT/mirra-14b0e/main/MANIFEST-000004                     Writable, Readable              113 bytes   08/06/1448 AH, 2:09 PM
+google-heartbeat-storage                                                        Writable, Readable, Directory   96 bytes    08/06/1448 AH, 2:09 PM
+google-heartbeat-storage/heartbeats-1_399849748934_ios_25ac117e432b31f497dac7   Writable, Readable              249 bytes   08/06/1448 AH, 2:09 PM
+mira_discover_logs                                                              Writable, Readable, Directory   96 bytes    08/06/1448 AH, 2:09 PM
+mira_discover_logs/mira_discover_device.log                                     Writable, Readable              2 KB        08/06/1448 AH, 2:09 PM

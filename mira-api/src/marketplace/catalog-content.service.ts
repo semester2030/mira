@@ -2,7 +2,17 @@ import { BadRequestException, ConflictException, ForbiddenException, Inject, Inj
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { FIELD_OWNERSHIP, IMAGE_MAX_BYTES, IMAGE_MIME, VIDEO_MAX_BYTES, VIDEO_MIME, sniffMedia } from './catalog-content.policy';
+import {
+  FIELD_OWNERSHIP,
+  IMAGE_MAX_BYTES,
+  IMAGE_MIME,
+  MAIN_MAX_IMAGES,
+  MAIN_MAX_VIDEOS,
+  VIDEO_MAX_BYTES,
+  VIDEO_MIME,
+  mainPlacementCapMessage,
+  sniffMedia,
+} from './catalog-content.policy';
 import { videoDurationRejection } from './catalog-video-duration';
 import {
   CatalogMediaConnectionError,
@@ -142,6 +152,22 @@ export class CatalogContentService {
             where: { ownerKind: kind, ownerId: id, sourceMediaKey: input.sourceMediaKey },
           });
           if (existing) return existing;
+        }
+        if (placement === 'main') {
+          const mainKind = image ? 'image' : 'video';
+          const mainCount = await tx.catalogMedia.count({
+            where: {
+              ownerKind: kind,
+              ownerId: id,
+              kind: mainKind,
+              placement: 'main',
+              pendingRemoval: false,
+            },
+          });
+          const cap = image ? MAIN_MAX_IMAGES : MAIN_MAX_VIDEOS;
+          if (mainCount >= cap) {
+            throw new BadRequestException(mainPlacementCapMessage(mainKind));
+          }
         }
         const count = await tx.catalogMedia.count({ where: { ownerKind: kind, ownerId: id } });
         const published = locked.contentStatus === 'published';

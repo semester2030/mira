@@ -25,6 +25,7 @@ import { listSaudiCities } from '../geo/saudi-cities';
 import { absoluteBeautyIconPath } from './taxonomy/beauty-icon-assets';
 import { absoluteCatalogIconPath } from './taxonomy/catalog-icon-assets';
 import { TaxonomyService } from './taxonomy/taxonomy.service';
+import { CatalogGuideService } from './taxonomy/catalog-guide.service';
 
 function qstr(raw: unknown): string | undefined {
   return coerceQueryParam(raw);
@@ -34,18 +35,58 @@ function qstr(raw: unknown): string | undefined {
 @Controller('marketplace')
 export class MarketplaceController {
   private readonly taxonomy: TaxonomyService;
+  private readonly catalogGuide: CatalogGuideService;
 
   constructor(
     @Inject(MarketplaceService) private readonly marketplace: MarketplaceService,
     @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
+    @Optional() @Inject(CatalogGuideService) catalogGuide?: CatalogGuideService,
   ) {
     this.taxonomy = taxonomy ?? new TaxonomyService();
     if (!taxonomy) this.taxonomy.onModuleInit();
+    this.catalogGuide = catalogGuide ?? new CatalogGuideService();
+    if (!catalogGuide) this.catalogGuide.onModuleInit();
   }
 
   @Post('match')
   match(@Body() dto: MatchMarketplaceDto) {
     return this.marketplace.match(dto);
+  }
+
+  /**
+   * Single source of truth for Mira service definitions (22 providers / 74 services).
+   * Portal + Flutter + advisor read this; provider prices/media live on Partner offerings.
+   */
+  @Get('catalog-guide')
+  getCatalogGuide(
+    @Query('providerTypeId') providerTypeId?: string,
+    @Query('serviceId') serviceId?: string,
+  ) {
+    if (serviceId?.trim()) {
+      const service = this.catalogGuide.getService(serviceId.trim());
+      if (!service) {
+        throw new NotFoundException({
+          message: 'الخدمة غير موجودة في دليل ميرا',
+          messageAr: 'الخدمة غير موجودة في دليل ميرا',
+          code: 'CATALOG_GUIDE_SERVICE_NOT_FOUND',
+        });
+      }
+      return {
+        schemaVersion: 1,
+        hash: this.catalogGuide.getHash(),
+        service,
+        phrasesAr: service.suggestedPhrasesAr,
+        taxonomyLeafId: service.taxonomyLeafId,
+      };
+    }
+    return {
+      ...this.catalogGuide.summary(),
+      providers: this.catalogGuide.listProviders(),
+      services: this.catalogGuide.listServices({
+        providerTypeId: providerTypeId?.trim() || undefined,
+        inScopeOnly: true,
+      }),
+    };
   }
 
   /** Lane index — public sees publicBrowse lanes only; audience=partner includes preview lanes. */

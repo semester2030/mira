@@ -1,0 +1,7 @@
+BASE_TIP=c14a84aec8b33037b64313773d304b4258622957
+FEATURE_RC5=f7fa162b16b01e1987d1bcf81959d5218144b6fe
+RESULT=7a00e305a5e2cc62ba252804026942b42d7e82ea
+TIP=4c65589359595bbc2741222385cc94408561d58a
+SOURCE_TREE=d4eebeee31369aed0c0e31d59a2dab82428f8568
+BRANCH=mira/catalog-provider-rc1
+{"ok":true,"visitId":"0a22b6ed-43df-48b0-a9e3-3d2b124be529","bookingIds":["1f0532ad-c5b3-4f1b-a8c9-062808fa2177","d3c84c80-4ed5-45c5-888c-72451f678418"],"beforeVisits":0,"afterCreateVisits":1,"afterReplayVisits":1,"beforeRaceVisits":2,"afterRaceVisits":3,"raceWinner":1,"midTxRollback":true,"homeOnlyRejected":true,"firstSendSameKeyOk":true,"activityGrantRejected":true}

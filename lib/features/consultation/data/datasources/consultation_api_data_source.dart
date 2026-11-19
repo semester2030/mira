@@ -18,6 +18,8 @@ class ConsultationApiDataSource {
     String? occasionId,
     String? statedGoalAr,
     Map<String, dynamic>? face,
+    String? marketplaceOfferId,
+    String? marketplaceOfferKind,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       ConsultationApiEndpoints.sessions(),
@@ -32,6 +34,10 @@ class ConsultationApiDataSource {
         if (statedGoalAr != null && statedGoalAr.isNotEmpty)
           'statedGoalAr': statedGoalAr,
         if (face != null) 'face': face,
+        if (marketplaceOfferId != null && marketplaceOfferId.isNotEmpty)
+          'marketplaceOfferId': marketplaceOfferId,
+        if (marketplaceOfferKind != null && marketplaceOfferKind.isNotEmpty)
+          'marketplaceOfferKind': marketplaceOfferKind,
         'locale': 'ar',
       },
     );

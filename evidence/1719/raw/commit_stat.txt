@@ -1,0 +1,18 @@
+dd17f18 fix(discover): detect real proxy client abort without test hooks
+ evidence/1719/raw/flutter_test_abort_real_1719.txt |  110 +
+ .../1719/raw/flutter_test_detach_fix2_1719.txt     |  142 ++
+ .../1719/raw/flutter_test_detach_fix3_1719.txt     |  144 ++
+ .../1719/raw/flutter_test_detach_fix4_1719.txt     |  135 ++
+ .../1719/raw/flutter_test_detach_fix5_1719.txt     |  125 ++
+ evidence/1719/raw/flutter_test_detach_fix_1719.txt |  141 ++
+ .../1719/raw/flutter_test_discover_suite_1719.txt  | 1332 ++++++++++++
+ evidence/1719/raw/flutter_test_focus_1719.txt      | 1034 ++++++++++
+ .../1719/raw/flutter_test_past2m_debug_1719.txt    |  121 ++
+ evidence/1719/src/discover_video_disk_cache.dart   | 2062 ++++++++++++++++++
+ .../1719/src/discover_video_disk_cache_test.dart   | 2182 ++++++++++++++++++++
+ evidence/1719/src/presentation_video_port.dart     | 1975 ++++++++++++++++++
+ .../presentation/discover_video_disk_cache.dart    |  297 ++-
+ .../presentation/presentation_video_port.dart      |    2 +-
+ pubspec.yaml                                       |    2 +-
+ .../discover_video_disk_cache_test.dart            |    7 +-
+ 16 files changed, 9771 insertions(+), 40 deletions(-)

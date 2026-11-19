@@ -2,6 +2,11 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CatalogMediaStorage } from '../../marketplace/catalog-media.contract';
+import {
+  MAIN_MAX_IMAGES,
+  MAIN_MAX_VIDEOS,
+  mainPlacementCapMessage,
+} from '../../marketplace/catalog-content.policy';
 import { DiskMultipartUploadStore, MemoryMultipartUploadStore, MultipartUploadStore } from './multipart.store';
 import { verifyMediaFile } from './upload-media-verify';
 import {
@@ -586,6 +591,7 @@ export class UploadFinalizeService implements OnModuleInit {
         const published = owner.contentStatus === 'published';
         const firstMedia = count === 0;
         const firstImage = firstMedia && image;
+        const placement = session.placement === 'detail' || session.placement === 'cover' ? session.placement : 'main';
 
         let created = await tx.catalogMedia.findFirst({
           where: {
@@ -595,6 +601,22 @@ export class UploadFinalizeService implements OnModuleInit {
           },
         });
         if (!created) {
+          if (placement === 'main') {
+            const mainKind = image ? 'image' : 'video';
+            const mainCount = await tx.catalogMedia.count({
+              where: {
+                ownerKind: session.owner_kind,
+                ownerId: session.owner_id,
+                kind: mainKind,
+                placement: 'main',
+                pendingRemoval: false,
+              },
+            });
+            const cap = image ? MAIN_MAX_IMAGES : MAIN_MAX_VIDEOS;
+            if (mainCount >= cap) {
+              throw new Error(mainPlacementCapMessage(mainKind));
+            }
+          }
           try {
             created = await tx.catalogMedia.create({
               data: {
@@ -611,7 +633,7 @@ export class UploadFinalizeService implements OnModuleInit {
                 isPrimary: published ? false : firstImage || (firstMedia && video),
                 draftIsPrimary: firstImage || (firstMedia && video) ? true : null,
                 publication: 'draft',
-                placement: session.placement,
+                placement,
                 sourceMediaKey,
               },
             });

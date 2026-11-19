@@ -1,0 +1,70 @@
+{
+  "note": "HTTP in-process Nest on ephemeral port; portal outcomes simulated via discovery liveStatus",
+  "base": "http://127.0.0.1:58048/api/v1",
+  "partnerPortal": "SIMULATED (PARTNER_BEARER not required for this proof)",
+  "http_alt_both_bookable": {
+    "httpStatus": 201,
+    "phase": "both_bookable",
+    "message": "بكم البديل؟",
+    "contentAr": "سعر البديل المنشور «ترطيب»: 120 ريال — وليس سعر «تنظيف» (150 ريال).\n\n",
+    "discoveryOfferIds": [
+      "svc-hydrate-http"
+    ],
+    "discoveryOfferActions": [
+      {
+        "id": "svc-hydrate-http",
+        "action": "book",
+        "liveStatus": "published"
+      }
+    ],
+    "discoverySideOffer": null,
+    "searchFailed": false,
+    "suggestedQuestionsAr": []
+  },
+  "http_alt_booking_closed": {
+    "httpStatus": 201,
+    "phase": "hydrate_booking_closed",
+    "message": "بكم البديل؟",
+    "contentAr": "سعر البديل المنشور «ترطيب»: 120 ريال (الحجز غير متاح — عرض التفاصيل فقط) — وليس سعر «تنظيف» (150 ريال).\n\n",
+    "discoveryOfferIds": [
+      "svc-hydrate-http"
+    ],
+    "discoveryOfferActions": [
+      {
+        "id": "svc-hydrate-http",
+        "action": "view",
+        "liveStatus": "published"
+      }
+    ],
+    "discoverySideOffer": null,
+    "searchFailed": false,
+    "suggestedQuestionsAr": []
+  },
+  "http_alt_withdrawn": {
+    "httpStatus": 201,
+    "phase": "hydrate_withdrawn",
+    "message": "بكم البديل؟",
+    "contentAr": "أي بديل أو خدمة ثانية تقصدين؟ لن أستخدم سعر «تنظيف» (150 ريال) كسعر لبديل. إن وُجدت بدائل منشورة سأعرض كل واحدة بسعرها الخاص بعد تحديدها.\n\n",
+    "discoveryOfferIds": [],
+    "discoveryOfferActions": [],
+    "discoverySideOffer": null,
+    "searchFailed": false,
+    "suggestedQuestionsAr": []
+  },
+  "http_alt_search_failed": {
+    "httpStatus": 201,
+    "phase": "search_failed",
+    "message": "بكم البديل؟",
+    "contentAr": "تعذّر عليّ البحث الآن، تبين أعيد المحاولة؟\n\n",
+    "discoveryOfferIds": [],
+    "discoveryOfferActions": [],
+    "discoverySideOffer": null,
+    "searchFailed": true,
+    "suggestedQuestionsAr": [
+      "أعيدي البحث"
+    ]
+  },
+  "http_open_offer_price": {
+    "contentAr": "سعر «تنظيف» 150 ريال، والحجز متاح للطلب (بانتظار رد المركز).\n\n"
+  }
+}

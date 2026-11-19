@@ -28,6 +28,10 @@ import {
   const card = discoveryCardFromOffer(moist.offers[0]!);
   assert.equal(card?.id, moist.offers[0]!.id);
   assert.equal(card?.priceLabelAr, '49 ريال');
+  assert.equal(card?.action, 'buy');
+  const oos = discoveryCardFromOffer(RC5_FIXTURE_OFFERS.find((o) => o.id === 'rc5-prod-sun')!);
+  assert.equal(oos?.inStock, false);
+  assert.equal(oos?.action, 'view');
   console.log('pass search_returns_offer_ids');
 }
 

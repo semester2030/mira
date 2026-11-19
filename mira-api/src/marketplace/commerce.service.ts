@@ -2,8 +2,6 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
-import { resolveSaudiCity } from '../geo/saudi-cities';
-import { coverageIncludesCity } from './catalog-filters';
 import { journeyCode, recordJourney } from './journey-events';
 import {
   ACTIVE_BOOKING_STATUSES,
@@ -67,6 +65,21 @@ import {
   opsSlaMs,
   orderOpsHint,
 } from './commerce.ops';
+import {
+  consecutiveStartsAlign,
+  encodeVisitPlanNote,
+  extractVisitPlanFromNotes,
+  parseVisitPlan,
+  type VisitPlanInput,
+} from './visit-plan';
+import { parseVisitItems, visitRequestFingerprint } from './commerce-visit';
+import {
+  assertConsecutiveItemBranchEligible,
+  assertPartnerActivityApproved,
+  assertServiceBookableBasics,
+  resolveBookingPlace,
+  type ServiceForBooking,
+} from './commerce-booking-eligibility';
 
 /** Trimmed non-empty string capped at `max` chars, else null. */
 function optionalText(value: unknown, max: number): string | null {
@@ -1555,7 +1568,10 @@ export class CommerceService {
     const startsAt = new Date(data.startsAt);
     if (Number.isNaN(startsAt.getTime())) throw badRequest('STARTS_AT_INVALID', 'وقت الحجز غير صالح');
     const contact = parseContact(data);
-    const notes = parseOptionalNotes(data.notes);
+    const humanNotes = parseOptionalNotes(data.notes);
+    const visitPlan = parseVisitPlan(data.visitPlan);
+    // Appointment requests stay `requested` until the partner confirms — never label as confirmed.
+    const notes = visitPlan ? encodeVisitPlanNote(visitPlan, humanNotes) : humanNotes;
     const resourceId = normalizeResourceId(data.resourceId);
     const startsAtIso = startsAt.toISOString();
     const rawPlace =
@@ -1563,6 +1579,19 @@ export class CommerceService {
     const rawBranchId = optionalText(data.branchId, 64);
     const rawVisitCityId = optionalText(data.visitCityId ?? data.coverageCityId, 64);
     const rawVisitAddress = optionalText(data.visitAddress, 300);
+    if (visitPlan?.mode === 'consecutive') {
+      if (!rawBranchId && rawPlace !== 'home') {
+        throw badRequest('VISIT_BRANCH_REQUIRED', 'الزيارة المتتابعة تتطلب فرعًا واحدًا لكل البنود', {
+          field: 'branchId',
+        });
+      }
+      if (visitPlan.expectedStartsAt) {
+        const expected = new Date(visitPlan.expectedStartsAt);
+        if (!Number.isNaN(expected.getTime()) && Math.abs(expected.getTime() - startsAt.getTime()) > 60_000) {
+          throw unprocessable('VISIT_START_MISMATCH', 'وقت بدء البند لا يطابق خطة الزيارة المتتابعة');
+        }
+      }
+    }
     const requestFingerprint = bookingRequestFingerprint({
       serviceId,
       startsAt: startsAtIso,
@@ -1631,179 +1660,26 @@ export class CommerceService {
           include: { partner: true },
         });
         if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-        if (!service.bookingEnabled) throw unprocessable('BOOKING_NOT_ENABLED', 'الحجز غير متاح لهذه الخدمة');
-        if (service.payMode !== 'pay_at_venue') throw unprocessable('PAY_MODE_UNSUPPORTED', 'طريقة الدفع غير مدعومة لهذه الخدمة');
-        if (!Number.isSafeInteger(service.priceHalalas) || service.priceHalalas <= 0 || service.durationMin <= 0) {
-          throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
-        }
+        const serviceForElig = service as unknown as ServiceForBooking;
+        assertServiceBookableBasics(serviceForElig);
+        const placeData = await resolveBookingPlace(tx, {
+          service: serviceForElig,
+          rawPlace,
+          rawBranchId,
+          rawVisitCityId,
+          rawVisitAddress,
+          travelFeeHalalasClient: data.travelFeeHalalas,
+        });
+        await assertPartnerActivityApproved(tx, serviceForElig);
 
-        // Place intent: customer-selected place must be approved on this service row.
-        const servicePlace =
-          typeof service.placeMode === 'string' && service.placeMode.trim()
-            ? service.placeMode.trim()
-            : null;
-        // Home / either / branch services always require an explicit placeMode (no HQ fallback).
-        // Legacy remote/unset rows may still omit place when neither home nor branch applies.
-        const placeRequired =
-          servicePlace === 'home' || servicePlace === 'either' || servicePlace === 'branch';
-        // Infer branch only when the service itself pins a branch (legacy branch-only rows).
-        const requestedPlace: string | null =
-          rawPlace ?? (servicePlace === 'branch' && service.branchId ? 'branch' : null);
-        if (placeRequired && requestedPlace !== 'home' && requestedPlace !== 'branch') {
-          throw badRequest('PLACE_REQUIRED', 'اختاري مكان تقديم الخدمة (مقر أو زيارة)', {
-            field: 'placeMode',
-            servicePlaceMode: servicePlace,
+        if (visitPlan?.mode === 'consecutive' && visitPlan.sequence > 1) {
+          await this.assertConsecutiveVisitPeer(tx, {
+            actorUserId: actor.userId,
+            partnerId: service.partnerId,
+            plan: visitPlan,
+            startsAt,
+            branchId: placeData.branchId,
           });
-        }
-        let placeData: {
-          placeMode: 'branch' | 'home' | null;
-          branchId: string | null;
-          visitCityId: string | null;
-          visitAddress: string | null;
-          travelFeeHalalas: number | null;
-          branchLabel: string;
-        } = {
-          placeMode: null,
-          branchId: null,
-          visitCityId: null,
-          visitAddress: null,
-          travelFeeHalalas: null,
-          branchLabel: `${service.partner.nameAr} - ${service.partner.city}`,
-        };
-        if (requestedPlace === 'home' || requestedPlace === 'branch') {
-          const ok =
-            servicePlace === requestedPlace ||
-            servicePlace === 'either' ||
-            (requestedPlace === 'home' && servicePlace === 'home') ||
-            (requestedPlace === 'branch' && servicePlace === 'branch');
-          if (!ok) {
-            throw unprocessable(
-              'PLACE_NOT_ALLOWED',
-              requestedPlace === 'home'
-                ? 'هذه الخدمة غير معتمدة في موقع العميلة'
-                : 'هذه الخدمة غير معتمدة في المقر',
-            );
-          }
-          if (requestedPlace === 'branch') {
-            // Prefer the customer's branch; else the service's pinned branch.
-            const branchId = rawBranchId || service.branchId || null;
-            if (!branchId) {
-              throw unprocessable('BRANCH_REQUIRED', 'اختاري فرع المقر لهذه الخدمة');
-            }
-            const branch = await tx.partnerBranch.findFirst({ where: { id: branchId } });
-            if (!branch || branch.partnerId !== service.partnerId) {
-              // Same code for missing and foreign ids — never reveal another partner's branch.
-              throw unprocessable('BRANCH_NOT_OWNED', 'هذا الفرع لا يتبع جهة الخدمة', { branchId });
-            }
-            if (!branch.active) {
-              throw unprocessable('BRANCH_INACTIVE', 'هذا الفرع غير نشط حاليًا', { branchId });
-            }
-            // Owned+active only: when the service pins a branch, reject sibling branches.
-            if (service.branchId && branch.id !== service.branchId) {
-              throw unprocessable(
-                'BRANCH_NOT_FOR_SERVICE',
-                'هذا الفرع غير مرتبط بهذه الخدمة',
-                { branchId: branch.id, serviceBranchId: service.branchId },
-              );
-            }
-            placeData = {
-              placeMode: 'branch',
-              branchId: branch.id,
-              visitCityId: null,
-              visitAddress: null,
-              travelFeeHalalas: null,
-              // Real branch name + city — not the partner HQ city.
-              branchLabel: `${branch.nameAr} - ${branch.cityNameAr}`,
-            };
-          } else {
-            if (!rawVisitCityId) {
-              throw badRequest('VISIT_CITY_REQUIRED', 'اختاري مدينة الزيارة', { field: 'visitCityId' });
-            }
-            if (!rawVisitAddress || rawVisitAddress.length < 3) {
-              throw badRequest('VISIT_ADDRESS_REQUIRED', 'عنوان الزيارة مطلوب', { field: 'visitAddress' });
-            }
-            const visitCity = resolveSaudiCity(rawVisitCityId);
-            if (!visitCity) {
-              throw badRequest('VISIT_CITY_INVALID', 'مدينة الزيارة غير معروفة', { field: 'visitCityId' });
-            }
-            const coverage =
-              service.coverageJson && typeof service.coverageJson === 'object' && !Array.isArray(service.coverageJson)
-                ? (service.coverageJson as { cityIds?: unknown; travelFeeSar?: unknown })
-                : {};
-            const coverageCityIds = Array.isArray(coverage.cityIds)
-              ? coverage.cityIds.filter((x): x is string => typeof x === 'string' && !!x.trim())
-              : [];
-            if (!coverageIncludesCity(coverageCityIds, visitCity.id)) {
-              throw unprocessable('PLACE_OUT_OF_COVERAGE', 'مدينة الزيارة خارج نطاق تغطية هذه الخدمة', {
-                visitCityId: visitCity.id,
-              });
-            }
-            const travelFeeHalalas =
-              typeof coverage.travelFeeSar === 'number' && Number.isFinite(coverage.travelFeeSar) && coverage.travelFeeSar >= 0
-                ? Math.round(coverage.travelFeeSar * 100)
-                : null;
-            if (data.travelFeeHalalas != null && data.travelFeeHalalas !== (travelFeeHalalas ?? 0)) {
-              throw unprocessable('TRAVEL_FEE_MISMATCH', 'رسوم التنقل لا تطابق رسوم الخدمة', {
-                expectedHalalas: travelFeeHalalas ?? 0,
-              });
-            }
-            placeData = {
-              placeMode: 'home',
-              branchId: null,
-              visitCityId: visitCity.id,
-              visitAddress: rawVisitAddress,
-              travelFeeHalalas,
-              branchLabel: `${service.partner.nameAr} - زيارة منزلية (${visitCity.nameAr})`,
-            };
-          }
-        }
-
-        // When the partner has activity grants, booking requires a matching approved activity.
-        // Prefer taxonomy leaf on attributesJson (catalog binding); fall back to category.
-        const grantCount = await tx.paGrant.count({ where: { partnerId: service.partnerId } });
-        if (grantCount > 0) {
-          const attrs =
-            service.attributesJson && typeof service.attributesJson === 'object' && !Array.isArray(service.attributesJson)
-              ? (service.attributesJson as { subcategory?: unknown; taxonomyLeaf?: unknown })
-              : {};
-          const leafFromAttrs =
-            (typeof attrs.taxonomyLeaf === 'string' && attrs.taxonomyLeaf.trim()) ||
-            (typeof attrs.subcategory === 'string' && attrs.subcategory.trim()) ||
-            '';
-          const categoryId =
-            typeof service.category === 'string' && service.category.trim() ? service.category.trim() : '';
-          const candidates = [...new Set([leafFromAttrs, categoryId].filter(Boolean))];
-          if (!candidates.length) {
-            throw unprocessable('ACTIVITY_NOT_APPROVED', 'هذه الخدمة خارج الأنشطة المعتمدة للجهة');
-          }
-          const titleNorm = service.nameAr.normalize('NFKC').trim().replace(/\s+/gu, ' ');
-          let granted = false;
-          for (const activityId of candidates) {
-            const categoryGrant = await tx.paGrant.findFirst({
-              where: { partnerId: service.partnerId, activity: activityId, scope: 'category' },
-            });
-            if (categoryGrant) {
-              granted = true;
-              break;
-            }
-            const oneGrant = await tx.paGrant.findFirst({
-              where: {
-                partnerId: service.partnerId,
-                activity: activityId,
-                scope: 'one',
-                itemName: titleNorm,
-              },
-            });
-            if (oneGrant) {
-              granted = true;
-              break;
-            }
-          }
-          if (!granted) {
-            throw unprocessable('ACTIVITY_NOT_APPROVED', 'هذه الخدمة خارج الأنشطة المعتمدة للجهة', {
-              activity: candidates[0],
-            });
-          }
         }
 
         const knownResources = new Set(resourceIdsFromAvailabilityDocument(service.availabilityJson));
@@ -1893,6 +1769,421 @@ export class CommerceService {
         }
       }
       throw error;
+    }
+  }
+
+  /**
+   * Atomic consecutive visit *request*: one customer operation → N booking rows (all or none).
+   * Partner still confirms each booking; never labels the visit as confirmed.
+   */
+  async createConsecutiveVisit(
+    actor: CommerceActor & { type: 'customer' },
+    body: unknown,
+    headerKey?: string,
+  ) {
+    const data = record(body);
+    const idempotencyKey = normalizeIdempotencyKey(headerKey, data.idempotencyKey);
+    const contact = parseContact(data);
+    const notes = parseOptionalNotes(data.notes);
+    const branchId = optionalText(data.branchId, 64);
+    if (!branchId) throw badRequest('VISIT_BRANCH_REQUIRED', 'اختاري فرع الزيارة المتتابعة', { field: 'branchId' });
+
+    let items;
+    try {
+      items = parseVisitItems(data.items);
+    } catch (e) {
+      const code = (e as { code?: string }).code ?? 'VISIT_ITEMS_INVALID';
+      if (code === 'VISIT_ITEMS_EXACTLY_TWO') {
+        throw badRequest(code, 'الزيارة المتتابعة في هذه المرحلة لخدمتين فقط تختاريهما صراحةً');
+      }
+      throw badRequest(code, 'بنود الزيارة غير صالحة');
+    }
+
+    const fingerprint = visitRequestFingerprint({
+      mode: 'consecutive',
+      branchId,
+      contactName: contact.contactName,
+      contactPhone: contact.contactPhone,
+      notes,
+      items: items.map((it) => ({
+        serviceId: it.serviceId,
+        startsAt: it.startsAt.toISOString(),
+        resourceId: it.resourceId || '',
+      })),
+    });
+
+    const existing = await this.prisma.commerceVisit.findUnique({
+      where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },
+      include: {
+        partner: { select: { id: true, nameAr: true } },
+        bookings: { include: BOOKING_INCLUDE, orderBy: { visitSequence: 'asc' } },
+      },
+    });
+    if (existing) {
+      if (existing.requestFingerprint && existing.requestFingerprint !== fingerprint) {
+        throw conflict(
+          'IDEMPOTENCY_CONFLICT',
+          'مفتاح المحاولة استُخدم لزيارة مختلفة. غيّري البنود أو الأوقات ثم استخدمي مفتاحًا جديدًا',
+        );
+      }
+      return { visit: this.visitDto(existing), idempotentReplay: true };
+    }
+
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        const serviceIds = items.map((i) => i.serviceId);
+        // Peek partner for schedule lock — never trust client partner ids.
+        const peekServices = await tx.service.findMany({
+          where: { id: { in: serviceIds } },
+          select: { id: true, partnerId: true, availabilityJson: true },
+        });
+        if (peekServices.length !== items.length) {
+          throw notFound('SERVICE_NOT_FOUND', 'إحدى خدمات الزيارة غير متاحة');
+        }
+        const partnerId = peekServices[0].partnerId;
+        if (peekServices.some((s) => s.partnerId !== partnerId)) {
+          throw unprocessable('VISIT_PARTNER_MISMATCH', 'خدمات الزيارة المتتابعة يجب أن تكون لنفس المركز');
+        }
+
+        // Serialize capacity + first-send same-key races before any slot write.
+        await lockPartnerScheduleScope(tx, {
+          partnerId,
+          seedServiceIds: serviceIds,
+          seedResourceIds: items.flatMap((o) => (o.resourceId ? [o.resourceId] : [])),
+          loadServices: async () => {
+            const partnerServices = await tx.service.findMany({
+              where: { partnerId, active: true },
+              select: { id: true, availabilityJson: true },
+            });
+            return partnerServices.map((s) => ({
+              id: s.id,
+              resourceIds: resourceIdsFromAvailabilityDocument(s.availabilityJson),
+            }));
+          },
+        });
+
+        // Re-read by key *after* the lock so the second same-key request replays
+        // instead of seeing SLOT_FULL from the first request's own bookings.
+        const again = await tx.commerceVisit.findUnique({
+          where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },
+          include: {
+            partner: { select: { id: true, nameAr: true } },
+            bookings: { include: BOOKING_INCLUDE, orderBy: { visitSequence: 'asc' } },
+          },
+        });
+        if (again) {
+          if (again.requestFingerprint && again.requestFingerprint !== fingerprint) {
+            throw conflict('IDEMPOTENCY_CONFLICT', 'مفتاح المحاولة استُخدم لزيارة مختلفة');
+          }
+          return { visit: again, replay: true };
+        }
+
+        // Re-read mutable acceptance fields under the lock (publish / booking / duration / branch / grants).
+        const services = await tx.service.findMany({
+          where: {
+            id: { in: serviceIds },
+            active: true,
+            contentStatus: 'published',
+            catalogSource: 'catalog',
+            partner: { status: 'active' },
+          },
+          include: { partner: true },
+        });
+        if (services.length !== items.length) {
+          throw notFound('SERVICE_NOT_FOUND', 'إحدى خدمات الزيارة غير متاحة');
+        }
+        const byId = new Map(services.map((s) => [s.id, s]));
+        const ordered = items.map((it) => {
+          const s = byId.get(it.serviceId);
+          if (!s) throw notFound('SERVICE_NOT_FOUND', 'إحدى خدمات الزيارة غير متاحة');
+          return { input: it, service: s as unknown as ServiceForBooking & { availabilityJson: unknown } };
+        });
+        if (ordered.some((o) => o.service.partnerId !== partnerId)) {
+          throw unprocessable('VISIT_PARTNER_MISMATCH', 'خدمات الزيارة المتتابعة يجب أن تكون لنفس المركز');
+        }
+
+        // Same eligibility as createBooking(placeMode=branch) for every item — all-or-nothing.
+        let branchLabel = '';
+        let resolvedBranchId = branchId;
+        for (const row of ordered) {
+          const place = await assertConsecutiveItemBranchEligible(tx, {
+            service: row.service,
+            branchId,
+          });
+          resolvedBranchId = place.branchId;
+          branchLabel = place.branchLabel;
+        }
+
+        // Server-authoritative endsAt from duration — never trust client end times.
+        const planned: Array<{
+          service: (typeof ordered)[0]['service'];
+          startsAt: Date;
+          endsAt: Date;
+          resourceId: string;
+        }> = [];
+        for (let i = 0; i < ordered.length; i++) {
+          const { service, input } = ordered[i];
+          const startsAt = input.startsAt;
+          if (i > 0) {
+            const prev = planned[i - 1];
+            if (!consecutiveStartsAlign(prev.endsAt, startsAt)) {
+              throw unprocessable(
+                'VISIT_NOT_CONSECUTIVE',
+                'وقت الخدمة التالية يجب أن يبدأ مباشرة بعد انتهاء السابقة في نفس الزيارة',
+                { priorEndsAt: prev.endsAt.toISOString(), startsAt: startsAt.toISOString() },
+              );
+            }
+          }
+          const resourceId = input.resourceId || '';
+          const knownResources = new Set(resourceIdsFromAvailabilityDocument(service.availabilityJson));
+          if (resourceId && !knownResources.has(resourceId)) {
+            throw unprocessable('RESOURCE_NOT_AVAILABLE', 'هذا المورد غير مرتبط بجدول توفر هذه الخدمة');
+          }
+          const { windows, calendar, conflicts } = await this.windowsWithPartnerCaps(
+            tx,
+            partnerId,
+            service.availabilityJson,
+          );
+          const conflictHit = conflicts.find((c) =>
+            resourceId ? c.resourceId === resourceId : knownResources.has(c.resourceId),
+          );
+          if (conflictHit) {
+            throw conflict(
+              'RESOURCE_CAPACITY_CONFLICT',
+              `سعة المورد «${conflictHit.resourceId}» غير متسقة بين خدمات الجهة`,
+            );
+          }
+          const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId, calendar);
+          if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
+          const serverEnd = lockedSlot.endsAt;
+          const overlapWhere: Prisma.CommerceBookingWhereInput = {
+            status: { in: [...ACTIVE_BOOKING_STATUSES] },
+            startsAt: { lt: serverEnd },
+            endsAt: { gt: startsAt },
+            ...(resourceId
+              ? { partnerId, resourceId }
+              : { serviceId: service.id, resourceId: '' }),
+          };
+          const overlapping = await tx.commerceBooking.findMany({
+            where: overlapWhere,
+            select: { userId: true, serviceId: true },
+          });
+          if (overlapping.some((b) => b.userId === actor.userId && b.serviceId === service.id)) {
+            throw conflict('BOOKING_USER_OVERLAP', 'لديك حجز آخر لنفس الخدمة في هذا الوقت');
+          }
+          if (overlapping.length >= lockedSlot.capacity) {
+            throw conflict('BOOKING_SLOT_FULL', 'هذا الموعد غير متاح، اختر وقتًا آخر');
+          }
+          planned.push({ service, startsAt, endsAt: serverEnd, resourceId });
+        }
+
+        const visit = await tx.commerceVisit.create({
+          data: {
+            publicNumber: makePublicNumber('MV'),
+            userId: actor.userId,
+            partnerId,
+            mode: 'consecutive',
+            branchId: resolvedBranchId,
+            branchLabel,
+            status: 'requested',
+            contactName: contact.contactName,
+            contactPhone: contact.contactPhone,
+            notes,
+            idempotencyKey,
+            requestFingerprint: fingerprint,
+          },
+        });
+
+        const bookingRows = [];
+        for (let i = 0; i < planned.length; i++) {
+          const p = planned[i];
+          const row = await tx.commerceBooking.create({
+            data: {
+              publicNumber: makePublicNumber('MB'),
+              userId: actor.userId,
+              partnerId,
+              serviceId: p.service.id,
+              serviceNameAr: p.service.nameAr,
+              branchLabel,
+              placeMode: 'branch',
+              branchId: resolvedBranchId,
+              resourceId: p.resourceId,
+              startsAt: p.startsAt,
+              endsAt: p.endsAt,
+              durationMin: p.service.durationMin,
+              priceHalalas: p.service.priceHalalas,
+              payMode: p.service.payMode,
+              status: 'requested',
+              contactName: contact.contactName,
+              contactPhone: contact.contactPhone,
+              notes,
+              idempotencyKey: `${idempotencyKey}:item:${i + 1}`,
+              requestFingerprint: fingerprint,
+              visitId: visit.id,
+              visitSequence: i + 1,
+              events: { create: [{ actorType: 'customer', actorId: actor.id, toStatus: 'requested' }] },
+            },
+            include: BOOKING_INCLUDE,
+          });
+          bookingRows.push(row);
+          // Test-only mid-TX abort after first booking row — never enabled outside NODE_ENV=test.
+          if (
+            i === 0 &&
+            process.env.NODE_ENV === 'test' &&
+            process.env.MIRA_TEST_VISIT_FAIL_AFTER_ITEM === '1'
+          ) {
+            throw Object.assign(new Error('MIRA_TEST_VISIT_FAIL_AFTER_ITEM'), {
+              code: 'MIRA_TEST_VISIT_FAIL_AFTER_ITEM',
+            });
+          }
+        }
+
+        return {
+          visit: {
+            ...visit,
+            partner: { id: partnerId, nameAr: ordered[0].service.partner.nameAr },
+            bookings: bookingRows,
+          },
+          replay: false,
+        };
+      }, TX_OPTIONS);
+
+      return { visit: this.visitDto(created.visit), idempotentReplay: created.replay };
+    } catch (error) {
+      if (p2002Target(error)?.includes('idempotency_key')) {
+        const again = await this.prisma.commerceVisit.findUnique({
+          where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },
+          include: {
+            partner: { select: { id: true, nameAr: true } },
+            bookings: { include: BOOKING_INCLUDE, orderBy: { visitSequence: 'asc' } },
+          },
+        });
+        if (again) {
+          if (again.requestFingerprint && again.requestFingerprint !== fingerprint) {
+            throw conflict('IDEMPOTENCY_CONFLICT', 'مفتاح المحاولة استُخدم لزيارة مختلفة');
+          }
+          return { visit: this.visitDto(again), idempotentReplay: true };
+        }
+      }
+      throw error;
+    }
+  }
+
+  async getCustomerVisit(actor: CommerceActor & { type: 'customer' }, id: string) {
+    const visit = await this.prisma.commerceVisit.findFirst({
+      where: { id, userId: actor.userId },
+      include: {
+        partner: { select: { id: true, nameAr: true } },
+        bookings: { include: BOOKING_INCLUDE, orderBy: { visitSequence: 'asc' } },
+      },
+    });
+    if (!visit) throw notFound('VISIT_NOT_FOUND', 'طلب الزيارة غير موجود');
+    return { visit: this.visitDto(visit) };
+  }
+
+  /** Recover a visit by the customer's attempt key after a lost response (account-scoped). */
+  async getCustomerVisitByKey(actor: CommerceActor & { type: 'customer' }, idempotencyKey: string) {
+    const key = typeof idempotencyKey === 'string' ? idempotencyKey.trim() : '';
+    if (!key || key.length > 128) throw badRequest('IDEMPOTENCY_KEY_REQUIRED', 'مفتاح المحاولة مطلوب');
+    const visit = await this.prisma.commerceVisit.findUnique({
+      where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey: key } },
+      include: {
+        partner: { select: { id: true, nameAr: true } },
+        bookings: { include: BOOKING_INCLUDE, orderBy: { visitSequence: 'asc' } },
+      },
+    });
+    if (!visit) throw notFound('VISIT_NOT_FOUND', 'لا توجد زيارة محفوظة لهذا المفتاح');
+    return { visit: this.visitDto(visit), idempotentReplay: true };
+  }
+
+  private visitDto(row: {
+    id: string;
+    publicNumber: string;
+    mode: string;
+    status: string;
+    branchId: string | null;
+    branchLabel: string | null;
+    contactName: string;
+    contactPhone: string;
+    notes: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    partner: { id: string; nameAr: string };
+    bookings: BookingRow[];
+  }) {
+    return {
+      id: row.id,
+      publicNumber: row.publicNumber,
+      mode: row.mode,
+      status: row.status,
+      statusLabelAr: row.status === 'requested' ? 'طلب بانتظار رد المركز' : row.status,
+      branchId: row.branchId,
+      branchLabel: row.branchLabel,
+      partner: row.partner,
+      contactName: row.contactName,
+      contactPhone: row.contactPhone,
+      notes: row.notes,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      bookings: row.bookings.map((b) => ({
+        ...this.bookingDto(b, false, 'customer'),
+        visitId: row.id,
+        visitSequence: (b as { visitSequence?: number | null }).visitSequence ?? null,
+      })),
+    };
+  }
+
+  /**
+   * Consecutive visit: peer sequence N must follow sequence N-1 end time on the same
+   * partner + branch. Creates linked *requests* — partner still confirms each row.
+   */
+  private async assertConsecutiveVisitPeer(
+    tx: Prisma.TransactionClient,
+    args: {
+      actorUserId: string;
+      partnerId: string;
+      plan: VisitPlanInput;
+      startsAt: Date;
+      branchId: string | null;
+    },
+  ) {
+    const priorSeq = args.plan.sequence - 1;
+    const recent = await tx.commerceBooking.findMany({
+      where: {
+        userId: args.actorUserId,
+        partnerId: args.partnerId,
+        status: { in: [...ACTIVE_BOOKING_STATUSES] },
+        notes: { contains: args.plan.groupId },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    const prior = recent.find((row) => {
+      const plan = extractVisitPlanFromNotes(row.notes);
+      return plan?.groupId === args.plan.groupId && plan.sequence === priorSeq;
+    });
+    if (!prior) {
+      throw unprocessable(
+        'VISIT_PEER_MISSING',
+        'لا يوجد بند سابق في خطة الزيارة المتتابعة. أكملي البند الأول أولًا أو اختاري مواعيد منفصلة',
+        { groupId: args.plan.groupId, expectedSequence: priorSeq },
+      );
+    }
+    if (args.branchId && prior.branchId && prior.branchId !== args.branchId) {
+      throw unprocessable('VISIT_BRANCH_MISMATCH', 'الزيارة المتتابعة تتطلب نفس الفرع لكل البنود', {
+        priorBranchId: prior.branchId,
+        branchId: args.branchId,
+      });
+    }
+    if (!consecutiveStartsAlign(prior.endsAt, args.startsAt)) {
+      throw unprocessable(
+        'VISIT_NOT_CONSECUTIVE',
+        'وقت الخدمة التالية يجب أن يبدأ مباشرة بعد انتهاء السابقة في نفس الزيارة',
+        {
+          priorEndsAt: prior.endsAt.toISOString(),
+          startsAt: args.startsAt.toISOString(),
+        },
+      );
     }
   }
 
@@ -2149,9 +2440,12 @@ export class CommerceService {
       currency: 'SAR',
       payMode: row.payMode,
       status: row.status,
+      statusLabelAr: row.status === 'requested' ? 'طلب بانتظار رد المركز' : undefined,
       contactName: row.contactName,
       contactPhone: row.contactPhone,
       notes: row.notes,
+      visitId: (row as { visitId?: string | null }).visitId ?? null,
+      visitSequence: (row as { visitSequence?: number | null }).visitSequence ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
       nextActionAr: hint.nextActionAr,

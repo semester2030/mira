@@ -15,7 +15,7 @@ import 'package:mirra/features/marketplace/presentation/screens/discover_present
 import 'package:mirra/features/marketplace/data/discover_favorite_client.dart';
 import 'package:mirra/shared/theme/theme.dart';
 
-import 'discover_fonts.dart';
+import '../../helpers/load_discover_fonts.dart';
 
 class _FakeFavoriteClient extends DiscoverFavoriteClient {
   _FakeFavoriteClient({required this.accountKeyValue, this.initial = const {}}) {

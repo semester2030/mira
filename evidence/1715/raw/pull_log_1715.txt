@@ -1,0 +1,10 @@
+14:50:40  Acquired tunnel connection to device.
+14:50:40  Enabling developer disk image services.
+14:50:40  Acquired usage assertion.
+File received from Device
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/evidence/1715/raw/device_pull_1715/mira_discover_device.log
+14:51:20  Acquired tunnel connection to device.
+14:51:20  Enabling developer disk image services.
+14:51:20  Acquired usage assertion.
+File received from Device
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/evidence/1715/raw/device_pull_1715/mira_discover_device.log

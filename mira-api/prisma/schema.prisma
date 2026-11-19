@@ -29,6 +29,7 @@ model User {
   commerceCart     CommerceCart?
   commerceOrders   CommerceOrder[]
   commerceBookings CommerceBooking[]
+  commerceVisits   CommerceVisit[]
 
   @@map("users")
 }
@@ -176,6 +177,7 @@ model Partner {
   commerceCarts    CommerceCart[]
   commerceOrders   CommerceOrder[]
   commerceBookings CommerceBooking[]
+  commerceVisits   CommerceVisit[]
   editorDrafts     PartnerEditorDraft[]
   uploadSessions   PartnerUploadSession[]
   /// Approved identity kinds + service delivery modes from activities review (JSON).
@@ -909,6 +911,37 @@ model CommerceOrderEvent {
 }
 
 /// Independent service booking. Customer pays at the venue; Mira does not collect.
+/// Customer consecutive visit request (one customer-facing request → N booking rows).
+/// Partner still confirms each booking; visit status mirrors the request envelope.
+model CommerceVisit {
+  id                 String   @id @default(uuid())
+  publicNumber       String   @unique @map("public_number")
+  userId             String   @map("user_id")
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerId          String   @map("partner_id")
+  partner            Partner  @relation(fields: [partnerId], references: [id])
+  /// consecutive only for RC4 journey-1.
+  mode               String   @default("consecutive")
+  branchId           String?  @map("branch_id")
+  branchLabel        String?  @map("branch_label")
+  /// requested | cancelled
+  status             String   @default("requested")
+  contactName        String   @map("contact_name")
+  contactPhone       String   @map("contact_phone")
+  notes              String?
+  idempotencyKey     String?  @map("idempotency_key")
+  requestFingerprint String?  @map("request_fingerprint")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  bookings CommerceBooking[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([partnerId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("commerce_visits")
+}
+
 model CommerceBooking {
   id             String   @id @default(uuid())
   publicNumber   String   @unique @map("public_number")
@@ -941,16 +974,22 @@ model CommerceBooking {
   notes          String?
   idempotencyKey String?  @map("idempotency_key")
   requestFingerprint String? @map("request_fingerprint")
+  /// Structured consecutive-visit link (nullable for legacy single bookings).
+  visitId        String?  @map("visit_id")
+  visit          CommerceVisit? @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  visitSequence  Int?     @map("visit_sequence")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   events CommerceBookingEvent[]
 
   @@unique([userId, idempotencyKey])
+  @@unique([visitId, visitSequence])
   @@index([partnerId, serviceId, startsAt])
   @@index([partnerId, resourceId, startsAt])
   @@index([userId, createdAt(sort: Desc)])
   @@index([branchId])
+  @@index([visitId])
   @@map("commerce_bookings")
 }
 

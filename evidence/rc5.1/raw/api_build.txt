@@ -1,0 +1,149 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 build
+> nest build
+
+[96msrc/consultation/services/consultation-orchestrator.service.ts[0m:[93m403[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+
+[7m403[0m       localReply = marketplaceOfferLiveAskReply(askText, loaded.factRegistry) ?? undefined;
+[7m   [0m [91m      ~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m43[0m:[93m25[0m - [91merror[0m[90m TS2693: [0m'CatalogGuideService' only refers to a type, but is being used as a value here.
+
+[7m43[0m     @Optional() @Inject(CatalogGuideService) catalogGuide?: CatalogGuideService,
+[7m  [0m [91m                        ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m47[0m:[93m45[0m - [91merror[0m[90m TS2693: [0m'CatalogGuideService' only refers to a type, but is being used as a value here.
+
+[7m47[0m     this.catalogGuide = catalogGuide ?? new CatalogGuideService();
+[7m  [0m [91m                                            ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m48[0m:[93m42[0m - [91merror[0m[90m TS2339: [0mProperty 'onModuleInit' does not exist on type 'CatalogGuideService'.
+
+[7m48[0m     if (!catalogGuide) this.catalogGuide.onModuleInit();
+[7m  [0m [91m                                         ~~~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m66[0m:[93m41[0m - [91merror[0m[90m TS2339: [0mProperty 'getService' does not exist on type 'CatalogGuideService'.
+
+[7m66[0m       const service = this.catalogGuide.getService(serviceId.trim());
+[7m  [0m [91m                                        ~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m76[0m:[93m33[0m - [91merror[0m[90m TS2339: [0mProperty 'getHash' does not exist on type 'CatalogGuideService'.
+
+[7m76[0m         hash: this.catalogGuide.getHash(),
+[7m  [0m [91m                                ~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m83[0m:[93m28[0m - [91merror[0m[90m TS2339: [0mProperty 'summary' does not exist on type 'CatalogGuideService'.
+
+[7m83[0m       ...this.catalogGuide.summary(),
+[7m  [0m [91m                           ~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m84[0m:[93m36[0m - [91merror[0m[90m TS2339: [0mProperty 'listProviders' does not exist on type 'CatalogGuideService'.
+
+[7m84[0m       providers: this.catalogGuide.listProviders(),
+[7m  [0m [91m                                   ~~~~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.controller.ts[0m:[93m85[0m:[93m35[0m - [91merror[0m[90m TS2339: [0mProperty 'listServices' does not exist on type 'CatalogGuideService'.
+
+[7m85[0m       services: this.catalogGuide.listServices({
+[7m  [0m [91m                                  ~~~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.module.ts[0m:[93m26[0m:[93m5[0m - [91merror[0m[90m TS2693: [0m'CatalogGuideService' only refers to a type, but is being used as a value here.
+
+[7m26[0m     CatalogGuideService,
+[7m  [0m [91m    ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/marketplace.module.ts[0m:[93m30[0m:[93m129[0m - [91merror[0m[90m TS2693: [0m'CatalogGuideService' only refers to a type, but is being used as a value here.
+
+[7m30[0m   exports: [MarketplaceService, CatalogContentService, CatalogMediaStorage, CatalogAdService, CommerceService, TaxonomyService, CatalogGuideService],
+[7m  [0m [91m                                                                                                                                ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/ops-tracking.iphone.proof.ts[0m:[93m28[0m:[93m37[0m - [91merror[0m[90m TS2307: [0mCannot find module 'playwright' or its corresponding type declarations.
+
+[7m28[0m import { chromium, type Page } from 'playwright';
+[7m  [0m [91m                                    ~~~~~~~~~~~~[0m
+[96msrc/marketplace/ops-tracking.staff-closure.ts[0m:[93m17[0m:[93m37[0m - [91merror[0m[90m TS2307: [0mCannot find module 'playwright' or its corresponding type declarations.
+
+[7m17[0m import { chromium, type Page } from 'playwright';
+[7m  [0m [91m                                    ~~~~~~~~~~~~[0m
+[96msrc/marketplace/ops-tracking.staff-closure.ts[0m:[93m466[0m:[93m37[0m - [91merror[0m[90m TS7006: [0mParameter 'd' implicitly has an 'any' type.
+
+[7m466[0m     superPage.once('dialog', async (d) => {
+[7m   [0m [91m                                    ~[0m
+[96msrc/marketplace/ops-tracking.ui.proof.ts[0m:[93m19[0m:[93m37[0m - [91merror[0m[90m TS2307: [0mCannot find module 'playwright' or its corresponding type declarations.
+
+[7m19[0m import { chromium, type Page } from 'playwright';
+[7m  [0m [91m                                    ~~~~~~~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.mira-seller.closure.ts[0m:[93m14[0m:[93m37[0m - [91merror[0m[90m TS2307: [0mCannot find module 'playwright' or its corresponding type declarations.
+
+[7m14[0m import { chromium, type Page } from 'playwright';
+[7m  [0m [91m                                    ~~~~~~~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.mira-seller.closure.ts[0m:[93m599[0m:[93m72[0m - [91merror[0m[90m TS7006: [0mParameter 'el' implicitly has an 'any' type.
+
+[7m599[0m     const shellHidden = await adminPage.locator('#appShell').evaluate((el) => el.classList.contains('hidden'));
+[7m   [0m [91m                                                                       ~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m14[0m:[93m37[0m - [91merror[0m[90m TS2307: [0mCannot find module 'playwright' or its corresponding type declarations.
+
+[7m14[0m import { chromium, type Page } from 'playwright';
+[7m  [0m [91m                                    ~~~~~~~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m389[0m:[93m37[0m - [91merror[0m[90m TS7006: [0mParameter 'tok' implicitly has an 'any' type.
+
+[7m389[0m     await sellerPage.addInitScript((tok) => {
+[7m   [0m [91m                                    ~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m411[0m:[93m53[0m - [91merror[0m[90m TS7006: [0mParameter 'oid' implicitly has an 'any' type.
+
+[7m411[0m     const driven = await sellerPage.evaluate(async (oid) => {
+[7m   [0m [91m                                                    ~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m436[0m:[93m16[0m - [91merror[0m[90m TS7031: [0mBinding element 'indepId' implicitly has an 'any' type.
+
+[7m436[0m       async ({ indepId, productId }) => {
+[7m   [0m [91m               ~~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m436[0m:[93m25[0m - [91merror[0m[90m TS7031: [0mBinding element 'productId' implicitly has an 'any' type.
+
+[7m436[0m       async ({ indepId, productId }) => {
+[7m   [0m [91m                        ~~~~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m467[0m:[93m36[0m - [91merror[0m[90m TS7006: [0mParameter 'tok' implicitly has an 'any' type.
+
+[7m467[0m     await salonPage.addInitScript((tok) => localStorage.setItem('mira_partner_token', tok), salonTok);
+[7m   [0m [91m                                   ~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m494[0m:[93m16[0m - [91merror[0m[90m TS7031: [0mBinding element 'bid' implicitly has an 'any' type.
+
+[7m494[0m       async ({ bid, pastId }) => {
+[7m   [0m [91m               ~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m494[0m:[93m21[0m - [91merror[0m[90m TS7031: [0mBinding element 'pastId' implicitly has an 'any' type.
+
+[7m494[0m       async ({ bid, pastId }) => {
+[7m   [0m [91m                    ~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m545[0m:[93m31[0m - [91merror[0m[90m TS7006: [0mParameter 'key' implicitly has an 'any' type.
+
+[7m545[0m     await adminPage.evaluate((key) => {
+[7m   [0m [91m                              ~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m554[0m:[93m16[0m - [91merror[0m[90m TS7031: [0mBinding element 'orderRef' implicitly has an 'any' type.
+
+[7m554[0m       async ({ orderRef, bookingRef, key }) => {
+[7m   [0m [91m               ~~~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m554[0m:[93m26[0m - [91merror[0m[90m TS7031: [0mBinding element 'bookingRef' implicitly has an 'any' type.
+
+[7m554[0m       async ({ orderRef, bookingRef, key }) => {
+[7m   [0m [91m                         ~~~~~~~~~~[0m
+[96msrc/marketplace/sell-book-without-store.ui-browser.proof.ts[0m:[93m554[0m:[93m38[0m - [91merror[0m[90m TS7031: [0mBinding element 'key' implicitly has an 'any' type.
+
+[7m554[0m       async ({ orderRef, bookingRef, key }) => {
+[7m   [0m [91m                                     ~~~[0m
+[96msrc/marketplace/taxonomy/catalog-guide.service.ts[0m:[93m16[0m:[93m13[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'CatalogGuideService'.
+
+[7m16[0m export type CatalogGuideService = {
+[7m  [0m [91m            ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/taxonomy/catalog-guide.service.ts[0m:[93m54[0m:[93m14[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'CatalogGuideService'.
+
+[7m54[0m export class CatalogGuideService implements OnModuleInit {
+[7m  [0m [91m             ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/taxonomy/taxonomy.service.ts[0m:[93m45[0m:[93m25[0m - [91merror[0m[90m TS2693: [0m'CatalogGuideService' only refers to a type, but is being used as a value here.
+
+[7m45[0m     @Optional() @Inject(CatalogGuideService) catalogGuide?: CatalogGuideService,
+[7m  [0m [91m                        ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/taxonomy/taxonomy.service.ts[0m:[93m47[0m:[93m45[0m - [91merror[0m[90m TS2693: [0m'CatalogGuideService' only refers to a type, but is being used as a value here.
+
+[7m47[0m     this.catalogGuide = catalogGuide ?? new CatalogGuideService();
+[7m  [0m [91m                                            ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/marketplace/taxonomy/taxonomy.service.ts[0m:[93m258[0m:[93m43[0m - [91merror[0m[90m TS2339: [0mProperty 'listServices' does not exist on type 'CatalogGuideService'.
+
+[7m258[0m       for (const svc of this.catalogGuide.listServices({ inScopeOnly: true })) {
+[7m   [0m [91m                                          ~~~~~~~~~~~~[0m
+[96msrc/partners-portal/upload-sessions/multipart.store.ts[0m:[93m19[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '@aws-sdk/s3-request-presigner' or its corresponding type declarations.
+
+[7m19[0m import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+Found 35 error(s).
+

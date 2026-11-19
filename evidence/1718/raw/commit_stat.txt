@@ -1,0 +1,21 @@
+687fe9e fix(discover): guard stale attach mutations and exit proxy waits
+ evidence/1718/FAILURE_CLASSIFICATION.md            |    9 +
+ evidence/1718/SCENARIOS.md                         |   11 +
+ evidence/1718/VERDICT.md                           |   21 +
+ evidence/1718/raw/flutter_test_abort_1718.txt      |  121 ++
+ .../1718/raw/flutter_test_discover_suite_1718.txt  | 1338 ++++++++++++
+ evidence/1718/raw/flutter_test_fail5_1718.txt      |  113 +
+ evidence/1718/raw/flutter_test_focus_1718.txt      | 1028 +++++++++
+ evidence/1718/raw/flutter_test_focus_1718c.txt     | 1028 +++++++++
+ evidence/1718/src/asset_video_port_test.dart       |  863 ++++++++
+ .../1718/src/controllable_video_controller.dart    |  190 ++
+ evidence/1718/src/discover_video_disk_cache.dart   | 1831 ++++++++++++++++
+ .../1718/src/discover_video_disk_cache_test.dart   | 2185 ++++++++++++++++++++
+ evidence/1718/src/presentation_video_port.dart     | 1975 ++++++++++++++++++
+ .../presentation/discover_video_disk_cache.dart    |   62 +-
+ .../presentation/presentation_video_port.dart      |  367 ++--
+ pubspec.yaml                                       |    2 +-
+ .../marketplace/asset_video_port_test.dart         |  142 +-
+ .../marketplace/controllable_video_controller.dart |    2 +
+ .../discover_video_disk_cache_test.dart            |   20 +-
+ 19 files changed, 11146 insertions(+), 162 deletions(-)

@@ -341,23 +341,29 @@ class MarketplaceApiDataSource {
     );
     } on DioException catch (error) {
       if (error.response?.statusCode == 400) throw const CatalogCursorException();
-      throw const CatalogSourceException();
+      throw CatalogSourceException(
+        'dio status=${error.response?.statusCode} type=${error.type} lane=$lane',
+      );
     }
     final data = response.data ?? const <String, dynamic>{};
     final raw = data['items'] as List<dynamic>? ?? const [];
-    return (
-      items: raw.map((item) => _offer(item as Map<String, dynamic>)).toList(),
-      nextCursor: data['nextCursor'] as String?,
-      cities: (data['availableCities'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
-      facets: DiscoverCatalogFacets.fromJson(
-        data['facets'] is Map ? Map<String, dynamic>.from(data['facets'] as Map) : null,
-      ),
-      activeFilters: data['activeFilters'] is Map
-          ? Map<String, dynamic>.from(data['activeFilters'] as Map)
-          : const <String, dynamic>{},
-      totalMatched: (data['totalMatched'] as num?)?.toInt(),
-      queryFingerprint: data['queryFingerprint'] as String?,
-    );
+    try {
+      return (
+        items: raw.map((item) => _offer(item as Map<String, dynamic>)).toList(),
+        nextCursor: data['nextCursor'] as String?,
+        cities: (data['availableCities'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
+        facets: DiscoverCatalogFacets.fromJson(
+          data['facets'] is Map ? Map<String, dynamic>.from(data['facets'] as Map) : null,
+        ),
+        activeFilters: data['activeFilters'] is Map
+            ? Map<String, dynamic>.from(data['activeFilters'] as Map)
+            : const <String, dynamic>{},
+        totalMatched: (data['totalMatched'] as num?)?.toInt(),
+        queryFingerprint: data['queryFingerprint'] as String?,
+      );
+    } catch (error) {
+      throw CatalogSourceException('parse lane=$lane error=$error');
+    }
   }
 
   DiscoverOffer _offer(Map<String, dynamic> json) {

@@ -1,0 +1,4 @@
+BUNDLE_VERSION=2026111715
+install_ok=1
+launch_ok=1
+runtime_log_1715_lines=29

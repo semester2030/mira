@@ -1,0 +1,1005 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.13.1 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.3.0 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.4 available)
+  video_player_avfoundation 2.12.0 (2.12.4 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+99 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart                                                                    00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart                                                                    00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart                                                                       00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: a payload that points at a different original is rejected                    00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: a payload that points at a different original is rejected                    00:01 +1: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: the catalog entry loads product and service ads and records the real link event00:01 +2: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: the catalog entry loads product and service ads and records the real link event00:02 +2: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: the catalog entry loads product and service ads and records the real link event00:02 +3: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: the catalog entry loads product and service ads and records the real link event00:02 +4: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: the catalog entry loads product and service ads and records the real link event00:02 +5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: the catalog entry loads product and service ads and records the real link event00:02 +5 -1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart: discover routes stay closed unless the test define is on [E]           
+  Expected: <Instance of 'DiscoverHubScreen'>
+    Actual: DiscoverPresentationScreen:<DiscoverPresentationScreen>
+     Which: is not an instance of 'DiscoverHubScreen'
+  
+  package:matcher                                                expect
+  package:flutter_test/src/widget_tester.dart 473:18             expect
+  test/features/marketplace/discover_activation_test.dart 122:7  main.<fn>
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart -p vm --plain-name 'discover routes stay closed unless the test define is on'
+00:02 +6 -1: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_feed_test.dart: the catalog entry loads product and service ads and records the real link event  00:02 +7 -1: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_presentation_test.dart: the current presentation shows the ad roles and hides a misleading action00:02 +8 -1: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_presentation_test.dart: the current presentation shows the ad roles and hides a misleading action00:02 +9 -1: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_presentation_test.dart: the current presentation shows the ad roles and hides a misleading action00:02 +10 -1: /Users/fayez/Desktop/مراجع ... the current presentation shows the ad roles and hides a misleading action                                                                                 00:02 +10 -1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart: product detail treats the store link as an external handoff           
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TextContainingWidgetFinder:<Found 0 widgets with text containing الشراء من متجر: []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart:152:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart line 152
+The test description was:
+  product detail treats the store link as an external handoff
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:02 +10 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart: product detail treats the store link as an external handoff [E]       
+  Test failed. See exception logs above.
+  The test description was: product detail treats the store link as an external handoff
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_activation_test.dart -p vm --plain-name 'product detail treats the store link as an external handoff'
+00:02 +11 -2: /Users/fayez/Desktop/مراجع ... the current presentation shows the ad roles and hides a misleading action                                                                                 00:02 +12 -2: /Users/fayez/Desktop/مراجع ... the current presentation shows the ad roles and hides a misleading action                                                                                 00:02 +13 -2: /Users/fayez/Desktop/مراجع ... the current presentation shows the ad roles and hides a misleading action                                                                                 00:02 +14 -2: /Users/fayez/Desktop/مراجع ... the current presentation shows the ad roles and hides a misleading action                                                                                 00:03 +14 -2: /Users/fayez/Desktop/مراجع ... the current presentation shows the ad roles and hides a misleading action                                                                                 00:03 +15 -2: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc4_test.dart: the resolved image bytes load and salon and clinic keep their own categories00:03 +16 -2: /Users/fayez/Desktop/مراجع ... forward swipes visit every page and ad once, including a page that arrives on an ad                                                                       00:03 +17 -2: /Users/fayez/Desktop/مراجع ... forward swipes visit every page and ad once, including a page that arrives on an ad                                                                       00:03 +18 -2: /Users/fayez/Desktop/مراجع ... forward swipes visit every page and ad once, including a page that arrives on an ad                                                                       00:03 +18 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc4_test.dart: opening details or changing media does not record a link, and failures do not claim success
+
+Warning: A call to fling() with finder "Found 1 widget with type "PageView" (ignoring all but last): [
+  PageView(dependencies: [Directionality, ScrollConfiguration], state: _PageViewState#840f7(scrollDirection: horizontal, PageController#124db(one client, offset 0.0), null)),
+]" derived an Offset (Offset(400.0, 300.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderClipRect#e9d3c
+The hit test result at that offset is: HitTestResult(RenderDecoratedBox#3b6dd@Offset(400.0, 64.0), RenderStack#20832@Offset(400.0, 300.0), RenderStack#164b9@Offset(400.0, 300.0), RenderRepaintBoundary#5ab90@Offset(400.0, 300.0), RenderIndexedSemantics#fe16f@Offset(400.0, 300.0), RenderSliverFillViewport@(mainAxis: 300.0, crossAxis: 400.0), _RenderSliverFractionalPadding@(mainAxis: 300.0, crossAxis: 400.0), RenderViewport#38063@Offset(400.0, 300.0), RenderIgnorePointer#4cdaa@Offset(400.0, 300.0), RenderSemanticsAnnotations#e2b4e@Offset(400.0, 300.0), RenderPointerListener#5970c@Offset(400.0, 300.0), RenderSemanticsGestureHandler#094ef@Offset(400.0, 300.0), RenderPointerListener#28641@Offset(400.0, 300.0), _RenderScrollSemantics#73bcd@Offset(400.0, 300.0), RenderClipRect#7a8e3@Offset(400.0, 300.0), RenderStack#2e84b@Offset(400.0, 300.0), RenderCustomMultiChildLayoutBox#7c925@Offset(400.0, 300.0), _RenderInkFeatures#f45e3@Offset(400.0, 300.0), RenderPhysicalModel#17bbe@Offset(400.0, 300.0), RenderSemanticsAnnotations#0e671@Offset(400.0, 300.0), RenderRepaintBoundary#3f660@Offset(400.0, 300.0), RenderIgnorePointer#efb71@Offset(400.0, 300.0), RenderAnimatedOpacity#1958a@Offset(400.0, 300.0), RenderAnimatedOpacity#98507@Offset(400.0, 300.0), _RenderColoredBox#e58f9@Offset(400.0, 300.0), RenderAnimatedOpacity#6e9b7@Offset(400.0, 300.0), RenderIgnorePointer#9bb28@Offset(400.0, 300.0), RenderAnimatedOpacity#169ec@Offset(400.0, 300.0), RenderRepaintBoundary#63959@Offset(400.0, 300.0), RenderSemanticsAnnotations#23bc7@Offset(400.0, 300.0), RenderOffstage#f4069@Offset(400.0, 300.0), RenderSemanticsAnnotations#a0a7c@Offset(400.0, 300.0), _RenderTheater#ebccd@Offset(400.0, 300.0), RenderAbsorbPointer#911fe@Offset(400.0, 300.0), RenderPointerListener#2b722@Offset(400.0, 300.0), RenderSemanticsAnnotations#15c51@Offset(400.0, 300.0), RenderCustomPaint#95097@Offset(400.0, 300.0), RenderSemanticsAnnotations#2a9fa@Offset(400.0, 300.0), RenderSemanticsAnnotations#89b02@Offset(400.0, 300.0), RenderTapRegionSurface#30d61@Offset(400.0, 300.0), RenderSemanticsAnnotations#43684@Offset(400.0, 300.0), RenderSemanticsAnnotations#3fa4c@Offset(400.0, 300.0), RenderSemanticsAnnotations#eaee7@Offset(400.0, 300.0), HitTestEntry<HitTestTarget>#df22d(_ReusableRenderView#15f46), HitTestEntry<HitTestTarget>#4afb8(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2081:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1865:12)
+#2      WidgetController.fling (package:flutter_test/src/controller.dart:1257:7)
+#3      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_ad_rc4_test.dart:221:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "fling()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:03 +19 -2: /Users/fayez/Desktop/مراجع ... opening details or changing media does not record a link, and failures do not claim success                                                               00:03 +20 -2: /Users/fayez/Desktop/مراجع ... opening details or changing media does not record a link, and failures do not claim success                                                               00:03 +21 -2: /Users/fayez/Desktop/مراجع ... opening details or changing media does not record a link, and failures do not claim success                                                               00:03 +22 -2: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: two instances and a recreated screen get different ids, and a resend keeps its id00:04 +22 -2: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: two instances and a recreated screen get different ids, and a resend keeps its id00:04 +23 -2: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: two instances and a recreated screen get different ids, and a resend keeps its id00:04 +23 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart: two ads for one original stay distinct and a failed page retries once     
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: at least one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "تعذر تحميل المزيد. النتائج المحملة ما زالت
+ظاهرة.": []>
+   Which: means none were found but some were expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart:127:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart line 127
+The test description was:
+  two ads for one original stay distinct and a failed page retries once
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:04 +23 -3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart: two ads for one original stay distinct and a failed page retries once [E] 
+  Test failed. See exception logs above.
+  The test description was: two ads for one original stay distinct and a failed page retries once
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart -p vm --plain-name 'two ads for one original stay distinct and a failed page retries once'
+00:04 +24 -3: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: two instances and a recreated screen get different ids, and a resend keeps its id00:04 +25 -3: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: two instances and a recreated screen get different ids, and a resend keeps its id00:04 +26 -3: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: two instances and a recreated screen get different ids, and a resend keeps its id00:04 +27 -3: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: two instances and a recreated screen get different ids, and a resend keeps its id00:04 +28 -3: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart: a page that arrives after the query changed is not inserted into the new sequence00:04 +29 -3: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart: a page that arrives after the query changed is not inserted into the new sequence00:04 +29 -3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart: a page that arrives after the query changed is not inserted into the new sequence
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following StateError was thrown running a test:
+Bad state: No element
+
+When the exception was thrown, this was the stack:
+#0      Iterable.first (dart:core/iterable.dart:663:7)
+#1      _FirstFinderMixin.filter (package:flutter_test/src/finders.dart:1332:28)
+#3      ExpandIterator.moveNext (dart:_internal/iterable.dart:506:21)
+#4      SetBase.addAll (dart:collection/set.dart:58:23)
+#5      _Set.addAll (dart:_compact_hash:1190:11)
+#6      new LinkedHashSet.of (dart:collection/linked_hash_set.dart:193:27)
+#7      Iterable.toSet (dart:core/iterable.dart:532:21)
+#8      _DescendantFinderMixin.allCandidates (package:flutter_test/src/finders.dart:1731:10)
+#9      FinderBase.evaluate (package:flutter_test/src/finders.dart:979:76)
+#10     WidgetController.state (package:flutter_test/src/controller.dart:912:31)
+#11     WidgetTester.showKeyboard.<anonymous closure> (package:flutter_test/src/widget_tester.dart:1125:42)
+#14     TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#15     WidgetTester.showKeyboard (package:flutter_test/src/widget_tester.dart:1124:27)
+#16     WidgetTester.enterText.<anonymous closure> (package:flutter_test/src/widget_tester.dart:1160:13)
+#19     TestAsyncUtils.guard (package:flutter_test/src/test_async_utils.dart:74:41)
+#20     WidgetTester.enterText (package:flutter_test/src/widget_tester.dart:1159:27)
+#21     main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart:156:18)
+<asynchronous suspension>
+#22     testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#23     TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 6 frames from dart:async, dart:async-patch, and package:stack_trace)
+
+The test description was:
+  a page that arrives after the query changed is not inserted into the new sequence
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:04 +29 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart: a page that arrives after the query changed is not inserted into the new sequence [E]
+  Test failed. See exception logs above.
+  The test description was: a page that arrives after the query changed is not inserted into the new sequence
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart -p vm --plain-name 'a page that arrives after the query changed is not inserted into the new sequence'
+00:04 +30 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc7_test.dart: resend does not open the browser again                                    00:04 +30 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart: the open button keeps opening while a failed record is resent with the same id
+
+Warning: A call to fling() with finder "Found 1 widget with type "PageView" (ignoring all but last): [
+  PageView(dependencies: [Directionality, ScrollConfiguration], state: _PageViewState#cf475(scrollDirection: horizontal, PageController#b2c6e(one client, offset 0.0), null)),
+]" derived an Offset (Offset(400.0, 300.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderClipRect#07505
+The hit test result at that offset is: HitTestResult(RenderDecoratedBox#8b51d@Offset(400.0, 64.0), RenderStack#aae19@Offset(400.0, 300.0), RenderStack#ce075@Offset(400.0, 300.0), RenderRepaintBoundary#a5a4d@Offset(400.0, 300.0), RenderIndexedSemantics#1891e@Offset(400.0, 300.0), RenderSliverFillViewport@(mainAxis: 300.0, crossAxis: 400.0), _RenderSliverFractionalPadding@(mainAxis: 300.0, crossAxis: 400.0), RenderViewport#4babf@Offset(400.0, 300.0), RenderIgnorePointer#3de3f@Offset(400.0, 300.0), RenderSemanticsAnnotations#e7fa2@Offset(400.0, 300.0), RenderPointerListener#00fdc@Offset(400.0, 300.0), RenderSemanticsGestureHandler#9d541@Offset(400.0, 300.0), RenderPointerListener#21af5@Offset(400.0, 300.0), _RenderScrollSemantics#e9f75@Offset(400.0, 300.0), RenderClipRect#58b66@Offset(400.0, 300.0), RenderStack#96d71@Offset(400.0, 300.0), RenderCustomMultiChildLayoutBox#aacf3@Offset(400.0, 300.0), _RenderInkFeatures#4e3a3@Offset(400.0, 300.0), RenderPhysicalModel#a9c2d@Offset(400.0, 300.0), RenderSemanticsAnnotations#b5d1c@Offset(400.0, 300.0), RenderRepaintBoundary#69b12@Offset(400.0, 300.0), RenderIgnorePointer#75e74@Offset(400.0, 300.0), RenderAnimatedOpacity#ef7d8@Offset(400.0, 300.0), RenderAnimatedOpacity#f3125@Offset(400.0, 300.0), _RenderColoredBox#c28da@Offset(400.0, 300.0), RenderAnimatedOpacity#a07a1@Offset(400.0, 300.0), RenderIgnorePointer#27a3b@Offset(400.0, 300.0), RenderAnimatedOpacity#98df2@Offset(400.0, 300.0), RenderRepaintBoundary#7b0b0@Offset(400.0, 300.0), RenderSemanticsAnnotations#24544@Offset(400.0, 300.0), RenderOffstage#bd165@Offset(400.0, 300.0), RenderSemanticsAnnotations#789ac@Offset(400.0, 300.0), _RenderTheater#74e93@Offset(400.0, 300.0), RenderAbsorbPointer#27b2a@Offset(400.0, 300.0), RenderPointerListener#fa873@Offset(400.0, 300.0), RenderSemanticsAnnotations#02b36@Offset(400.0, 300.0), RenderCustomPaint#a36d8@Offset(400.0, 300.0), RenderSemanticsAnnotations#5e2d6@Offset(400.0, 300.0), RenderSemanticsAnnotations#f4a8c@Offset(400.0, 300.0), RenderTapRegionSurface#04cf7@Offset(400.0, 300.0), RenderSemanticsAnnotations#fb38f@Offset(400.0, 300.0), RenderSemanticsAnnotations#bfa07@Offset(400.0, 300.0), RenderSemanticsAnnotations#c56db@Offset(400.0, 300.0), HitTestEntry<HitTestTarget>#44c72(_ReusableRenderView#ffe3d), HitTestEntry<HitTestTarget>#45317(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2081:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1865:12)
+#2      WidgetController.fling (package:flutter_test/src/controller.dart:1257:7)
+#3      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_ad_rc5_test.dart:199:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "fling()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:04 +31 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc7_test.dart: resend does not open the browser again                                    00:04 +32 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc7_test.dart: resend does not open the browser again                                    00:04 +33 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc7_test.dart: resend does not open the browser again                                    00:04 +34 -4: /Users/fayez/Desktop/مراجع ... leaving the slide keeps the event on its ad and a late eligibility check does not open                                                                    00:04 +35 -4: /Users/fayez/Desktop/مراجع ... leaving the slide keeps the event on its ad and a late eligibility check does not open                                                                    00:04 +35 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: preload, details, and media changes do not record a link open             00:04 +35 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart: preload, details, and media changes do not record a link open             
+
+Warning: A call to fling() with finder "Found 1 widget with type "PageView" (ignoring all but last): [
+  PageView(dependencies: [Directionality, ScrollConfiguration], state: _PageViewState#d7e0e(scrollDirection: horizontal, PageController#fa5be(one client, offset 0.0), null)),
+]" derived an Offset (Offset(400.0, 300.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderClipRect#1154b
+The hit test result at that offset is: HitTestResult(RenderDecoratedBox#f79d1@Offset(400.0, 64.0), RenderStack#92f12@Offset(400.0, 300.0), RenderStack#d870b@Offset(400.0, 300.0), RenderRepaintBoundary#d9fea@Offset(400.0, 300.0), RenderIndexedSemantics#a5e38@Offset(400.0, 300.0), RenderSliverFillViewport@(mainAxis: 300.0, crossAxis: 400.0), _RenderSliverFractionalPadding@(mainAxis: 300.0, crossAxis: 400.0), RenderViewport#efb08@Offset(400.0, 300.0), RenderIgnorePointer#43577@Offset(400.0, 300.0), RenderSemanticsAnnotations#7833e@Offset(400.0, 300.0), RenderPointerListener#1afb1@Offset(400.0, 300.0), RenderSemanticsGestureHandler#6b174@Offset(400.0, 300.0), RenderPointerListener#3a432@Offset(400.0, 300.0), _RenderScrollSemantics#54f50@Offset(400.0, 300.0), RenderClipRect#86fd0@Offset(400.0, 300.0), RenderStack#26bdc@Offset(400.0, 300.0), RenderCustomMultiChildLayoutBox#d1c75@Offset(400.0, 300.0), _RenderInkFeatures#6c374@Offset(400.0, 300.0), RenderPhysicalModel#9edb8@Offset(400.0, 300.0), RenderSemanticsAnnotations#07e42@Offset(400.0, 300.0), RenderRepaintBoundary#bdf6f@Offset(400.0, 300.0), RenderIgnorePointer#597ce@Offset(400.0, 300.0), RenderAnimatedOpacity#39c43@Offset(400.0, 300.0), RenderAnimatedOpacity#c8813@Offset(400.0, 300.0), _RenderColoredBox#1b1ef@Offset(400.0, 300.0), RenderAnimatedOpacity#e5d1d@Offset(400.0, 300.0), RenderIgnorePointer#07c7e@Offset(400.0, 300.0), RenderAnimatedOpacity#fc413@Offset(400.0, 300.0), RenderRepaintBoundary#60bd5@Offset(400.0, 300.0), RenderSemanticsAnnotations#94162@Offset(400.0, 300.0), RenderOffstage#334ad@Offset(400.0, 300.0), RenderSemanticsAnnotations#e72bd@Offset(400.0, 300.0), _RenderTheater#49477@Offset(400.0, 300.0), RenderAbsorbPointer#0e541@Offset(400.0, 300.0), RenderPointerListener#3b5cd@Offset(400.0, 300.0), RenderSemanticsAnnotations#c417f@Offset(400.0, 300.0), RenderCustomPaint#68761@Offset(400.0, 300.0), RenderSemanticsAnnotations#f8907@Offset(400.0, 300.0), RenderSemanticsAnnotations#81d6e@Offset(400.0, 300.0), RenderTapRegionSurface#443e4@Offset(400.0, 300.0), RenderSemanticsAnnotations#1f559@Offset(400.0, 300.0), RenderSemanticsAnnotations#6fbe9@Offset(400.0, 300.0), RenderSemanticsAnnotations#2afc6@Offset(400.0, 300.0), HitTestEntry<HitTestTarget>#417f7(_ReusableRenderView#f77aa), HitTestEntry<HitTestTarget>#0ff28(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2081:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1865:12)
+#2      WidgetController.fling (package:flutter_test/src/controller.dart:1257:7)
+#3      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_ad_rc6_test.dart:324:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "fling()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:04 +36 -4: /Users/fayez/Desktop/مراجع ... beauty partnerType clears hidden product filters even when lane is null                                                                                   00:04 +37 -4: /Users/fayez/Desktop/مراجع ... beauty partnerType clears hidden product filters even when lane is null                                                                                   00:04 +37 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_filters_ui_test.dart: elegance lane clears service-only filters                     00:04 +38 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_filters_ui_test.dart: elegance lane clears service-only filters                     00:04 +38 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_filters_ui_test.dart: facets parse volumes and stale selections                     00:04 +39 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_filters_ui_test.dart: facets parse volumes and stale selections                     00:04 +39 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_filters_ui_test.dart: price range dialog validates min>max                          00:05 +39 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_filters_ui_test.dart: price range dialog validates min>max                          00:05 +40 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_filters_ui_test.dart: price range dialog validates min>max                          00:05 +41 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: occasions rail enlarges circles ~20% vs default band               00:05 +42 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: occasions rail enlarges circles ~20% vs default band               00:05 +42 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +43 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +44 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +45 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +46 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +47 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +48 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +49 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +50 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +51 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +52 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +53 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_test.dart: long Arabic taxonomy label is fully visible without ellipsis       00:05 +54 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_catalog_query_test.dart: catalog slides keep ids and do not borrow generated images         00:05 +55 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_goldens_test.dart: export occasions enlarged + beauty normal PNGs             00:05 +56 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_goldens_test.dart: export occasions enlarged + beauty normal PNGs             00:05 +57 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_goldens_test.dart: export occasions enlarged + beauty normal PNGs             00:05 +58 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_goldens_test.dart: export occasions enlarged + beauty normal PNGs             00:06 +58 -4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_goldens_test.dart: export occasions enlarged + beauty normal PNGs             /var/folders/x9/m0t84f6n5q79qyfy5z4_8y4c0000gn/T/flutter_tools.Btxpq7/flutter_test_listener.OM6w9D/listener.dart:21:21: Error: Undefined name 'main'.
+  await Future(test.main);
+                    ^^^^
+00:06 +58 -5: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_fonts.dart [E]                                                                      
+  Failed to load "/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_fonts.dart":
+  Compilation failed for testPath=/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_fonts.dart: /var/folders/x9/m0t84f6n5q79qyfy5z4_8y4c0000gn/T/flutter_tools.Btxpq7/flutter_test_listener.OM6w9D/listener.dart:21:21: Error: Undefined name 'main'.
+    await Future(test.main);
+                      ^^^^
+  .
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_fonts.dart -p vm --plain-name 'loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_fonts.dart'
+00:06 +59 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_category_rail_goldens_test.dart: export occasions enlarged + beauty normal PNGs             00:06 +59 -5: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart                                                           00:06 +59 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: a late response does not replace a newer query                   00:06 +60 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: a late response does not replace a newer query                   00:06 +60 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: load more does not cancel or append onto a newer search          00:06 +61 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: load more does not cancel or append onto a newer search          00:06 +61 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: a local page is not merged into a server page                    00:06 +62 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: a local page is not merged into a server page                    00:06 +62 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: the first failure is not an empty result and retry asks again    00:06 +62 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: the first failure is not an empty result and retry asks again    
+MIRA_DISCOVER_CATALOG apply_fail lane=null category=null failed=true invalidCursor=false transport=null contentMark=null items=0
+00:06 +63 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: the first failure is not an empty result and retry asks again    00:06 +63 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: a browse that finishes after dispose does not notify listeners   00:06 +64 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: a browse that finishes after dispose does not notify listeners   00:06 +64 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: favorite rows stay inside the account that saved them            00:06 +65 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_feed_controller_test.dart: favorite rows stay inside the account that saved them            00:06 +65 -5: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart                                                           00:06 +65 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a late refresh for account A does not write account B            00:07 +65 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a late refresh for account A does not write account B            00:07 +66 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a late refresh for account A does not write account B            00:07 +66 -5: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: logout during a save drops the previous account and ignores its result  00:07 +67 -5: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: logout during a save drops the previous account and ignores its result  00:07 +67 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: dispose during a request does not notify afterwards              00:07 +68 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: dispose during a request does not notify afterwards              00:07 +68 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: an older refresh does not replace a newer save                   00:07 +69 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: an older refresh does not replace a newer save                   00:07 +69 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a failed read stays failed until retry succeeds                  00:07 +70 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a failed read stays failed until retry succeeds                  00:07 +70 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: signing in again restores that account favorites                 00:07 +71 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: signing in again restores that account favorites                 00:07 +71 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: repeating the same save request stays saved                      00:07 +72 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: repeating the same save request stays saved                      00:07 +72 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a late 401 does not clear a newer save or show a stale error     00:07 +73 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a late 401 does not clear a newer save or show a stale error     00:07 +73 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a late network error does not clear a newer save                 00:07 +74 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a late network error does not clear a newer save                 00:07 +74 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a read started during a pending write does not overwrite that write00:07 +75 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: a read started during a pending write does not overwrite that write00:07 +75 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: logout and dispose ignore an in-flight read error                00:07 +76 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: logout and dispose ignore an in-flight read error                00:07 +76 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: an older read does not overwrite a newer read                    00:07 +77 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_favorite_client_test.dart: an older read does not overwrite a newer read                    00:07 +77 -5: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart                                                               00:07 +77 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: null matched ids means unrestricted browse                           00:07 +78 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: null matched ids means unrestricted browse                           00:07 +78 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: empty matched ids means matches gone — never expand to all           00:07 +79 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: empty matched ids means matches gone — never expand to all           00:07 +79 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: stale matched ids with no overlap means matches gone                 00:07 +80 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: stale matched ids with no overlap means matches gone                 00:07 +80 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: multi-match keeps only listed variants                               00:07 +81 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_match_scope_test.dart: multi-match keeps only listed variants                               00:07 +81 -5: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart                                                              00:07 +81 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: slides keep ids and do not fail a real service on purpose           00:07 +82 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: slides keep ids and do not fail a real service on purpose           00:07 +82 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: local detail stays local after a later server list                  00:07 +83 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: local detail stays local after a later server list                  00:07 +83 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: an explicit server flag is demo and a name is not                   00:07 +84 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: an explicit server flag is demo and a name is not                   00:07 +84 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:07 +84 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_swipe_latency_harness_test.dart: harness: 30 transitions median/p95 with warm path          
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=1 build=2026111713 mediaId=null offer=open playerId=837303260 firstFrameMs=8 source=0 cacheSource=0 cacheBytes=null audioCutMs=3 audible=0 initStart=5 initDone=7 playStart=8 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=1 build=2026111713 mediaId=null offer=open claim=0 cache=0 bytes=null audioCutMs=3 firstFrameMs=8 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.498771Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=8 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.502158Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.503528Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=3 build=2026111713 mediaId=null offer=t-0 playerId=837303260 firstFrameMs=2 source=2 cacheSource=null cacheBytes=null audioCutMs=2 audible=0 initStart=2 initDone=2 playStart=2 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=3 build=2026111713 mediaId=null offer=t-0 claim=2 cache=null bytes=null audioCutMs=2 firstFrameMs=2 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.506603Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=2 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.507334Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.507861Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=4
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=5 build=2026111713 mediaId=null offer=t-1 playerId=837303260 firstFrameMs=4 source=2 cacheSource=null cacheBytes=null audioCutMs=4 audible=0 initStart=4 initDone=4 playStart=4 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=5 build=2026111713 mediaId=null offer=t-1 claim=2 cache=null bytes=null audioCutMs=4 firstFrameMs=4 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.514146Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=4 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.514719Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.516546Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=7 build=2026111713 mediaId=null offer=t-2 playerId=837303260 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=7 build=2026111713 mediaId=null offer=t-2 claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.519030Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.519424Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.520557Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=9 build=2026111713 mediaId=null offer=t-3 playerId=837303260 firstFrameMs=3 source=2 cacheSource=null cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=2 playStart=3 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=9 build=2026111713 mediaId=null offer=t-3 claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=3 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.524674Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=3 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.525340Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.526723Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=11 build=2026111713 mediaId=null offer=t-4 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=11 build=2026111713 mediaId=null offer=t-4 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.528368Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.528815Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.529263Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=13 build=2026111713 mediaId=null offer=t-5 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=13 build=2026111713 mediaId=null offer=t-5 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.530329Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.530843Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.531323Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=15 build=2026111713 mediaId=null offer=t-6 playerId=837303260 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=15 build=2026111713 mediaId=null offer=t-6 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.533254Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.533707Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.534170Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=17 build=2026111713 mediaId=null offer=t-7 playerId=837303260 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=17 build=2026111713 mediaId=null offer=t-7 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.536067Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.536327Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.536910Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=19 build=2026111713 mediaId=null offer=t-8 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=19 build=2026111713 mediaId=null offer=t-8 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.537912Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.538571Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.538941Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=21 build=2026111713 mediaId=null offer=t-9 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=21 build=2026111713 mediaId=null offer=t-9 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.539863Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.540263Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.541182Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=23 build=2026111713 mediaId=null offer=t-10 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=23 build=2026111713 mediaId=null offer=t-10 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.542138Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.542369Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.542683Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=25 build=2026111713 mediaId=null offer=t-11 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=25 build=2026111713 mediaId=null offer=t-11 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.543863Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.544140Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.544627Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=27 build=2026111713 mediaId=null offer=t-12 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=27 build=2026111713 mediaId=null offer=t-12 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.545970Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.546296Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.546696Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=29 build=2026111713 mediaId=null offer=t-13 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=29 build=2026111713 mediaId=null offer=t-13 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.547800Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.548428Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.548871Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=31 build=2026111713 mediaId=null offer=t-14 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=31 build=2026111713 mediaId=null offer=t-14 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.550134Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.550567Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.551022Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=33 build=2026111713 mediaId=null offer=t-15 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=33 build=2026111713 mediaId=null offer=t-15 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.551999Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.552656Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.553086Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=35 build=2026111713 mediaId=null offer=t-16 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=35 build=2026111713 mediaId=null offer=t-16 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.554104Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.554311Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.554866Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=37 build=2026111713 mediaId=null offer=t-17 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=37 build=2026111713 mediaId=null offer=t-17 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.555555Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.555850Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.556486Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=39 build=2026111713 mediaId=null offer=t-18 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=39 build=2026111713 mediaId=null offer=t-18 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.557208Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.557954Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.558647Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=41 build=2026111713 mediaId=null offer=t-19 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=41 build=2026111713 mediaId=null offer=t-19 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.559579Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.559789Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.560324Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=43 build=2026111713 mediaId=null offer=t-20 playerId=837303260 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=43 build=2026111713 mediaId=null offer=t-20 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.561643Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.561946Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.563211Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=45 build=2026111713 mediaId=null offer=t-21 playerId=837303260 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=45 build=2026111713 mediaId=null offer=t-21 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.564691Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.565471Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.566273Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=47 build=2026111713 mediaId=null offer=t-22 playerId=837303260 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=47 build=2026111713 mediaId=null offer=t-22 claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.568408Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.569149Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.569729Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=49 build=2026111713 mediaId=null offer=t-23 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=49 build=2026111713 mediaId=null offer=t-23 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.570898Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.571096Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.572115Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=51 build=2026111713 mediaId=null offer=t-24 playerId=837303260 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=51 build=2026111713 mediaId=null offer=t-24 claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.573679Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.573964Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.574382Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=53 build=2026111713 mediaId=null offer=t-25 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=53 build=2026111713 mediaId=null offer=t-25 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.575268Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.575448Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.575723Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=55 build=2026111713 mediaId=null offer=t-26 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=55 build=2026111713 mediaId=null offer=t-26 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.576502Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.576878Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.577624Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=57 build=2026111713 mediaId=null offer=t-27 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=57 build=2026111713 mediaId=null offer=t-27 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.578688Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.578926Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.579214Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=59 build=2026111713 mediaId=null offer=t-28 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=59 build=2026111713 mediaId=null offer=t-28 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.580489Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.580765Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=parked at=2026-11-18T11:09:33.581314Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1rgex transition=61 build=2026111713 mediaId=null offer=t-29 playerId=837303260 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1rgex transition=61 build=2026111713 mediaId=null offer=t-29 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=837303260 at=2026-11-18T11:09:33.582203Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=837303260 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=837303260 role=unknown at=2026-11-18T11:09:33.582482Z
+MIRA_DISCOVER_AUDIO mute_done playerId=837303260 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=837303260 role=unknown ms=0
+00:07 +85 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:07 +85 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        
+MIRA_BUILD_IDENTITY build=2026111713 session=sho9vp1ve92 api=https://mira-api-n4p3.onrender.com/api/v1 useBackend=true
+00:08 +85 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:08 +86 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:08 +87 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:08 +88 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:08 +89 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:08 +89 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:08 +89 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=65536 elapsedMs=44 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=disk reused=65536 dl=0 elapsedMs=3 err=null prio=null lock=true
+00:08 +90 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot00:08 +91 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +91 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                        
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=finalize_part reused=32768 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=network_to_disk reused=0 dl=32768 elapsedMs=107 err=null prio=null lock=true
+00:08 +92 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +92 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: reopen after partial prefix: serves local start, Range-fetches only the tail
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=partial reused=0 dl=10240 elapsedMs=3 err=incomplete_10240/49152 prio=null lock=true
+00:08 +93 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +93 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_FF session=sho9vp1yip9 transition=1 build=2026111713 mediaId=null offer=mix-screen playerId=829821363 firstFrameMs=251 source=0 cacheSource=0 cacheBytes=null audioCutMs=235 audible=0 initStart=242 initDone=247 playStart=251 resolveMs=6 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1yip9 transition=1 build=2026111713 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=235 firstFrameMs=251 audible=0
+00:08 +93 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 source=partial reused=0 dl=8192 elapsedMs=10 err=incomplete_8192/24576 prio=null lock=true
+00:08 +93 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_AUDIO unmute_req playerId=829821363 at=2026-11-18T11:09:34.339291Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=829821363 firstFrameMs=251 audible=1
+00:08 +93 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 source=partial reused=0 dl=8192 elapsedMs=9 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 source=partial reused=0 dl=8192 elapsedMs=5 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 source=partial reused=0 dl=8192 elapsedMs=5 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 source=partial reused=0 dl=8192 elapsedMs=5 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c source=partial reused=0 dl=8192 elapsedMs=5 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d source=partial reused=0 dl=8192 elapsedMs=6 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f source=network_error reused=0 dl=0 elapsedMs=6 err=non_video_body prio=null lock=true
+00:08 +94 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +94 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+00:08 +94 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +94 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+00:08 +95 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +95 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 source=partial reused=0 dl=8192 elapsedMs=6 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 source=partial reused=0 dl=8192 elapsedMs=5 err=incomplete_8192/24576 prio=null lock=true
+00:08 +95 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_AUDIO mute_req playerId=829821363 role=active at=2026-11-18T11:09:34.483275Z
+MIRA_DISCOVER_AUDIO mute_done playerId=829821363 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=829821363 role=active ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=829821363
+MIRA_DISCOVER_AUDIO mute_req playerId=829821363 role=unknown at=2026-11-18T11:09:34.485432Z
+MIRA_DISCOVER_AUDIO mute_done playerId=829821363 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=829821363 role=unknown ms=0
+00:08 +95 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+LOGICAL_20_IDS localFirst=8192 others=155648 prefix=8192 bodySize=24576
+00:08 +96 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +96 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-)
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=partial reused=0 dl=8192 elapsedMs=5 err=incomplete_8192/32768 prio=null lock=true
+FIRST_BYTE_MS=pending
+FIRST_BYTE_MS=6 PREFIX_ARRIVED_BEFORE_TAIL_RELEASE=true
+COMPLETE_MS=14 STATS={mediaId: cccccccc-cccc-cccc-cccc-cccccccccccc, bytesFromDisk: 8192, bytesFromNetwork: 24576, contentLength: 32768, source: proxy_stream, requestStart: 0, requestEnd: 32767, firstByteMs: 2, completeMs: null} FULL_GETS=1 RANGE_STARTS=[8192]
+00:08 +97 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +97 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=partial reused=0 dl=8192 elapsedMs=5 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000001 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000002 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000003 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000004 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:08 +97 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_AUDIO mute_req playerId=829821363 role=parked at=2026-11-18T11:09:34.580893Z
+00:08 +97 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000005 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:08 +97 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_AUDIO mute_done playerId=829821363 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=829821363 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp1yip9 transition=3 build=2026111713 mediaId=null offer=mix-screen playerId=829821363 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp1yip9 transition=3 build=2026111713 mediaId=null offer=mix-screen claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=829821363 at=2026-11-18T11:09:34.582634Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=829821363 firstFrameMs=1 audible=1
+00:08 +97 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000006 source=partial reused=0 dl=8192 elapsedMs=6 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000007 source=partial reused=0 dl=8192 elapsedMs=6 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000008 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:08 +98 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +98 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000009 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000a source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000b source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000c source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000d source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000e source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:08 +98 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_AUDIO mute_req playerId=829821363 role=unknown at=2026-11-18T11:09:34.634794Z
+00:08 +98 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000f source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000010 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:08 +98 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages        
+MIRA_DISCOVER_AUDIO mute_done playerId=829821363 role=unknown ms=10
+MIRA_DISCOVER_AUDIO pause_done playerId=829821363 role=unknown ms=10
+00:08 +98 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000011 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:08 +99 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids        00:08 +99 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000012 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000013 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000014 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+00:08 +99 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:08 +99 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+AFTER20_FIRST_BYTE_MS=10
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=finalize_part reused=24576 dl=0 elapsedMs=0 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=disk_resume reused=8192 dl=16384 elapsedMs=24 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+00:08 +99 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_FF session=sho9vp2glgr transition=1 build=2026111713 mediaId=null offer=mix-screen playerId=315893929 firstFrameMs=39 source=0 cacheSource=0 cacheBytes=null audioCutMs=39 audible=0 initStart=39 initDone=39 playStart=39 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp2glgr transition=1 build=2026111713 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=39 firstFrameMs=39 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=315893929 at=2026-11-18T11:09:34.709633Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=315893929 firstFrameMs=39 audible=1
+00:08 +99 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+AFTER20_COMPLETE_MS=41 RANGE_STARTS=[-1, 8192] localFirst=24576
+00:08 +100 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +100 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +100 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: finalizePartIfComplete promotes full .part to complete file    
+MIRA_DISCOVER_CACHE mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+00:09 +100 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_AUDIO mute_req playerId=315893929 role=active at=2026-11-18T11:09:34.737353Z
+00:09 +101 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +102 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +103 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +103 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_AUDIO mute_req playerId=315893929 role=active at=2026-11-18T11:09:34.755784Z
+MIRA_DISCOVER_AUDIO mute_done playerId=315893929 role=active ms=43
+MIRA_DISCOVER_AUDIO mute_done playerId=315893929 role=active ms=25
+MIRA_DISCOVER_AUDIO pause_done playerId=315893929 role=active ms=43
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=315893929 role=active ms=25
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=315893929
+MIRA_DISCOVER_AUDIO mute_req playerId=315893929 role=unknown at=2026-11-18T11:09:34.782507Z
+MIRA_DISCOVER_AUDIO mute_done playerId=315893929 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=315893929 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9vp2glgr transition=2 build=2026111713 mediaId=null offer=mix-screen playerId=288308974 firstFrameMs=27 source=0 cacheSource=0 cacheBytes=null audioCutMs=26 audible=0 initStart=27 initDone=27 playStart=27 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp2glgr transition=2 build=2026111713 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=26 firstFrameMs=27 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=288308974 at=2026-11-18T11:09:34.784359Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=288308974 firstFrameMs=27 audible=1
+00:09 +103 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 206 prefix fill records Content-Range total and stays incomplete
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=null lock=true
+00:09 +103 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_AUDIO mute_req playerId=288308974 role=active at=2026-11-18T11:09:34.804395Z
+MIRA_DISCOVER_AUDIO mute_req playerId=315893929 role=parked at=2026-11-18T11:09:34.804888Z
+MIRA_DISCOVER_AUDIO mute_done playerId=288308974 role=active ms=1
+MIRA_DISCOVER_AUDIO mute_done playerId=315893929 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=288308974 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=315893929 role=parked ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=288308974
+MIRA_DISCOVER_AUDIO mute_req playerId=288308974 role=unknown at=2026-11-18T11:09:34.806389Z
+MIRA_DISCOVER_AUDIO mute_done playerId=288308974 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=288308974 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=315893929 role=unknown at=2026-11-18T11:09:34.807146Z
+00:09 +104 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +104 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_AUDIO mute_done playerId=315893929 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=315893929 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=288308974 role=parked at=2026-11-18T11:09:34.826768Z
+MIRA_DISCOVER_AUDIO mute_done playerId=288308974 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=288308974 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9vp2glgr transition=4 build=2026111713 mediaId=null offer=mix-screen playerId=288308974 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9vp2glgr transition=4 build=2026111713 mediaId=null offer=mix-screen claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=288308974 at=2026-11-18T11:09:34.828231Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=288308974 firstFrameMs=1 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=288308974 role=unknown at=2026-11-18T11:09:34.851410Z
+MIRA_DISCOVER_AUDIO mute_done playerId=288308974 role=unknown ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=288308974 role=unknown ms=2
+00:09 +105 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +106 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +106 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 200 ignore-Range aborts body after prefix (networkBytesRead near need)
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=null lock=true
+00:09 +107 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +107 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: lowPriority prefetch grows prefix only — never a full GET      
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+00:09 +108 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       00:09 +108 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: catalog search, empty state, and store stay on the same ids       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:09 +109 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_view_count_test.dart: the eye stays without a zero count                                   00:09 +110 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_view_count_test.dart: the eye stays without a zero count                                   00:09 +111 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_view_count_test.dart: the eye stays without a zero count                                   00:09 +111 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: resolvePlaySource returns while full download holds write lock (no deadlock)
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=f1111111-1111-1111-1111-111111111111 lock=true
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=network_to_disk reused=0 dl=262144 elapsedMs=95 err=null prio=f1111111-1111-1111-1111-111111111111 lock=true
+00:09 +112 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_view_count_test.dart: the eye stays without a zero count                                   00:09 +113 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_view_count_test.dart: the eye stays without a zero count                                   00:09 +113 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=disk_resume reused=24576 dl=106496 elapsedMs=14 err=null prio=null lock=true
+00:09 +114 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one 00:09 +115 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one 00:09 +116 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one 00:09 +116 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=network_to_disk reused=0 dl=262144 elapsedMs=10 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=disk reused=262144 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=network_to_disk reused=0 dl=524288 elapsedMs=10 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=disk reused=524288 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=finalize_part reused=1048576 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=network_to_disk reused=0 dl=1048576 elapsedMs=22 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=disk reused=1048576 dl=0 elapsedMs=2 err=null prio=null lock=true
+00:09 +117 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one 00:09 +118 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one 00:09 +119 -5: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one 00:09 +119 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: write lock serializes writers; peekComplete reads without waiting
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=network_to_disk reused=0 dl=131072 elapsedMs=96 err=null prio=null lock=true
+00:09 +119 -5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "سيروم فيتامين C": []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart:160:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart line 160
+The test description was:
+  server entry shows loading, then the response, and not an older one
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:09 +120 -6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: product chrome shows buy and store without fake success            00:09 +120 -6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: server entry shows loading, then the response, and not an older one [E]
+  Test failed. See exception logs above.
+  The test description was: server entry shows loading, then the response, and not an older one
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart -p vm --plain-name 'server entry shows loading, then the response, and not an older one'
+00:09 +120 -6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: one failed origin GET does not close shared client for other media
+MIRA_DISCOVER_CACHE mediaId=deaddead-dead-dead-dead-deaddeaddead source=network_error reused=0 dl=0 elapsedMs=5 err=bad_content_type_text/plain prio=null lock=true
+00:09 +120 -6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: a failed catalog load is not an empty page, and retry can be empty
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:09 +120 -6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: one failed origin GET does not close shared client for other media
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=finalize_part reused=49152 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=network_to_disk reused=0 dl=49152 elapsedMs=13 err=null prio=null lock=true
+00:09 +121 -6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: product chrome shows buy and store without fake success            00:09 +121 -6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: product chrome shows buy and store without fake success            
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "أضيفي للسلة": []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart:553:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart line 553
+The test description was:
+  product chrome shows buy and store without fake success
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:09 +121 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: product chrome shows buy and store without fake success [E]        
+  Test failed. See exception logs above.
+  The test description was: product chrome shows buy and store without fake success
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart -p vm --plain-name 'product chrome shows buy and store without fake success'
+00:09 +121 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: a failed catalog load is not an empty page, and retry can be empty
+MIRA_DISCOVER_CATALOG apply_fail lane=null category=null failed=true invalidCursor=false transport=null contentMark=null items=0
+00:09 +121 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor proxy open does not steal priority from visible clip  
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=finalize_part reused=2097152 dl=0 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=network_to_disk reused=0 dl=2097152 elapsedMs=42 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+00:09 +121 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: a failed catalog load is not an empty page, and retry can be empty00:09 +121 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: a failed catalog load is not an empty page, and retry can be empty
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:09 +122 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor proxy open does not steal priority from visible clip  00:09 +123 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: preview buy does not open a transaction                            00:09 +123 -7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: preview buy does not open a transaction                            
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown running a test:
+The finder "Found 0 widgets with text "أضيفي للسلة": []" (used in a call to "tap()") could not find
+any matching widgets.
+
+When the exception was thrown, this was the stack:
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2013:7)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1865:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1045:7)
+#3      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart:577:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+The test description was:
+  preview buy does not open a transaction
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:09 +123 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: preview buy does not open a transaction [E]                        
+  Test failed. See exception logs above.
+  The test description was: preview buy does not open a transaction
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart -p vm --plain-name 'preview buy does not open a transaction'
+00:09 +123 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves claimed priority bytes; neighbor stays prefix-only under load
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=524288 elapsedMs=9 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+00:09 +124 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      00:09 +124 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: trusted complete reopens from disk after new cache instance with origin down
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=network_to_disk reused=0 dl=98304 elapsedMs=6 err=null prio=null lock=true
+00:09 +125 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      00:09 +125 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: trusted complete reopens from disk after new cache instance with origin down
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=disk reused=98304 dl=0 elapsedMs=1 err=null prio=null lock=true
+00:09 +126 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      00:09 +126 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: HEAD 404/HTML length is not recorded as video total            
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=finalize_part reused=40960 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=network_to_disk reused=0 dl=40960 elapsedMs=8 err=null prio=null lock=true
+00:09 +127 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      00:09 +127 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: untrusted named complete is never used by peek/prefix/proxy paths
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=network_to_disk reused=0 dl=65536 elapsedMs=7 err=null prio=null lock=true
+00:09 +128 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      00:09 +129 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      00:10 +129 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      00:10 +129 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: details, appointment, and favorite describe the real outcome      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:10 +130 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +130 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: two stopAfterBytes ensureLocal calls serialize writers (not just inflight)
+MIRA_DISCOVER_CACHE mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=partial reused=0 dl=16384 elapsedMs=64 err=incomplete_16384/262144 prio=null lock=true
+MIRA_DISCOVER_LOCK wait mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb waitedMs=65
+00:10 +131 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +131 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: typing while the first response is pending keeps the search field 
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:10 +132 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +132 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: saved favorite shows a filled heart for a signed-in account       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:10 +133 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +134 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +135 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +135 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: empty presentation has an exit                                     
+MIRA_BUILD_IDENTITY build=2026111713 session=sho9vp38gw2 api=https://mira-api-n4p3.onrender.com/api/v1 useBackend=true
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:10 +136 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +136 -8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: appointment says the operational request is unavailable           
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "طلب موعد": []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart:254:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart line 254
+The test description was:
+  appointment says the operational request is unavailable
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:10 +136 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: appointment says the operational request is unavailable [E]       
+  Test failed. See exception logs above.
+  The test description was: appointment says the operational request is unavailable
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart -p vm --plain-name 'appointment says the operational request is unavailable'
+00:10 +136 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: a vertical drag keeps one search field                            
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:10 +137 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +137 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: search stays fixed through loading, empty, and failure            
+MIRA_DISCOVER_CATALOG apply_fail lane=null category=null failed=true invalidCursor=false transport=CatalogTransport.server contentMark=null items=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:10 +138 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +138 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_phase2_widget_test.dart: favorite read retry clears the error                              
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:10 +139 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome                                           00:10 +140 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:11 +140 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:11 +141 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:11 +142 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:11 +143 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:11 +144 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:11 +145 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:12 +145 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:12 +146 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:12 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:13 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:14 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:15 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:16 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:17 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:18 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:19 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:20 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:21 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:22 +147 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:22 +148 -9: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                    00:22 +148 -9: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                              00:22 +148 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: prefix holding lock + ensureLocal inflight: Range fill without join (fixed)
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=8192 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK wait mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb waitedMs=6
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=disk_resume reused=8192 dl=122880 elapsedMs=9 err=null prio=null lock=true
+00:22 +149 -9: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                              00:22 +149 -9: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                           00:22 +149 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=98304 elapsedMs=48 err=null prio=null lock=true
+00:22 +150 -9: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                           00:22 +150 -9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download 00:22 +150 -9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download
+MIRA_DISCOVER_CACHE mediaId=deadbeef-dead-dead-dead-deaddeadbeef source=network_error reused=0 dl=0 elapsedMs=3 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=65536 elapsedMs=41 err=null prio=null lock=true
+00:22 +151 -9: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download 00:22 +151 -9: Some tests failed.                                                                                                                                                                      

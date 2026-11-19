@@ -1,0 +1,12 @@
+{"step":"health","ok":true,"api":"http://127.0.0.1:3031/api/v1","portal":"http://127.0.0.1:8031/dashboard.html"}
+{"step":"portal_me","status":200,"partnerId":"9698321a-337b-4820-a20e-b06174bfbc81"}
+{"step":"create_service","status":201,"nameAr":"تنظيف اختبار إصدار","id":"f8c2e453-1c7c-4c3a-8376-35f1abec23b4","err":null}
+{"step":"submit_review","id":"f8c2e453-1c7c-4c3a-8376-35f1abec23b4","status":400,"err":"صورة واحدة على الأقل مطلوبة. الفيديو اختياري"}
+{"step":"patch_bookable","id":"f8c2e453-1c7c-4c3a-8376-35f1abec23b4","status":200,"contentStatus":"draft","bookingEnabled":true,"err":null}
+{"step":"create_service","status":201,"nameAr":"ترطيب اختبار إصدار","id":"c862acfa-39a3-431b-9661-67563ecb3141","err":null}
+{"step":"submit_review","id":"c862acfa-39a3-431b-9661-67563ecb3141","status":400,"err":"صورة واحدة على الأقل مطلوبة. الفيديو اختياري"}
+{"step":"patch_bookable","id":"c862acfa-39a3-431b-9661-67563ecb3141","status":200,"contentStatus":"draft","bookingEnabled":true,"err":null}
+{"step":"close_booking","id":"f8c2e453-1c7c-4c3a-8376-35f1abec23b4","status":200,"bookingEnabled":false,"contentStatus":"draft"}
+{"step":"withdraw","id":"f8c2e453-1c7c-4c3a-8376-35f1abec23b4","status":200,"ok":true}
+{"step":"portal_html_api_base","pointsToTestApi":true,"hasProdApi":false}
+{"done":true,"ok":true}

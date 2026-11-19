@@ -1,0 +1,6 @@
+pass http both_bookable
+pass http booking_closed view
+pass http withdrawn omitted
+pass http search_failed retry
+pass http بكم هذه؟ 150
+OK rc52-alt-cards-live-http

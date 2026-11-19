@@ -1,0 +1,34 @@
+{
+  "note": "isolated fixture via sendMessage harness — not live customer data",
+  "ask": "بكم البديل؟",
+  "rawDiscoveryOffers": [
+    {
+      "id": "svc-clean",
+      "titleAr": "تنظيف",
+      "priceSar": 150,
+      "action": "book"
+    },
+    {
+      "id": "svc-hydrate",
+      "titleAr": "ترطيب",
+      "priceSar": 120,
+      "action": "book"
+    }
+  ],
+  "answerAr_contains": [
+    "ترطيب",
+    "120"
+  ],
+  "answerAr_excludes": [
+    "سعر البديل المنشور «تنظيف»"
+  ],
+  "finalCards": [
+    {
+      "id": "svc-hydrate",
+      "priceSar": 120,
+      "action": "book"
+    }
+  ],
+  "discoverySideOffer": null,
+  "source": "rc52-alternatives-final-merge.integration-tests.ts"
+}

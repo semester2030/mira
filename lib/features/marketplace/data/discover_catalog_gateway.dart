@@ -6,7 +6,12 @@ import '../domain/entities/catalog_product.dart';
 import '../domain/entities/catalog_service.dart';
 
 class CatalogSourceException implements Exception {
-  const CatalogSourceException();
+  const CatalogSourceException([this.reason]);
+
+  final String? reason;
+
+  @override
+  String toString() => reason == null ? 'CatalogSourceException' : 'CatalogSourceException($reason)';
 }
 
 class CatalogCursorException implements Exception {

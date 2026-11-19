@@ -22,6 +22,18 @@ abstract final class MiraUrlLauncher {
     }
   }
 
+  /// Opens the iOS/Android app settings page (camera / privacy toggles).
+  static Future<bool> openAppSettings() async {
+    try {
+      // iOS: app-settings: · Android: package settings via same scheme when supported.
+      final uri = Uri.parse('app-settings:');
+      if (await canLaunchUrl(uri)) {
+        return launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+    return false;
+  }
+
   static void _snack(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }

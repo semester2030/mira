@@ -128,6 +128,12 @@
       "contentType": "image/png"
     },
     {
+      "imageKey": "beauty.face_care.peel",
+      "file": "beauty_face_care_peel.png",
+      "sha256": "a5db416b26a0c5a91141307986418cbb2823beb7b462060b6e0027725f97a8cb",
+      "contentType": "image/png"
+    },
+    {
       "imageKey": "beauty.face_care.pre_makeup",
       "file": "beauty_face_care_pre_makeup.png",
       "sha256": "54b8ca10d79f2400ef02e2a2cc593bb2aa0a7ab485ee6ee0b2f565b3d1e0a7af",

@@ -1,0 +1,14 @@
+app: Mira (app.mira.beauty)
+versionName: 1.0.0
+buildNumber: 2026111709
+commit: 2824e222726fe3c344d2b37349e20e048e914e95
+commitShort: 2824e22
+branch: mira/discover-speed-multi-media
+device: fayez’s iPhone (00008110-00191986268BA01E)
+installedBundleVersion: 2026111709
+portalDashboardScript: partners-portal/web/js/catalog-journey.js
+bags1Alias: partners-portal/web/js/catalog-journey.bags1.js (synced identical)
+apiHint: mira-api-n4p3.onrender.com (from prior media URLs; not re-verified this pass)
+publicPublish: no
+performanceVerdict: OPEN — awaiting device confirmation
+priorDevice: 2026111708 @ 4267997 — user reported no noticeable improvement

@@ -1,0 +1,6 @@
+pass fixture_two_products_one_service
+pass search_returns_offer_ids
+pass no_match_vs_search_failed
+pass hairstyle_maps_to_published_service
+pass conversation_path_uses_search_offers_not_flag_alone
+OK consultant discovery catalog schema tests

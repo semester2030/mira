@@ -1,0 +1,7 @@
+18:42:04  Acquired tunnel connection to device.
+18:42:04  Enabling developer disk image services.
+18:42:04  Acquired usage assertion.
+Apps installed:
+Name   Bundle Identifier   Version   Bundle Version
+----   -----------------   -------   --------------
+Mira   app.mira.beauty     1.0.0     2026111719    

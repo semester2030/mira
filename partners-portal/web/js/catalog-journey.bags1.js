@@ -1031,11 +1031,25 @@
     async function refreshDescriptionPhrases() {
       const subId = subcategory && subcategory.value ? String(subcategory.value) : '';
       phraseList.innerHTML = '';
-      if (!subId || !taxonomyCache || !taxonomyCache.descriptionPhrases) {
+      if (!subId) {
         phraseBox.hidden = true;
         return;
       }
-      const phrases = taxonomyCache.descriptionPhrases[subId] || [];
+      let phrases =
+        (taxonomyCache && taxonomyCache.descriptionPhrases && taxonomyCache.descriptionPhrases[subId]) ||
+        [];
+      if ((!phrases || !phrases.length) && window.ServiceTemplates) {
+        const tmpl =
+          window.ServiceTemplates.byId(subId) ||
+          (window.ServiceTemplates.templates || []).find(
+            (t) => t.taxonomyLeafId === subId || t.catalogGuideServiceId === subId,
+          );
+        if (tmpl && Array.isArray(tmpl.suggestedPhrasesAr) && tmpl.suggestedPhrasesAr.length) {
+          phrases = tmpl.suggestedPhrasesAr.map(function (textAr, ix) {
+            return { id: (tmpl.catalogGuideServiceId || tmpl.id) + '_local_' + (ix + 1), textAr: textAr };
+          });
+        }
+      }
       if (!phrases.length) {
         phraseBox.hidden = true;
         return;
@@ -4101,7 +4115,12 @@
     mediaSection.setAttribute('data-section-role', 'main-media');
     text(mediaSection, 'وسائط العرض الرئيسي', 'h3');
     text(mediaSection, 'الفيديو أو الصور التي تظهر للمستخدم مباشرة أثناء تصفح اكتشفي بملء الشاشة.');
-    text(mediaSection, 'فيديو واحد أو مجموعة صور. صور JPEG وPNG وWebP وصورة الآيفون حتى 5 ميغابايت. الفيديو حتى 5 دقائق.');
+    text(
+      mediaSection,
+      'حتى 3 فيديوهات وحتى 10 صور في العرض الرئيسي (حدود مستقلة، يمكن المزج). صور JPEG وPNG وWebP وصورة الآيفون حتى 5 ميغابايت. الفيديو حتى 5 دقائق.',
+    );
+    const MAIN_MAX_VIDEOS = 3;
+    const MAIN_MAX_IMAGES = 10;
     const videoScopeSeed =
       (seed.attributesJson && seed.attributesJson.videoScope) ||
       seed.videoScope ||
@@ -4202,19 +4221,19 @@
     }
     const images = mediaInput(form.id + '-images', 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,.jpg');
     const videos = mediaInput(form.id + '-videos', 'video/mp4,video/quicktime,video/x-m4v,.mov,.m4v,.mp4');
-    videos.multiple = false;
+    videos.multiple = true;
     videos.classList.add('e2b-file-input-native');
     images.classList.add('e2b-file-input-native');
     const imageLabel = document.createElement('label');
     imageLabel.htmlFor = images.id;
     imageLabel.className = 'e2b-media-pick-btn';
-    imageLabel.textContent = 'إضافة صور للعرض الرئيسي';
+    imageLabel.textContent = 'إضافة صور للعرض الرئيسي (حتى 10)';
     const videoCard = document.createElement('div');
     videoCard.className = 'e2b-video-card';
     videoCard.setAttribute('data-testid', 'e2b-video-card');
     const videoTitle = document.createElement('h4');
     videoTitle.className = 'e2b-video-card-title';
-    videoTitle.textContent = 'الفيديو الرئيسي';
+    videoTitle.textContent = 'فيديوهات العرض الرئيسي (حتى 3)';
     const videoStatus = document.createElement('p');
     videoStatus.className = 'e2b-video-card-status';
     videoStatus.setAttribute('data-testid', 'e2b-video-card-status');
@@ -4224,7 +4243,7 @@
     videoPick.htmlFor = videos.id;
     videoPick.className = 'e2b-media-pick-btn e2b-video-pick';
     videoPick.setAttribute('data-testid', 'e2b-video-pick');
-    videoPick.textContent = 'اختيار المقطع';
+    videoPick.textContent = 'إضافة مقاطع';
     const mainPreview = document.createElement('p');
     mainPreview.className = 'e2b-media-hint';
     mainPreview.textContent = 'معاينة الموضع: تملأ شاشة اكتشفي من الحافة إلى الحافة.';
@@ -4355,20 +4374,23 @@
         return;
       }
       if (savedMain) {
+        const savedCount = Array.isArray(serverMedia)
+          ? serverMedia.filter((m) => m && m.kind === 'video' && m.placement !== 'detail' && !m.pendingRemoval).length
+          : 1;
         videoStatus.dataset.state = 'saved';
         videoStatus.dataset.phase = 'saved';
         videoStatus.textContent =
-          'فيديو محفوظ على العنصر' +
+          (savedCount > 1 ? savedCount + ' فيديوهات محفوظة' : 'فيديو محفوظ على العنصر') +
           (savedMain.publication ? ' · ' + savedMain.publication : '') +
-          ' — يمكن استبداله.';
-        videoPick.textContent = 'استبدال المقطع';
-        videoPick.dataset.action = 'replace';
+          (savedCount >= MAIN_MAX_VIDEOS ? ' — الحد الأقصى.' : ' — يمكن إضافة المزيد.');
+        videoPick.textContent = savedCount >= MAIN_MAX_VIDEOS ? 'الحد الأقصى 3' : 'إضافة مقطع';
+        videoPick.dataset.action = savedCount >= MAIN_MAX_VIDEOS ? 'full' : 'pick';
         return;
       }
       videoStatus.dataset.state = 'empty';
       videoStatus.dataset.phase = 'empty';
       videoStatus.textContent = 'لم يُختر مقطع بعد — هذا ليس خطأ.';
-      videoPick.textContent = 'اختيار المقطع';
+      videoPick.textContent = 'إضافة مقاطع';
       videoPick.dataset.action = 'pick';
     }
     videos.addEventListener('change', () => {
@@ -6246,7 +6268,26 @@
     } catch (_) {}
 
 
+    function countMainKind(kind, serverMedia) {
+      const place = (row) => (row && row.placement === 'detail' ? 'detail' : row && row.placement === 'cover' ? 'cover' : 'main');
+      let n = 0;
+      const rows = staged[form.id] || [];
+      rows.forEach((e) => {
+        if (!e || e.error || place(e) !== 'main') return;
+        const isVid = e.file ? isPhoneVideo(e.file) : e.kind === 'video';
+        const isImg = e.file ? isPhoneImage(e.file) : e.kind === 'image';
+        if (kind === 'video' && isVid) n += 1;
+        if (kind === 'image' && isImg) n += 1;
+      });
+      (Array.isArray(serverMedia) ? serverMedia : item && item.media ? item.media : []).forEach((m) => {
+        if (!m || m.pendingRemoval || place(m) !== 'main') return;
+        if (m.kind === kind) n += 1;
+      });
+      return n;
+    }
+
     async function addStaged(fileList, placement) {
+      const place = placement === 'detail' ? 'detail' : 'main';
       for (const raw of Array.from(fileList || [])) {
         let file = raw;
         if (isHeic(raw)) {
@@ -6260,7 +6301,7 @@
               error: error.message || 'تعذر تحويل صورة الآيفون',
               percent: null,
               url: URL.createObjectURL(raw),
-              placement: placement === 'detail' ? 'detail' : 'main',
+              placement: place,
             });
             continue;
           }
@@ -6270,6 +6311,13 @@
           const seconds = await videoDurationSeconds(file);
           if (seconds != null && seconds > 300) problem = 'مدة الفيديو يجب ألا تتجاوز 5 دقائق';
         }
+        if (!problem && place === 'main') {
+          if (isPhoneVideo(file) && countMainKind('video') >= MAIN_MAX_VIDEOS) {
+            problem = 'العرض الرئيسي يقبل حتى ' + MAIN_MAX_VIDEOS + ' فيديوهات فقط.';
+          } else if (isPhoneImage(file) && countMainKind('image') >= MAIN_MAX_IMAGES) {
+            problem = 'العرض الرئيسي يقبل حتى ' + MAIN_MAX_IMAGES + ' صور فقط.';
+          }
+        }
         const entry = {
           key: file.name + ':' + file.size + ':' + file.lastModified,
           file: file,
@@ -6278,7 +6326,7 @@
           error: problem,
           percent: null,
           url: URL.createObjectURL(file),
-          placement: placement === 'detail' ? 'detail' : 'main',
+          placement: place,
         };
         staged[form.id].push(entry);
         if (!problem && item && item.id) uploadOne(entry);
