@@ -20,12 +20,16 @@ class BookingVisitConsecutiveScreen extends StatefulWidget {
     required this.services,
     this.client,
     this.pendingStore,
+    this.resumeIdempotencyKey,
   });
 
-  /// Exactly two services the customer selected for this visit.
+  /// Exactly two services the customer selected for this visit (may be stubs when resuming).
   final List<CatalogService> services;
   final CommerceClient? client;
   final PendingVisitAttemptStore? pendingStore;
+
+  /// When opening from «حجوزاتي», recover this attempt by account+key before availability.
+  final String? resumeIdempotencyKey;
 
   @override
   State<BookingVisitConsecutiveScreen> createState() => _BookingVisitConsecutiveScreenState();
@@ -50,15 +54,21 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
   bool _submitting = false;
   bool _needsLogin = false;
   bool _recovering = false;
+  bool _outcomeUnknown = false;
+  bool _rejectedFinal = false;
 
   String? _idempotencyKey;
   String? _completedVisitId;
   String? _completedPublicNumber;
   List<String> _acceptedServiceIds = const [];
-  PendingVisitAttempt? _pendingAttempt;
+  List<CommerceBooking> _acceptedBookings = const [];
+  PendingVisitAttempt? _activeAttempt;
 
   CatalogService get _a => widget.services.first;
   CatalogService get _b => widget.services[1];
+
+  bool get _lockedOnPendingKey =>
+      _outcomeUnknown || _recovering || (_activeAttempt?.phase == VisitAttemptPhase.outcomeUnknown);
 
   String? get _sharedBranchId {
     final a = (_a.branchId ?? '').trim();
@@ -66,10 +76,13 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
     if (a.isNotEmpty && b.isNotEmpty) return a == b ? a : null;
     if (a.isNotEmpty && b.isEmpty) return a;
     if (b.isNotEmpty && a.isEmpty) return b;
-    return null;
+    return _activeAttempt?.branchId;
   }
 
   String get _branchLabel {
+    if (_activeAttempt != null && _activeAttempt!.branchLabel.isNotEmpty) {
+      return _activeAttempt!.branchLabel;
+    }
     final id = _sharedBranchId;
     if (id == null) return '';
     final name = _a.branchNameAr ?? _b.branchNameAr;
@@ -91,53 +104,152 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
   }
 
   Future<void> _bootstrap() async {
-    await _tryRecoverPending();
+    final recovered = await _tryRecoverPending();
     if (_completedVisitId != null) return;
+    if (recovered && _outcomeUnknown) {
+      // Stay on verification UI — do not load availability or start a new attempt.
+      return;
+    }
+    if (_rejectedFinal) return;
     await _loadFirstSlots();
   }
 
-  Future<void> _tryRecoverPending() async {
+  /// Returns true when an actionable / terminal pending attempt was found for this screen.
+  Future<bool> _tryRecoverPending() async {
     final account = _client.accountKey;
-    if (account == null || account.isEmpty) return;
-    final pending = await _pending.load(account);
-    if (pending == null) return;
-    // Only recover when the pending attempt matches this pair of services.
-    final pendingIds = pending.items.map((e) => e['serviceId'] as String?).whereType<String>().toSet();
-    final screenIds = {_a.id, _b.id};
-    if (pendingIds.length != 2 || pendingIds.difference(screenIds).isNotEmpty) return;
+    if (account == null || account.isEmpty) return false;
 
+    PendingVisitAttempt? pending;
+    final resumeKey = widget.resumeIdempotencyKey?.trim();
+    if (resumeKey != null && resumeKey.isNotEmpty) {
+      pending = await _pending.get(account, resumeKey);
+    } else {
+      // Match this pair only — never steal another attempt's key.
+      final all = await _pending.list(account);
+      final screenIds = {_a.id, _b.id};
+      for (final a in all) {
+        final pendingIds = a.serviceIds.toSet();
+        if (pendingIds.length == 2 && pendingIds.difference(screenIds).isEmpty) {
+          pending = a;
+          break;
+        }
+      }
+    }
+    if (pending == null) return false;
+    if (pending.phase == VisitAttemptPhase.accepted && pending.visitId != null) {
+      setState(() {
+        _activeAttempt = pending;
+        _idempotencyKey = pending!.idempotencyKey;
+        _completedVisitId = pending.visitId;
+        _completedPublicNumber = pending.publicNumber;
+      });
+      return true;
+    }
+    if (pending.phase == VisitAttemptPhase.rejectedFinal) {
+      setState(() {
+        _activeAttempt = pending;
+        _idempotencyKey = pending!.idempotencyKey;
+        _rejectedFinal = true;
+        _error = pending.rejectionCode == null
+            ? 'رُفض الطلب نهائيًا. لإرسال طلب جديد اختاري الخدمات وأرسلي من جديد.'
+            : 'رُفض الطلب (${pending.rejectionCode}). لإرسال طلب جديد اختاري الخدمات وأرسلي من جديد.';
+      });
+      return true;
+    }
+    if (pending.phase != VisitAttemptPhase.outcomeUnknown &&
+        pending.phase != VisitAttemptPhase.submitting) {
+      return false;
+    }
+
+    final contact = await _pending.readContact(account, pending.idempotencyKey);
     setState(() {
       _recovering = true;
-      _pendingAttempt = pending;
-      _idempotencyKey = pending.idempotencyKey;
-      _name.text = pending.contactName;
-      _phone.text = SaudiPhone.display(pending.contactPhone);
-      if (pending.notes != null) _notes.text = pending.notes!;
+      _outcomeUnknown = true;
+      _activeAttempt = pending;
+      _idempotencyKey = pending!.idempotencyKey;
+      if (contact != null) {
+        _name.text = contact.contactName;
+        _phone.text = SaudiPhone.display(contact.contactPhone);
+        if (contact.notes != null) _notes.text = contact.notes!;
+      }
     });
 
+    await _verifyOrReplay(pending, contact);
+    return true;
+  }
+
+  Future<void> _verifyOrReplay(PendingVisitAttempt pending, VisitAttemptContact? contact) async {
+    final account = _client.accountKey;
+    if (account == null) return;
+    setState(() {
+      _recovering = true;
+      _error = null;
+    });
     try {
-      // Prefer lookup by key — do NOT treat availability as a receipt.
+      // Prefer lookup by key — never treat availability as a receipt.
       final byKey = await _client.getVisitByKey(pending.idempotencyKey);
       if (byKey != null) {
         await _applyVisitResult(byKey.visit, clearPending: true);
         return;
       }
-      // Unknown outcome: re-POST the same key + same body (idempotent replay or first write).
+
+      // VISIT_NOT_FOUND for *this* key only → same-key replay is appropriate when body unchanged.
+      final c = contact ?? await _pending.readContact(account, pending.idempotencyKey);
+      if (c == null || c.contactName.isEmpty || c.contactPhone.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _outcomeUnknown = true;
+            _error = 'لم نتحقق من نتيجة الطلب. بيانات الاتصال المحمية غير متاحة لإعادة الإرسال — اضغطي «تحققي من طلبي» لاحقًا.';
+          });
+        }
+        return;
+      }
+
+      await _pending.upsert(
+        pending.copyWith(phase: VisitAttemptPhase.submitting),
+        contact: c,
+      );
+
       final result = await _client.createConsecutiveVisit(
         idempotencyKey: pending.idempotencyKey,
         branchId: pending.branchId,
-        contactName: pending.contactName,
-        contactPhone: pending.contactPhone,
+        contactName: c.contactName,
+        contactPhone: c.contactPhone,
         items: pending.items,
-        notes: pending.notes,
+        notes: c.notes,
       );
       await _applyVisitResult(result.visit, clearPending: true);
     } on CommerceAuthException {
       if (mounted) setState(() => _needsLogin = true);
     } on CommerceApiException catch (e) {
-      if (mounted) setState(() => _error = e.messageAr);
+      if (!mounted) return;
+      if (isFinalVisitRejection(e.code)) {
+        // Terminal: drop protected contact; keep index so reopen does not auto-resend.
+        await _pending.remove(account, pending.idempotencyKey);
+        final terminal = pending.copyWith(phase: VisitAttemptPhase.rejectedFinal, rejectionCode: e.code);
+        await _pending.upsert(terminal);
+        setState(() {
+          _rejectedFinal = true;
+          _outcomeUnknown = false;
+          _activeAttempt = terminal;
+          _error = e.messageAr;
+        });
+        return;
+      }
+      // Network / 5xx / ambiguous — stay outcomeUnknown; do not invent SLOT_FULL from self.
+      await _pending.upsert(pending.copyWith(phase: VisitAttemptPhase.outcomeUnknown));
+      setState(() {
+        _outcomeUnknown = true;
+        _error = 'لم نتحقق من نتيجة الطلب (${e.messageAr}). اضغطي «تحققي من طلبي» دون إنشاء محاولة جديدة.';
+      });
     } catch (e) {
-      if (mounted) setState(() => _error = commerceErrorText(e));
+      await _pending.upsert(pending.copyWith(phase: VisitAttemptPhase.outcomeUnknown));
+      if (mounted) {
+        setState(() {
+          _outcomeUnknown = true;
+          _error = 'لم نتحقق من نتيجة الطلب. ${commerceErrorText(e)}';
+        });
+      }
     } finally {
       if (mounted) setState(() => _recovering = false);
     }
@@ -147,9 +259,13 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
     _completedVisitId = visit.id;
     _completedPublicNumber = visit.publicNumber;
     _acceptedServiceIds = visit.bookings.map((b) => b.serviceId).toList();
+    _acceptedBookings = visit.bookings;
+    _outcomeUnknown = false;
+    _rejectedFinal = false;
     if (clearPending) {
       final account = _client.accountKey;
-      if (account != null) await _pending.clear(account);
+      final key = _idempotencyKey ?? _activeAttempt?.idempotencyKey;
+      if (account != null && key != null) await _pending.remove(account, key);
     }
     if (!mounted) return;
     setState(() {});
@@ -212,10 +328,28 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
     return null;
   }
 
+  Future<void> _onVerifyPressed() async {
+    final attempt = _activeAttempt;
+    if (attempt == null) return;
+    final account = _client.accountKey;
+    if (account == null) return;
+    final contact = await _pending.readContact(account, attempt.idempotencyKey);
+    await _verifyOrReplay(attempt, contact);
+  }
+
   Future<void> _submit() async {
     if (_submitting || _recovering) return;
     if (_completedVisitId != null) {
       Navigator.of(context).pop(<String>{..._acceptedServiceIds});
+      return;
+    }
+    // Lost response / unknown outcome: verify by key before any availability read or new key.
+    if (_outcomeUnknown && _activeAttempt != null) {
+      await _onVerifyPressed();
+      return;
+    }
+    if (_rejectedFinal) {
+      setState(() => _error = 'الطلب السابق رُفض نهائيًا. ابدئي طلبًا جديدًا باختيار الخدمات من السلة.');
       return;
     }
     if (!_form.currentState!.validate()) return;
@@ -271,27 +405,32 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
         },
       ];
       final fp = pendingVisitFingerprint(branchId: branchId, items: items);
-      // Persist *before* the first send so a lost success can be recovered by key.
+      final contact = VisitAttemptContact(
+        contactName: _name.text.trim(),
+        contactPhone: phone,
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      );
       final attempt = PendingVisitAttempt(
         userId: account,
         idempotencyKey: _idempotencyKey!,
         fingerprint: fp,
         branchId: branchId,
+        branchLabel: _branchLabel,
         items: items,
-        contactName: _name.text.trim(),
-        contactPhone: phone,
-        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+        serviceNamesAr: [_a.nameAr, _b.nameAr],
+        phase: VisitAttemptPhase.submitting,
         savedAtMs: DateTime.now().millisecondsSinceEpoch,
       );
-      await _pending.save(attempt);
-      _pendingAttempt = attempt;
+      // Persist *before* the first send so a lost success can be recovered by key.
+      await _pending.upsert(attempt, contact: contact);
+      _activeAttempt = attempt;
 
       final result = await _client.createConsecutiveVisit(
         idempotencyKey: _idempotencyKey!,
         branchId: branchId,
-        contactName: attempt.contactName,
-        contactPhone: attempt.contactPhone,
-        notes: attempt.notes,
+        contactName: contact.contactName,
+        contactPhone: contact.contactPhone,
+        notes: contact.notes,
         items: items,
       );
       await _applyVisitResult(result.visit, clearPending: true);
@@ -299,9 +438,63 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
       if (mounted) setState(() => _needsLogin = true);
     } on CommerceApiException catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.messageAr);
+      final account = _client.accountKey;
+      final key = _idempotencyKey;
+      if (account != null && key != null && _activeAttempt != null) {
+        if (isFinalVisitRejection(e.code)) {
+          await _pending.remove(account, key);
+          await _pending.upsert(
+            _activeAttempt!.copyWith(phase: VisitAttemptPhase.rejectedFinal, rejectionCode: e.code),
+          );
+          setState(() {
+            _rejectedFinal = true;
+            _error = e.messageAr;
+          });
+        } else if (e.code == CommerceApiException.network || (e.status != null && e.status! >= 500) || e.status == 0) {
+          await _pending.upsert(_activeAttempt!.copyWith(phase: VisitAttemptPhase.outcomeUnknown));
+          setState(() {
+            _outcomeUnknown = true;
+            _error = 'لم نتحقق من نتيجة الطلب. اضغطي «تحققي من طلبي».';
+          });
+        } else if (isFinalVisitRejection(e.code) == false) {
+          // Soft/transient conflict (e.g. SLOT_FULL for a different customer) — keep attempt if we may have written.
+          // For clear client validation before write, drop submitting mark.
+          if (e.status == 409 || e.status == 422) {
+            // Ambiguous whether server wrote — keep outcomeUnknown only for network; 422 before write can clear.
+            if (e.code == 'BOOKING_SLOT_FULL' || e.code == 'BOOKING_USER_OVERLAP') {
+              await _pending.remove(account, key);
+              setState(() => _error = e.messageAr);
+            } else if (isFinalVisitRejection(e.code)) {
+              // unreachable
+            } else {
+              await _pending.remove(account, key);
+              setState(() => _error = e.messageAr);
+            }
+          } else {
+            await _pending.upsert(_activeAttempt!.copyWith(phase: VisitAttemptPhase.outcomeUnknown));
+            setState(() {
+              _outcomeUnknown = true;
+              _error = 'لم نتحقق من نتيجة الطلب (${e.messageAr}).';
+            });
+          }
+        }
+      } else {
+        setState(() => _error = e.messageAr);
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = commerceErrorText(e));
+      final account = _client.accountKey;
+      final key = _idempotencyKey;
+      if (account != null && key != null && _activeAttempt != null) {
+        await _pending.upsert(_activeAttempt!.copyWith(phase: VisitAttemptPhase.outcomeUnknown));
+        if (mounted) {
+          setState(() {
+            _outcomeUnknown = true;
+            _error = 'لم نتحقق من نتيجة الطلب. ${commerceErrorText(e)}';
+          });
+        }
+      } else if (mounted) {
+        setState(() => _error = commerceErrorText(e));
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -319,6 +512,10 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
         ? null
         : _firstSlot!.endsAt.add(Duration(minutes: _b.durationMin > 0 ? _b.durationMin : 30));
 
+    final titleNames = _activeAttempt?.serviceNamesAr.isNotEmpty == true
+        ? '${_activeAttempt!.serviceNamesAr[0]} → ${_activeAttempt!.serviceNamesAr.length > 1 ? _activeAttempt!.serviceNamesAr[1] : _b.nameAr}'
+        : '${_a.nameAr} → ${_b.nameAr}';
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: const MiraAppBar(pageTitle: 'طلب زيارة متتابعة'),
@@ -333,12 +530,25 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
                 style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
-              if (_recovering || _pendingAttempt != null && _completedVisitId == null)
+              if (_recovering || _outcomeUnknown)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    _recovering ? 'جارٍ استرجاع طلب الزيارة…' : 'توجد محاولة سابقة — نعيد الاستعلام بالمفتاح دون فحص توفر جديد أولًا.',
+                    _recovering
+                        ? 'جارٍ استرجاع طلب الزيارة بالمفتاح…'
+                        : 'لم نتحقق من نتيجة الطلب — الاسترجاع بالمفتاح قبل أي فحص للتوفر.',
+                    key: const Key('pending_outcome_unknown'),
                     style: AppTypography.bodySmall.copyWith(color: Colors.orange.shade800),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              if (_rejectedFinal)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'رُفض الطلب نهائيًا — لن يُعاد الإرسال تلقائيًا.',
+                    key: const Key('pending_rejected_final'),
+                    style: AppTypography.bodySmall.copyWith(color: Colors.red.shade700),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -351,8 +561,20 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
                     textAlign: TextAlign.center,
                   ),
                 ),
+              if (_acceptedBookings.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    [
+                      for (final b in _acceptedBookings)
+                        '«${b.serviceNameAr}» ${riyadhClock(b.startsAt)}–${riyadhClock(b.endsAt)} · ${b.publicNumber}',
+                    ].join('\n'),
+                    style: AppTypography.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               const SizedBox(height: 12),
-              Text('${_a.nameAr} → ${_b.nameAr}', style: AppTypography.titleMedium, textAlign: TextAlign.center),
+              Text(titleNames, style: AppTypography.titleMedium, textAlign: TextAlign.center),
               Text(_a.partnerNameAr, style: AppTypography.bodyMedium, textAlign: TextAlign.center),
               Text(
                 _sharedBranchId == null ? 'لا يوجد فرع مشترك منشور' : 'الفرع: $_branchLabel',
@@ -361,79 +583,82 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-              Text('اليوم (توقيت الرياض)', style: AppTypography.titleSmall),
-              SizedBox(
-                height: 48,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _dates.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (_, i) {
-                    return ChoiceChip(
-                      label: Text(_dateKey(_dates[i])),
-                      selected: i == _dateIndex,
-                      onSelected: _recovering
-                          ? null
-                          : (_) {
-                              setState(() => _dateIndex = i);
-                              _idempotencyKey = newIdempotencyKey();
-                              _loadFirstSlots();
-                            },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text('وقت بدء ${_a.nameAr} (${_a.durationMin} د) — توقيت الرياض', style: AppTypography.titleSmall),
-              if (_loading) const LinearProgressIndicator(),
-              if (_firstAvailability != null)
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final slot in _firstAvailability!.slots.where((s) => s.available))
-                      ChoiceChip(
-                        key: Key('visit_slot_${slot.startsAt.toUtc().toIso8601String()}'),
-                        label: Text('${riyadhClock(slot.startsAt)}–${riyadhClock(slot.endsAt)}'),
-                        selected: _firstSlot?.startsAt == slot.startsAt,
-                        onSelected: _recovering
+              if (!_outcomeUnknown && !_rejectedFinal) ...[
+                const SizedBox(height: 16),
+                Text('اليوم (توقيت الرياض)', style: AppTypography.titleSmall),
+                SizedBox(
+                  height: 48,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _dates.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) {
+                      return ChoiceChip(
+                        label: Text(_dateKey(_dates[i])),
+                        selected: i == _dateIndex,
+                        onSelected: _lockedOnPendingKey
                             ? null
-                            : (_) => setState(() {
-                                  _firstSlot = slot;
-                                  _blockReason = null;
-                                  _idempotencyKey = newIdempotencyKey();
-                                }),
-                      ),
-                  ],
+                            : (_) {
+                                setState(() => _dateIndex = i);
+                                // Fresh attempt only — never replace an unknown-outcome key.
+                                _idempotencyKey = newIdempotencyKey();
+                                _loadFirstSlots();
+                              },
+                      );
+                    },
+                  ),
                 ),
-              if (_firstSlot != null && secondEnd != null) ...[
                 const SizedBox(height: 12),
-                Text('ملخص قبل الإرسال (توقيت الرياض)', style: AppTypography.titleSmall),
-                Text(
-                  '١) ${_a.nameAr}: ${riyadhClock(_firstSlot!.startsAt)}–${riyadhClock(_firstSlot!.endsAt)} · '
-                  '${CatalogPrice.text(known: _a.priceKnown, halalas: _a.priceHalalas)}\n'
-                  '٢) ${_b.nameAr}: ${riyadhClock(_firstSlot!.endsAt)}–${riyadhClock(secondEnd)} · '
-                  '${CatalogPrice.text(known: _b.priceKnown, halalas: _b.priceHalalas)}\n'
-                  'الفرع: $_branchLabel\n'
-                  'الحالة بعد الإرسال: طلب بانتظار رد المركز',
-                  style: AppTypography.bodyMedium,
+                Text('وقت بدء ${_a.nameAr} (${_a.durationMin} د) — توقيت الرياض', style: AppTypography.titleSmall),
+                if (_loading) const LinearProgressIndicator(),
+                if (_firstAvailability != null)
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final slot in _firstAvailability!.slots.where((s) => s.available))
+                        ChoiceChip(
+                          key: Key('visit_slot_${slot.startsAt.toUtc().toIso8601String()}'),
+                          label: Text('${riyadhClock(slot.startsAt)}–${riyadhClock(slot.endsAt)}'),
+                          selected: _firstSlot?.startsAt == slot.startsAt,
+                          onSelected: _lockedOnPendingKey
+                              ? null
+                              : (_) => setState(() {
+                                    _firstSlot = slot;
+                                    _blockReason = null;
+                                    _idempotencyKey = newIdempotencyKey();
+                                  }),
+                        ),
+                    ],
+                  ),
+                if (_firstSlot != null && secondEnd != null) ...[
+                  const SizedBox(height: 12),
+                  Text('ملخص قبل الإرسال (توقيت الرياض)', style: AppTypography.titleSmall),
+                  Text(
+                    '١) ${_a.nameAr}: ${riyadhClock(_firstSlot!.startsAt)}–${riyadhClock(_firstSlot!.endsAt)} · '
+                    '${CatalogPrice.text(known: _a.priceKnown, halalas: _a.priceHalalas)}\n'
+                    '٢) ${_b.nameAr}: ${riyadhClock(_firstSlot!.endsAt)}–${riyadhClock(secondEnd)} · '
+                    '${CatalogPrice.text(known: _b.priceKnown, halalas: _b.priceHalalas)}\n'
+                    'الفرع: $_branchLabel\n'
+                    'الحالة بعد الإرسال: طلب بانتظار رد المركز',
+                    style: AppTypography.bodyMedium,
+                  ),
+                ],
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _name,
+                  decoration: const InputDecoration(labelText: 'الاسم'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                ),
+                TextFormField(
+                  controller: _phone,
+                  decoration: const InputDecoration(labelText: 'الجوال'),
+                  validator: (v) => SaudiPhone.toE164(v ?? '') == null ? 'رقم غير صالح' : null,
+                ),
+                TextFormField(
+                  controller: _notes,
+                  decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)'),
                 ),
               ],
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _name,
-                decoration: const InputDecoration(labelText: 'الاسم'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
-              ),
-              TextFormField(
-                controller: _phone,
-                decoration: const InputDecoration(labelText: 'الجوال'),
-                validator: (v) => SaudiPhone.toE164(v ?? '') == null ? 'رقم غير صالح' : null,
-              ),
-              TextFormField(
-                controller: _notes,
-                decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)'),
-              ),
               if (_blockReason != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -445,11 +670,20 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
                   child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
                 ),
               const SizedBox(height: 16),
-              FilledButton(
-                key: const Key('submit_consecutive_visit'),
-                onPressed: _submitting || _recovering || _sharedBranchId == null ? null : _submit,
-                child: Text(_submitting || _recovering ? 'جارٍ الإرسال' : 'إرسال طلب الزيارة المتتابعة'),
-              ),
+              if (_outcomeUnknown)
+                FilledButton(
+                  key: const Key('verify_pending_visit'),
+                  onPressed: _recovering ? null : _onVerifyPressed,
+                  child: Text(_recovering ? 'جارٍ التحقق…' : 'تحققي من طلبي'),
+                )
+              else
+                FilledButton(
+                  key: const Key('submit_consecutive_visit'),
+                  onPressed: _submitting || _recovering || _sharedBranchId == null || _rejectedFinal
+                      ? null
+                      : _submit,
+                  child: Text(_submitting || _recovering ? 'جارٍ الإرسال' : 'إرسال طلب الزيارة المتتابعة'),
+                ),
             ],
           ),
         ),

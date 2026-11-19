@@ -34,7 +34,10 @@ import { ConsultationDialogueService } from './consultation-attachment.service';
 import { answerCacheAllowed, consultationQuarantineApplies, readPinnedAttachmentIds } from './consultation-dialogue';
 import {
   buildDegradedAdvisorReply,
+  isAlternativesOrCompareAsk,
+  isAlternativesPriceOrCompareAsk,
   isOpenOfferLiveAsk,
+  marketplaceAlternativesOrCompareReply,
   marketplaceOfferLiveAskReply,
   decideConsultationScope,
   guardScopeAnswer,
@@ -379,9 +382,20 @@ export class ConsultationOrchestratorService {
     let discoveryPayload: MceAssistantPayloadV1 | null = null;
     let discoverySessionPatch: SessionDiscoveryContext | null | undefined = undefined;
 
-    // Open offer live state wins over discovery for includes/price/book about *this* offer.
-    if (!localReply && !mod.blocked && isOpenOfferLiveAsk(dto.message.trim())) {
-      localReply = marketplaceOfferLiveAskReply(dto.message.trim(), loaded.factRegistry) ?? undefined;
+    const askText = dto.message.trim();
+    // Price-of-alternatives / compare: always before open-offer price and before discovery.
+    if (!localReply && !mod.blocked && isAlternativesPriceOrCompareAsk(askText)) {
+      localReply = marketplaceAlternativesOrCompareReply(askText, loaded.factRegistry) ?? undefined;
+    }
+
+    // Open offer live state wins over discovery for includes/price/book about *this* offer only.
+    if (
+      !localReply &&
+      !mod.blocked &&
+      !isAlternativesOrCompareAsk(askText) &&
+      isOpenOfferLiveAsk(askText)
+    ) {
+      localReply = marketplaceOfferLiveAskReply(askText, loaded.factRegistry) ?? undefined;
     }
 
     // Real partner catalog via MarketplaceService.browse — never RC5 fixtures here.

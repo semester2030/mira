@@ -538,10 +538,30 @@ function offerLiveStatusLine(
   return null;
 }
 
-/** Price ask about the open marketplace offer (not a general catalog price hunt). */
+/**
+ * Alternatives / compare asks — must be classified *before* open-offer price/book/includes.
+ * Never answer these with the open offer's published price.
+ */
+export function isAlternativesOrCompareAsk(message: string): boolean {
+  const text = message.trim();
+  if (!text) return false;
+  return /بدائل|غير هذه|خدمة ثانية|مركز آخر|صالون آخر|قارن(?:ي|وا)?|بمقارن|سعرها ب|بكم\s+خدمة\s+ثانية|كم\s+سعر\s+البدائل/.test(
+    text,
+  );
+}
+
+/** Price-of-alternatives or compare-price — local clarify before discovery and open-offer price. */
+export function isAlternativesPriceOrCompareAsk(message: string): boolean {
+  const text = message.trim();
+  if (!text || !isAlternativesOrCompareAsk(text)) return false;
+  return /بكم|سعر|قارن|ثمن|how much|price/i.test(text);
+}
+
+/** Price ask about the open marketplace offer (demonstrative «هذه/ها»), not alternatives. */
 export function isOpenOfferPriceQuestion(message: string): boolean {
   const text = message.trim();
   if (!text) return false;
+  if (isAlternativesOrCompareAsk(text)) return false;
   return /كم\s*(?:ال)?سعر|بكم|ما\s*(?:ال)?سعر|سعرها|ثمنها|how much|price/i.test(text);
 }
 
@@ -550,10 +570,64 @@ export function isOpenOfferBookingQuestion(message: string): boolean {
   const text = message.trim();
   if (!text) return false;
   // Search-for-alternatives stays with discovery — not the open-offer gate.
-  if (/بدائل|غير هذه|خدمة ثانية|مركز آخر|صالون آخر/.test(text)) return false;
+  if (isAlternativesOrCompareAsk(text)) return false;
   return /أقدر\s*أحجز|اقدر\s*احجز|أحجزها|احجزها|احجزيها|احجزي|أبي\s*أحجز|ابي\s*احجز|هل\s*أقدر\s*أحجز|أقدر أحجزها|هل\s*الحجز\s*متاح|الحجز\s*متاح|هل\s*فيه\s*موعد|فيه\s*موعد|أقدر\s*أحجزها|موعد\s*اليوم|احجزي\s*لي/.test(
     text,
   );
+}
+
+/**
+ * When discovery is off (or before search): clarify alternatives/compare without
+ * attributing the open offer price to a second service.
+ */
+export function marketplaceAlternativesOrCompareReply(
+  message: string,
+  facts: Array<{
+    id: string;
+    labelAr?: string;
+    valueAr?: string;
+    commercial?: { subjectAr?: string; priceAmount?: string; currency?: string; availability?: boolean };
+  }> = [],
+): string | null {
+  const text = message.trim();
+  if (!text || !isAlternativesOrCompareAsk(text)) return null;
+
+  const title = facts.find((f) => f.id.startsWith('marketplace.offer.title.'));
+  const openName = title?.valueAr?.trim() || 'العرض المفتوح';
+  const openPrice =
+    title?.commercial?.priceAmount && title.commercial.currency === 'SAR'
+      ? title.commercial.priceAmount
+      : null;
+  const live = offerLiveStatusLine(facts);
+
+  if (/قارن(?:ي|وا)?|بمقارن|سعرها ب/.test(text)) {
+    const named =
+      text.match(/(?:ب|مع|و)?(?:خدمة\s+)?([\u0600-\u06FF]{3,40})\s*$/)?.[1]?.trim() ||
+      text.match(/بخدمة\s+([\u0600-\u06FFA-Za-z0-9]{2,40})/)?.[1]?.trim() ||
+      text.match(/قارن(?:ي|وا)?\s+(?:سعرها\s+)?(?:ب|مع)?\s*(?:خدمة\s+)?([\u0600-\u06FFA-Za-z0-9]{2,40})/)?.[1]?.trim();
+    if (!named || /سعرها|بكم|هذه|العرض/.test(named)) {
+      return `للمقارنة أحتاج مصدرين معروفين بأسعارهما المنشورة. حددي الخدمة الثانية بالاسم — ولن أنسب سعر «${openName}» لبديل غير محدد.`;
+    }
+    if (live === 'withdrawn') {
+      return `العرض المفتوح لم يعد منشورًا، ولا أملك سعرًا منشورًا موثوقًا لـ«${named}» هنا — لن أخترع مقارنة ولن أعيد سعرًا قديمًا.`;
+    }
+    if (live === 'error') {
+      return `تعذّر التحقق من العرض المنشور الآن، ولا أجد سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أخمن مقارنة.`;
+    }
+    if (!openPrice) {
+      return `لا أجد سعرًا منشورًا لـ«${openName}»، ولا سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أخترع مقارنة.`;
+    }
+    return `أعرف سعر «${openName}» المنشور (${openPrice} ريال) لكن لا أجد سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أنسب سعر «${openName}» لها ولن أخترع رقمًا.`;
+  }
+
+  // «بكم خدمة ثانية؟» / «كم سعر البدائل؟»
+  if (live === 'withdrawn') {
+    return `العرض المفتوح سُحب من النشر. أي بديل تقصدين؟ لن أعتمد سعرًا قديمًا لـ«${openName}» كسعر لخدمة ثانية، ولن أخترع أسعار بدائل غير منشورة.`;
+  }
+  if (live === 'error') {
+    return `تعذّر التحقق من العرض المنشور الآن. حددي أي بديل تقصدين — ولن أنسب رقمًا غير متحقق لخدمة ثانية.`;
+  }
+  return `أي بديل أو خدمة ثانية تقصدين؟ لن أستخدم سعر «${openName}»${openPrice ? ` (${openPrice} ريال)` : ''} كسعر لبديل. إن وُجدت بدائل منشورة سأعرض كل واحدة بسعرها الخاص بعد تحديدها.`;
 }
 
 /** True when the message targets the open offer (includes / price / bookability). */

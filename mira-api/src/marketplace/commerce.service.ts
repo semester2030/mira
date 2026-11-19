@@ -1831,20 +1831,6 @@ export class CommerceService {
 
     try {
       const created = await this.prisma.$transaction(async (tx) => {
-        const again = await tx.commerceVisit.findUnique({
-          where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },
-          include: {
-            partner: { select: { id: true, nameAr: true } },
-            bookings: { include: BOOKING_INCLUDE, orderBy: { visitSequence: 'asc' } },
-          },
-        });
-        if (again) {
-          if (again.requestFingerprint && again.requestFingerprint !== fingerprint) {
-            throw conflict('IDEMPOTENCY_CONFLICT', 'مفتاح المحاولة استُخدم لزيارة مختلفة');
-          }
-          return { visit: again, replay: true };
-        }
-
         const serviceIds = items.map((i) => i.serviceId);
         // Peek partner for schedule lock — never trust client partner ids.
         const peekServices = await tx.service.findMany({
@@ -1859,6 +1845,7 @@ export class CommerceService {
           throw unprocessable('VISIT_PARTNER_MISMATCH', 'خدمات الزيارة المتتابعة يجب أن تكون لنفس المركز');
         }
 
+        // Serialize capacity + first-send same-key races before any slot write.
         await lockPartnerScheduleScope(tx, {
           partnerId,
           seedServiceIds: serviceIds,
@@ -1874,6 +1861,22 @@ export class CommerceService {
             }));
           },
         });
+
+        // Re-read by key *after* the lock so the second same-key request replays
+        // instead of seeing SLOT_FULL from the first request's own bookings.
+        const again = await tx.commerceVisit.findUnique({
+          where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },
+          include: {
+            partner: { select: { id: true, nameAr: true } },
+            bookings: { include: BOOKING_INCLUDE, orderBy: { visitSequence: 'asc' } },
+          },
+        });
+        if (again) {
+          if (again.requestFingerprint && again.requestFingerprint !== fingerprint) {
+            throw conflict('IDEMPOTENCY_CONFLICT', 'مفتاح المحاولة استُخدم لزيارة مختلفة');
+          }
+          return { visit: again, replay: true };
+        }
 
         // Re-read mutable acceptance fields under the lock (publish / booking / duration / branch / grants).
         const services = await tx.service.findMany({

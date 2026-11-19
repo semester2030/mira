@@ -5,7 +5,7 @@
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommerceService } from './commerce.service';
 import { localInstant, localParts } from './commerce.types';
@@ -195,7 +195,7 @@ async function main() {
     const byKey = await commerce.getCustomerVisitByKey(actor, body.idempotencyKey);
     assert.equal(byKey.visit.id, created.visit.id);
 
-    // Concurrent same-key taps — both recover the same visit, never SLOT_FULL for this request.
+    // Concurrent same-key taps *after* create — both recover the same visit, never SLOT_FULL for this request.
     const sameKey = await Promise.all([
       commerce.createConsecutiveVisit(actor, body),
       commerce.createConsecutiveVisit(actor, body),
@@ -203,6 +203,70 @@ async function main() {
     assert.equal(sameKey[0].visit.id, created.visit.id);
     assert.equal(sameKey[1].visit.id, created.visit.id);
     assert.equal(await prisma.commerceVisit.count({ where: { partnerId: partner.id } }), afterReplayVisits);
+
+    // RC5.1 — first-send same-key race on a *new* key and free consecutive pair (capacity 1).
+    // Both must return the same visitId/bookingIds; DB grows by exactly 1 visit + 2 bookings.
+    let firstRaceA: (typeof listA.slots)[number] | undefined;
+    let firstRaceB: (typeof listB.slots)[number] | undefined;
+    for (const a of listA.slots.filter(
+      (s) => s.available && new Date(s.startsAt).getTime() >= startA.getTime() + 3600_000,
+    )) {
+      const b = listB.slots.find(
+        (s) =>
+          s.available &&
+          s.resourceId === a.resourceId &&
+          Math.abs(new Date(s.startsAt).getTime() - new Date(a.endsAt).getTime()) <= 60_000,
+      );
+      if (b) {
+        firstRaceA = a;
+        firstRaceB = b;
+        break;
+      }
+    }
+    assert.ok(firstRaceA && firstRaceB, 'expected a free consecutive pair for first-send same-key race');
+    const firstSendKey = `${run}-first-send-race`;
+    const firstSendBody = {
+      idempotencyKey: firstSendKey,
+      branchId: branch.id,
+      contactName: 'نورة',
+      contactPhone: PHONE,
+      items: [
+        {
+          serviceId: cleanse.id,
+          startsAt: new Date(firstRaceA.startsAt).toISOString(),
+          resourceId: firstRaceA.resourceId || resourceId,
+        },
+        {
+          serviceId: hydrate.id,
+          startsAt: new Date(firstRaceB.startsAt).toISOString(),
+          resourceId: firstRaceB.resourceId || resourceId,
+        },
+      ],
+    };
+    const beforeFirstSend = {
+      visits: await prisma.commerceVisit.count({ where: { partnerId: partner.id } }),
+      bookings: await prisma.commerceBooking.count({ where: { partnerId: partner.id } }),
+    };
+    const firstSendRace = await Promise.all([
+      commerce.createConsecutiveVisit(actor, firstSendBody),
+      commerce.createConsecutiveVisit(actor, firstSendBody),
+    ]);
+    assert.equal(firstSendRace[0].visit.id, firstSendRace[1].visit.id);
+    assert.deepEqual(
+      firstSendRace[0].visit.bookings.map((b: { id: string }) => b.id).sort(),
+      firstSendRace[1].visit.bookings.map((b: { id: string }) => b.id).sort(),
+    );
+    assert.equal(
+      await prisma.commerceVisit.count({ where: { partnerId: partner.id } }) - beforeFirstSend.visits,
+      1,
+    );
+    assert.equal(
+      await prisma.commerceBooking.count({ where: { partnerId: partner.id } }) - beforeFirstSend.bookings,
+      2,
+    );
+    visitIds.push(firstSendRace[0].visit.id);
+    bookingIds.push(...firstSendRace[0].visit.bookings.map((b: { id: string }) => b.id));
+    const firstSendSameKeyOk = true;
 
     // Fingerprint change with same key → conflict (do not reuse key for changed items).
     await failure(
@@ -339,8 +403,8 @@ async function main() {
         { serviceId: hydrate.id, startsAt: raceEndPeer.toISOString(), resourceId },
       ],
     });
-    // afterReplay captured *before* the two-customer race (RC5 acceptance).
-    const beforeRaceVisits = afterReplayVisits;
+    // Count immediately before the two-customer race (after first-send same-key + mid-TX).
+    const beforeRaceVisits = await prisma.commerceVisit.count({ where: { partnerId: partner.id } });
     const results = await Promise.allSettled([
       commerce.createConsecutiveVisit(actor, raceBody('a')),
       commerce.createConsecutiveVisit(actorB, raceBody('b')),
@@ -357,6 +421,122 @@ async function main() {
         bookingIds.push(...r.value.visit.bookings.map((b: { id: string }) => b.id));
       }
     }
+
+    // RC5.1 — activity grant: partner has grants for a *different* activity → reject with zero partial rows.
+    const grantReq = await prisma.paRequest.create({
+      data: {
+        kind: 'join',
+        state: 'approved',
+        description: `${run}-grant`,
+        partnerId: partner.id,
+        meta: {},
+      },
+    });
+    const grantLine = await prisma.paLine.create({
+      data: {
+        requestId: grantReq.id,
+        activity: 'hair.cut',
+        scope: 'category',
+        itemName: '',
+        decision: 'approved',
+      },
+    });
+    await prisma.paGrant.create({
+      data: {
+        partnerId: partner.id,
+        activity: 'hair.cut',
+        scope: 'category',
+        itemName: '',
+        lineId: grantLine.id,
+      },
+    });
+    // Tag care services with a leaf outside the granted activity.
+    await prisma.service.update({
+      where: { id: cleanse.id },
+      data: { category: 'care.cleanse', attributesJson: { taxonomyLeaf: 'care.cleanse' } },
+    });
+    await prisma.service.update({
+      where: { id: hydrate.id },
+      data: { category: 'care.hydrate', attributesJson: { taxonomyLeaf: 'care.hydrate' } },
+    });
+
+    // Free Thursday pair for grant rejection (avoid consumed Tuesday slots).
+    const GRANT_DATE = nextWeekday(4);
+    const grantListA = await commerce.serviceAvailability(cleanse.id, GRANT_DATE);
+    const grantListB = await commerce.serviceAvailability(hydrate.id, GRANT_DATE);
+    let grantA: (typeof grantListA.slots)[number] | undefined;
+    let grantB: (typeof grantListB.slots)[number] | undefined;
+    for (const a of grantListA.slots.filter((s) => s.available)) {
+      const b = grantListB.slots.find(
+        (s) =>
+          s.available &&
+          s.resourceId === a.resourceId &&
+          Math.abs(new Date(s.startsAt).getTime() - new Date(a.endsAt).getTime()) <= 60_000,
+      );
+      if (b) {
+        grantA = a;
+        grantB = b;
+        break;
+      }
+    }
+    assert.ok(grantA && grantB, `grant reject pair on ${GRANT_DATE}`);
+    const beforeGrant = {
+      visits: await prisma.commerceVisit.count({ where: { partnerId: partner.id } }),
+      bookings: await prisma.commerceBooking.count({ where: { partnerId: partner.id } }),
+    };
+    await failure(
+      commerce.createBooking(actor, {
+        idempotencyKey: `${run}-grant-single`,
+        serviceId: cleanse.id,
+        startsAt: grantA.startsAt,
+        resourceId: grantA.resourceId || resourceId,
+        contactName: 'نورة',
+        contactPhone: PHONE,
+        placeMode: 'branch',
+        branchId: branch.id,
+      }),
+      422,
+      'ACTIVITY_NOT_APPROVED',
+    );
+    assert.equal(await prisma.commerceBooking.count({ where: { partnerId: partner.id } }), beforeGrant.bookings);
+
+    await failure(
+      commerce.createConsecutiveVisit(actor, {
+        idempotencyKey: `${run}-grant-visit`,
+        branchId: branch.id,
+        contactName: 'نورة',
+        contactPhone: PHONE,
+        items: [
+          {
+            serviceId: cleanse.id,
+            startsAt: new Date(grantA.startsAt).toISOString(),
+            resourceId: grantA.resourceId || resourceId,
+          },
+          {
+            serviceId: hydrate.id,
+            startsAt: new Date(grantB.startsAt).toISOString(),
+            resourceId: grantB.resourceId || resourceId,
+          },
+        ],
+      }),
+      422,
+      'ACTIVITY_NOT_APPROVED',
+    );
+    assert.equal(await prisma.commerceVisit.count({ where: { partnerId: partner.id } }), beforeGrant.visits);
+    assert.equal(await prisma.commerceBooking.count({ where: { partnerId: partner.id } }), beforeGrant.bookings);
+    const activityGrantRejected = true;
+    // Drop grants so later place-mode checks are not shadowed by ACTIVITY_NOT_APPROVED.
+    await prisma.paGrant.deleteMany({ where: { partnerId: partner.id } });
+    await prisma.paLine.deleteMany({ where: { requestId: grantReq.id } });
+    await prisma.paRequest.delete({ where: { id: grantReq.id } });
+    await prisma.service.update({
+      where: { id: cleanse.id },
+      data: { category: null, attributesJson: Prisma.JsonNull },
+    });
+    await prisma.service.update({
+      where: { id: hydrate.id },
+      data: { category: null, attributesJson: Prisma.JsonNull },
+    });
 
     // Home-only service must reject consecutive visit (same as createBooking placeMode=branch).
     const homeOnly = await prisma.service.create({
@@ -414,6 +594,8 @@ async function main() {
         raceWinner: 1,
         midTxRollback: midTxOk,
         homeOnlyRejected: true,
+        firstSendSameKeyOk,
+        activityGrantRejected,
       }),
     );
   } finally {
@@ -434,6 +616,9 @@ async function main() {
       }
       await prisma.commerceVisit.deleteMany({ where: { id: { in: leftoverIds } } });
     }
+    await prisma.paGrant.deleteMany({ where: { partnerId: { in: partnerIds } } });
+    await prisma.paLine.deleteMany({ where: { request: { partnerId: { in: partnerIds } } } });
+    await prisma.paRequest.deleteMany({ where: { partnerId: { in: partnerIds } } });
     await prisma.service.deleteMany({ where: { partnerId: { in: partnerIds } } });
     await prisma.partnerBranch.deleteMany({ where: { partnerId: { in: partnerIds } } });
     await prisma.partner.deleteMany({ where: { id: { in: partnerIds } } });

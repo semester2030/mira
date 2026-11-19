@@ -5,6 +5,7 @@ import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../data/catalog_price.dart';
 import '../../data/commerce_api_client.dart';
+import '../../data/pending_visit_attempt_store.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../booking_basket.dart';
 import 'booking_request_screen.dart';
@@ -14,9 +15,10 @@ enum VisitBookingMode { consecutive, separate }
 
 /// «حجزك» — consecutive visit plan vs separate appointment *requests*.
 class BookingBasketScreen extends StatefulWidget {
-  const BookingBasketScreen({super.key, this.client});
+  const BookingBasketScreen({super.key, this.client, this.pendingStore});
 
   final CommerceClient? client;
+  final PendingVisitAttemptStore? pendingStore;
 
   @override
   State<BookingBasketScreen> createState() => _BookingBasketScreenState();
@@ -238,6 +240,7 @@ class _BookingBasketScreenState extends State<BookingBasketScreen> {
         builder: (_) => BookingVisitConsecutiveScreen(
           services: pair,
           client: widget.client,
+          pendingStore: widget.pendingStore,
         ),
       ),
     );
