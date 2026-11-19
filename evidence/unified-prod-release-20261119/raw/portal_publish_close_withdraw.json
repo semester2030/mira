@@ -1,0 +1,90 @@
+{
+  "ok": true,
+  "steps": [
+    {
+      "step": "create",
+      "status": 201,
+      "id": "dc6c03ec-dc0f-4166-8d2f-bcc3726aba37"
+    },
+    {
+      "step": "media",
+      "status": 201,
+      "id": "dc6c03ec-dc0f-4166-8d2f-bcc3726aba37"
+    },
+    {
+      "step": "submit",
+      "status": 201,
+      "id": "dc6c03ec-dc0f-4166-8d2f-bcc3726aba37",
+      "contentStatus": "draft",
+      "reviewStatus": "in_review",
+      "revision": 1
+    },
+    {
+      "step": "admin_approve",
+      "status": 201,
+      "id": "dc6c03ec-dc0f-4166-8d2f-bcc3726aba37",
+      "contentStatus": "published",
+      "err": null,
+      "body_keys": [
+        "contentStatus",
+        "id",
+        "cleanupPending"
+      ]
+    },
+    {
+      "step": "create",
+      "status": 201,
+      "id": "94affbf1-1600-4373-815a-223d00cdad5a"
+    },
+    {
+      "step": "media",
+      "status": 201,
+      "id": "94affbf1-1600-4373-815a-223d00cdad5a"
+    },
+    {
+      "step": "submit",
+      "status": 201,
+      "id": "94affbf1-1600-4373-815a-223d00cdad5a",
+      "contentStatus": "draft",
+      "reviewStatus": "in_review",
+      "revision": 1
+    },
+    {
+      "step": "admin_approve",
+      "status": 201,
+      "id": "94affbf1-1600-4373-815a-223d00cdad5a",
+      "contentStatus": "published",
+      "err": null,
+      "body_keys": [
+        "contentStatus",
+        "id",
+        "cleanupPending"
+      ]
+    },
+    {
+      "step": "close_booking",
+      "status": 200,
+      "id": "dc6c03ec-dc0f-4166-8d2f-bcc3726aba37",
+      "bookingEnabled": false,
+      "contentStatus": "published"
+    },
+    {
+      "step": "withdraw",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "step": "after_states",
+      "first": {
+        "contentStatus": "withdrawn",
+        "bookingEnabled": false,
+        "nameAr": "تنظيف معتمد إصدار"
+      },
+      "second": {
+        "contentStatus": "published",
+        "bookingEnabled": true,
+        "nameAr": "ترطيب معتمد إصدار"
+      }
+    }
+  ]
+}

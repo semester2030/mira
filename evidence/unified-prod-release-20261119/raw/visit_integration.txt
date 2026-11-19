@@ -1,0 +1,3 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+npm warn exec The following package was not found and will be installed: ts-node@10.9.2
+{"ok":true,"visitId":"b193ad57-93c8-48ec-970a-7bfde227d82b","bookingIds":["1dbc98f8-b5fb-4af6-9734-d60e58db3498","288fb663-813f-4240-87e0-9010fe634870"],"beforeVisits":0,"afterCreateVisits":1,"afterReplayVisits":1,"beforeRaceVisits":2,"afterRaceVisits":3,"raceWinner":1,"midTxRollback":true,"homeOnlyRejected":true,"firstSendSameKeyOk":true,"activityGrantRejected":true}

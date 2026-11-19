@@ -1,0 +1,10 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "mira_p1_rc7_test", schema "public" at "localhost:5432"
+
+45 migrations found in prisma/migrations
+
+Error: P3005
+
+The database schema is not empty. Read more about how to baseline an existing production database: https://pris.ly/d/migrate-baseline
+

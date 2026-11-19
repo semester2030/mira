@@ -1,0 +1,89 @@
+{
+  "ok": true,
+  "apiBase": "http://127.0.0.1:3031/api/v1",
+  "portalUrl": "http://127.0.0.1:8031/dashboard.html",
+  "steps": [
+    {
+      "utc": "2026-11-19T15:11:20.305Z",
+      "step": "health",
+      "ok": true,
+      "api": "http://127.0.0.1:3031/api/v1",
+      "portal": "http://127.0.0.1:8031/dashboard.html"
+    },
+    {
+      "utc": "2026-11-19T15:11:20.327Z",
+      "step": "portal_me",
+      "status": 200,
+      "partnerId": "9698321a-337b-4820-a20e-b06174bfbc81"
+    },
+    {
+      "utc": "2026-11-19T15:11:20.361Z",
+      "step": "create_service",
+      "status": 201,
+      "nameAr": "تنظيف اختبار إصدار",
+      "id": "f8c2e453-1c7c-4c3a-8376-35f1abec23b4",
+      "err": null
+    },
+    {
+      "utc": "2026-11-19T15:11:20.370Z",
+      "step": "submit_review",
+      "id": "f8c2e453-1c7c-4c3a-8376-35f1abec23b4",
+      "status": 400,
+      "err": "صورة واحدة على الأقل مطلوبة. الفيديو اختياري"
+    },
+    {
+      "utc": "2026-11-19T15:11:20.376Z",
+      "step": "patch_bookable",
+      "id": "f8c2e453-1c7c-4c3a-8376-35f1abec23b4",
+      "status": 200,
+      "contentStatus": "draft",
+      "bookingEnabled": true,
+      "err": null
+    },
+    {
+      "utc": "2026-11-19T15:11:20.383Z",
+      "step": "create_service",
+      "status": 201,
+      "nameAr": "ترطيب اختبار إصدار",
+      "id": "c862acfa-39a3-431b-9661-67563ecb3141",
+      "err": null
+    },
+    {
+      "utc": "2026-11-19T15:11:20.387Z",
+      "step": "submit_review",
+      "id": "c862acfa-39a3-431b-9661-67563ecb3141",
+      "status": 400,
+      "err": "صورة واحدة على الأقل مطلوبة. الفيديو اختياري"
+    },
+    {
+      "utc": "2026-11-19T15:11:20.392Z",
+      "step": "patch_bookable",
+      "id": "c862acfa-39a3-431b-9661-67563ecb3141",
+      "status": 200,
+      "contentStatus": "draft",
+      "bookingEnabled": true,
+      "err": null
+    },
+    {
+      "utc": "2026-11-19T15:11:20.397Z",
+      "step": "close_booking",
+      "id": "f8c2e453-1c7c-4c3a-8376-35f1abec23b4",
+      "status": 200,
+      "bookingEnabled": false,
+      "contentStatus": "draft"
+    },
+    {
+      "utc": "2026-11-19T15:11:20.402Z",
+      "step": "withdraw",
+      "id": "f8c2e453-1c7c-4c3a-8376-35f1abec23b4",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "utc": "2026-11-19T15:11:20.406Z",
+      "step": "portal_html_api_base",
+      "pointsToTestApi": true,
+      "hasProdApi": false
+    }
+  ]
+}
