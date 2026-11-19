@@ -44,6 +44,7 @@ abstract final class CatalogDetailFamilyResolver {
     const map = <String, String>{
       'metal': 'المعدن',
       'metalType': 'المعدن',
+      'metalColor': 'لون المعدن',
       'purity': 'العيار',
       'purityKarat': 'العيار',
       'goldWeight': 'وزن الذهب',
@@ -53,6 +54,8 @@ abstract final class CatalogDetailFamilyResolver {
       'stoneWeight': 'وزن الحجر',
       'stoneWeightCt': 'وزن الحجر',
       'stoneShape': 'شكل الحجر',
+      'sellUnit': 'وحدة البيع',
+      'pieceStyle': 'شكل القطعة',
       'ringSize': 'مقاس الخاتم',
       'chainLength': 'طول السلسلة',
       'fabric': 'الخامة',
@@ -62,7 +65,8 @@ abstract final class CatalogDetailFamilyResolver {
       'color': 'اللون',
       'size': 'المقاس',
     };
-    return map[key] ?? key;
+    // Never surface camelCase to the customer.
+    return map[key] ?? '';
   }
 
   static bool hasCertificate(Map<String, String> traits, Map<String, dynamic>? attributes) {

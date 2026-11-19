@@ -530,7 +530,7 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
   Widget build(BuildContext context) {
     if (_needsLogin) {
       return Scaffold(
-        appBar: const MiraAppBar(pageTitle: 'طلب زيارة متتابعة'),
+        appBar: const MiraAppBar(pageTitle: 'رتّبي زيارتك'),
         body: const CommerceLoginRequired(message: MarketplaceCopy.loginRequiredBookings),
       );
     }
@@ -544,7 +544,7 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: const MiraAppBar(pageTitle: 'طلب زيارة متتابعة'),
+      appBar: const MiraAppBar(pageTitle: 'رتّبي زيارتك'),
       body: SafeArea(
         child: Form(
           key: _form,
@@ -710,12 +710,18 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
                   child: Text(_recovering ? 'جارٍ التحقق…' : 'تحققي من طلبي'),
                 )
               else
-                FilledButton(
+                FilledButton.icon(
                   key: const Key('submit_consecutive_visit'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.brandBurgundy,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(52),
+                  ),
                   onPressed: _submitting || _recovering || _sharedBranchId == null || _rejectedFinal
                       ? null
                       : _submit,
-                  child: Text(_submitting || _recovering ? 'جارٍ الإرسال' : 'إرسال طلب الزيارة المتتابعة'),
+                  icon: const Icon(Icons.event_available_outlined),
+                  label: Text(_submitting || _recovering ? 'جارٍ الإرسال' : 'مراجعة الحجز'),
                 ),
             ],
           ),

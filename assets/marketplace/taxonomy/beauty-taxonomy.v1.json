@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "lane": "beauty",
-  "definitionsVersion": 1,
+  "definitionsVersion": 2,
   "compatMinAppBuild": 1,
   "status": "IMPLEMENTED",
   "publicBrowse": true,
-  "notes": "جمالك: صالونات/مختصّات منفصلة عن عيادات. beauty.home_visit فلتر اكتشاف غير طبي. الطبية clinic_only فقط. تجهيز العروس اختصار اكتشاف (browseOnly).",
+  "notes": "الجمال والعناية: أربع دوائر مقدّم (صالونات، مراكز العناية بالبشرة، السبا، خبيرات الجمال). الرموش/الشعر/المكياج تخصصات داخل التفاصيل. العيادات الطبية (ليزر/أسنان) خارج دوائر الاكتشاف العامة. beauty.home_visit و bridal_prep و beauty.all تبقى للتوافق القديم ولا تظهر كدوائر رئيسية.",
   "nodes": [
     {
       "id": "beauty_lane.all",
@@ -20,19 +20,19 @@
     {
       "id": "beauty",
       "parentId": null,
-      "labelAr": "جمالك",
+      "labelAr": "الجمال والعناية",
       "sort": 10,
       "active": true,
       "imageKey": "beauty",
       "children": [
-        "beauty.all",
-        "beauty.home_visit",
         "beauty.salons",
-        "beauty.clinics",
-        "beauty.bridal_prep"
+        "beauty.skin_centers",
+        "beauty.spa",
+        "beauty.experts"
       ],
       "writeEnabled": true,
-      "offerKind": "service"
+      "offerKind": "service",
+      "notes": "أربع دوائر مقدّم فقط: صالونات، مراكز عناية، سبا، خبيرات. التخصصات داخل التفاصيل."
     },
     {
       "id": "beauty.all",
@@ -47,15 +47,17 @@
     {
       "id": "beauty.home_visit",
       "parentId": "beauty",
-      "labelAr": "تجيني للبيت",
+      "labelAr": "في موقعك",
       "sort": 5,
       "active": true,
       "imageKey": "beauty.home_visit",
       "children": [],
       "browseOnly": true,
       "synonymsAr": [
+        "تجيني للبيت",
         "زيارة منزلية",
-        "منزلي"
+        "منزلي",
+        "في موقع العميلة"
       ]
     },
     {
@@ -74,7 +76,7 @@
     {
       "id": "beauty.salons",
       "parentId": "beauty",
-      "labelAr": "صالونات ومختصّات",
+      "labelAr": "الصالونات",
       "sort": 10,
       "active": true,
       "imageKey": "beauty.salons",
@@ -83,10 +85,8 @@
         "beauty.makeup",
         "beauty.nails",
         "beauty.lashes_brows",
-        "beauty.face_care",
         "beauty.hair_removal",
-        "beauty.henna",
-        "beauty.spa"
+        "beauty.henna"
       ],
       "writeEnabled": false,
       "offerKind": "service",
@@ -114,7 +114,9 @@
       "partnerKindsAllowed": [
         "clinic"
       ],
-      "medicalOnly": true
+      "medicalOnly": true,
+      "publicBrowse": false,
+      "browseOnly": false
     },
     {
       "id": "beauty.hair",
@@ -797,7 +799,7 @@
     },
     {
       "id": "beauty.face_care",
-      "parentId": "beauty.salons",
+      "parentId": "beauty.skin_centers",
       "labelAr": "العناية بالوجه",
       "sort": 50,
       "active": true,
@@ -805,6 +807,7 @@
       "children": [
         "beauty.face_care.cleanse",
         "beauty.face_care.hydrate",
+        "beauty.face_care.peel",
         "beauty.face_care.pre_makeup"
       ],
       "writeEnabled": false,
@@ -813,7 +816,8 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
       ]
     },
     {
@@ -826,6 +830,7 @@
       "children": [],
       "writeEnabled": true,
       "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S042",
       "offerKind": "service",
       "placeModesAllowed": [
         "branch",
@@ -835,7 +840,8 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
       ]
     },
     {
@@ -848,6 +854,7 @@
       "children": [],
       "writeEnabled": true,
       "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S043",
       "offerKind": "service",
       "placeModesAllowed": [
         "branch",
@@ -857,7 +864,32 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
+      ]
+    },
+    {
+      "id": "beauty.face_care.peel",
+      "parentId": "beauty.face_care",
+      "labelAr": "تقشير تجميلي سطحي للوجه",
+      "sort": 25,
+      "active": true,
+      "imageKey": "beauty.face_care.peel",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S098",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "spa",
+        "clinic"
       ]
     },
     {
@@ -870,6 +902,7 @@
       "children": [],
       "writeEnabled": true,
       "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S044",
       "offerKind": "service",
       "placeModesAllowed": [
         "branch",
@@ -879,7 +912,8 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
       ]
     },
     {
@@ -1085,9 +1119,9 @@
     },
     {
       "id": "beauty.spa",
-      "parentId": "beauty.salons",
-      "labelAr": "السبا والعناية بالجسم",
-      "sort": 80,
+      "parentId": "beauty",
+      "labelAr": "السبا والاسترخاء",
+      "sort": 30,
       "active": true,
       "imageKey": "beauty.spa",
       "children": [
@@ -1098,8 +1132,8 @@
       "writeEnabled": false,
       "offerKind": "service",
       "partnerKindsAllowed": [
-        "salon",
-        "spa"
+        "spa",
+        "salon"
       ]
     },
     {
@@ -1406,6 +1440,49 @@
         "clinic"
       ],
       "medicalOnly": true
+    },
+    {
+      "id": "beauty.skin_centers",
+      "parentId": "beauty",
+      "labelAr": "مراكز العناية بالبشرة",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.face_care",
+      "children": [
+        "beauty.face_care"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "clinic",
+        "salon",
+        "spa"
+      ],
+      "synonymsAr": [
+        "مركز عناية",
+        "عناية بشرة",
+        "تجميل غير طبي"
+      ]
+    },
+    {
+      "id": "beauty.experts",
+      "parentId": "beauty",
+      "labelAr": "خبيرات الجمال",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.makeup",
+      "children": [],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "independent",
+        "studio"
+      ],
+      "synonymsAr": [
+        "مستقلة",
+        "خبيرة",
+        "متخصصة"
+      ]
     }
   ]
 }

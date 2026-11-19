@@ -7,6 +7,9 @@ class AppColors {
   static const Color primary = Color(0xFFE86FA9);
   static const Color primaryLight = Color(0xFFFADAE9);
   static const Color primaryDark = Color(0xFFC95889);
+
+  /// Detail CTAs / titles / selected chips — approved burgundy identity.
+  static const Color brandBurgundy = Color(0xFF6B2040);
   static const Color secondary = Color(0xFFC19EE0);
   static const Color accent = Color(0xFFFFB6B9);
   static const Color background = Color(0xFFFFF7FA);

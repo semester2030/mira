@@ -86,7 +86,15 @@ export function taxonomyMidForLegacyBeauty(legacy: string | null | undefined, pa
 
 export function isBeautyTaxonomyLeafId(id: string | null | undefined): boolean {
   if (!id || !id.startsWith('beauty.')) return false;
-  if (id === 'beauty.home_visit' || id === 'beauty.bridal_prep' || id === 'beauty.salons' || id === 'beauty.clinics') {
+  if (
+    id === 'beauty.home_visit' ||
+    id === 'beauty.bridal_prep' ||
+    id === 'beauty.salons' ||
+    id === 'beauty.skin_centers' ||
+    id === 'beauty.spa' ||
+    id === 'beauty.experts' ||
+    id === 'beauty.clinics'
+  ) {
     return false;
   }
   const parts = id.split('.');
