@@ -122,14 +122,39 @@
     return map[catId] || null;
   }
 
+  /** Specialty groups linked to a provider without requiring mismatched parentId children. */
+  const PROVIDER_LINKED_GROUPS = {
+    'beauty.experts': ['beauty.makeup', 'beauty.lashes_brows', 'beauty.henna'],
+    'beauty.salons': [
+      'beauty.hair',
+      'beauty.makeup',
+      'beauty.nails',
+      'beauty.lashes_brows',
+      'beauty.hair_removal',
+      'beauty.henna',
+    ],
+    'beauty.skin_centers': ['beauty.face_care'],
+    'beauty.spa': ['beauty.spa.hammam', 'beauty.spa.body_care', 'beauty.spa.relax'],
+  };
+
   /** Specialty groups under a provider (or legacy specialty id). */
   function beautyGroupsForProvider(providerId) {
     if (!beautyTaxonomyDoc || !Array.isArray(beautyTaxonomyDoc.nodes)) return [];
     if (MEDICAL_CAT_BLOCKED.has(providerId) || String(providerId).indexOf('beauty.clinic') === 0) return [];
     const parentId = legacySpecialtyToBeautyParent(providerId) || providerId;
     const parent = taxonomyNodeById(parentId);
-    const childIds = parent && Array.isArray(parent.children) ? parent.children.slice() : [];
-    // Experts may list shared specialty ids that keep parentId under salons.
+    const linked =
+      (parent && Array.isArray(parent.linkedSpecialtyIds) && parent.linkedSpecialtyIds.length
+        ? parent.linkedSpecialtyIds
+        : null) ||
+      PROVIDER_LINKED_GROUPS[parentId] ||
+      null;
+    const childIds = linked
+      ? linked.slice()
+      : parent && Array.isArray(parent.children)
+        ? parent.children.slice()
+        : [];
+    // Experts/salons may reference shared specialty ids that keep their own parentId.
     const nodes = childIds.length
       ? childIds.map(taxonomyNodeById).filter(Boolean)
       : beautyTaxonomyDoc.nodes.filter((n) => n && n.parentId === parentId);

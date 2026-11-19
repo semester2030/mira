@@ -1606,14 +1606,36 @@
       }
       return out;
     }
-    // Beauty provider circles: collect writable leaves under the whole subtree.
-    if (
-      categoryId === 'beauty.salons' ||
-      categoryId === 'beauty.skin_centers' ||
-      categoryId === 'beauty.spa' ||
-      categoryId === 'beauty.experts'
-    ) {
-      return writableLeavesUnder(categoryId);
+    // Beauty provider circles: collect writable leaves under linked specialties / subtree.
+    var PROVIDER_LINKED = {
+      'beauty.experts': ['beauty.makeup', 'beauty.lashes_brows', 'beauty.henna'],
+      'beauty.salons': [
+        'beauty.hair',
+        'beauty.makeup',
+        'beauty.nails',
+        'beauty.lashes_brows',
+        'beauty.hair_removal',
+        'beauty.henna',
+      ],
+      'beauty.skin_centers': ['beauty.face_care'],
+      'beauty.spa': ['beauty.spa'],
+    };
+    if (PROVIDER_LINKED[categoryId]) {
+      var merged = [];
+      var seenLeaf = {};
+      var roots = PROVIDER_LINKED[categoryId];
+      var rootNode = byId[categoryId];
+      if (rootNode && Array.isArray(rootNode.linkedSpecialtyIds) && rootNode.linkedSpecialtyIds.length) {
+        roots = rootNode.linkedSpecialtyIds;
+      }
+      roots.forEach(function (rid) {
+        writableLeavesUnder(rid).forEach(function (leaf) {
+          if (seenLeaf[leaf.value]) return;
+          seenLeaf[leaf.value] = true;
+          merged.push(leaf);
+        });
+      });
+      return merged;
     }
     return nodes
       .filter(function (n) {

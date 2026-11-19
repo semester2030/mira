@@ -1,0 +1,31 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+{
+  "ok": true,
+  "defs": 3,
+  "experts": {
+    "id": "beauty.experts",
+    "parentId": "beauty",
+    "labelAr": "خبيرات الجمال",
+    "sort": 40,
+    "active": true,
+    "imageKey": "beauty.makeup",
+    "children": [],
+    "writeEnabled": false,
+    "offerKind": "service",
+    "partnerKindsAllowed": [
+      "independent",
+      "studio"
+    ],
+    "synonymsAr": [
+      "مستقلة",
+      "خبيرة",
+      "متخصصة"
+    ],
+    "notes": "تخصصات الخبيرة (مكياج/رموش/حناء) تُعرض عبر خريطة البوابة دون تغيير parentId للتخصصات المشتركة مع الصالونات.",
+    "linkedSpecialtyIds": [
+      "beauty.makeup",
+      "beauty.lashes_brows",
+      "beauty.henna"
+    ]
+  }
+}

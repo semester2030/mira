@@ -1485,11 +1485,7 @@
       "sort": 40,
       "active": true,
       "imageKey": "beauty.makeup",
-      "children": [
-        "beauty.makeup",
-        "beauty.lashes_brows",
-        "beauty.henna"
-      ],
+      "children": [],
       "writeEnabled": false,
       "offerKind": "service",
       "partnerKindsAllowed": [
@@ -1501,7 +1497,12 @@
         "خبيرة",
         "متخصصة"
       ],
-      "notes": "تخصصات الخبيرة تظهر داخل التفاصيل (مكياج، رموش، حناء) — ليست دوائر رئيسية إضافية."
+      "notes": "تخصصات الخبيرة (مكياج/رموش/حناء) تُعرض عبر خريطة البوابة دون تغيير parentId للتخصصات المشتركة مع الصالونات.",
+      "linkedSpecialtyIds": [
+        "beauty.makeup",
+        "beauty.lashes_brows",
+        "beauty.henna"
+      ]
     }
   ]
 }
