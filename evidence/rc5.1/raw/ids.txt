@@ -1,6 +1,7 @@
 BASE_TIP=c14a84aec8b33037b64313773d304b4258622957
 FEATURE_RC5=f7fa162b16b01e1987d1bcf81959d5218144b6fe
 RESULT=7a00e305a5e2cc62ba252804026942b42d7e82ea
-TIP=6bc90cbf1b5fa63322a6b2b3a424193bb3802684
+TIP=c3aee9d484e0aeac08dfef11e491370b00d430bf
+NOTE=TIP is this docs tip; RESULT is the code commit
 BRANCH=mira/catalog-provider-rc1
 {"ok":true,"visitId":"1eacf8de-b21d-4094-b01e-7677c6a0928a","bookingIds":["0fc345aa-2956-40e2-a9b8-475c966fb657","666d60e7-be2a-4720-8a15-51e58f7e40f0"],"beforeVisits":0,"afterCreateVisits":1,"afterReplayVisits":1,"beforeRaceVisits":2,"afterRaceVisits":3,"raceWinner":1,"midTxRollback":true,"homeOnlyRejected":true,"firstSendSameKeyOk":true,"activityGrantRejected":true}
