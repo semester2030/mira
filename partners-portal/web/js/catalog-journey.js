@@ -14,7 +14,19 @@
     ['gifts', 'الهدايا'],
     ['occasions', 'مناسباتك'],
   ];
+  /** Four provider circles — same ids/order as Discover beauty rail. */
+  const BEAUTY_PROVIDER_CIRCLES = [
+    ['beauty.salons', 'الصالونات'],
+    ['beauty.skin_centers', 'مراكز العناية بالبشرة'],
+    ['beauty.spa', 'السبا والاسترخاء'],
+    ['beauty.experts', 'خبيرات الجمال'],
+  ];
+  /** Legacy specialty ids kept for older drafts; laser/teeth removed from new registration. */
   const SERVICE_CATEGORIES = [
+    ['beauty.salons', 'الصالونات'],
+    ['beauty.skin_centers', 'مراكز العناية بالبشرة'],
+    ['beauty.spa', 'السبا والاسترخاء'],
+    ['beauty.experts', 'خبيرات الجمال'],
     ['hair', 'الشعر'],
     ['skin', 'البشرة'],
     ['makeup', 'المكياج'],
@@ -23,16 +35,15 @@
     ['hair_removal', 'إزالة الشعر'],
     ['henna', 'الحناء'],
     ['care', 'العناية'],
-    ['laser', 'الليزر'],
-    ['teeth', 'الأسنان'],
   ];
   const CLINIC_CATEGORIES = [
+    ['beauty.skin_centers', 'مراكز العناية بالبشرة'],
     ['skin', 'البشرة'],
     ['hair', 'الشعر'],
-    ['laser', 'الليزر'],
-    ['teeth', 'الأسنان'],
   ];
   const SALON_CATEGORIES = [
+    ['beauty.salons', 'الصالونات'],
+    ['beauty.spa', 'السبا والاسترخاء'],
     ['hair', 'الشعر'],
     ['makeup', 'المكياج'],
     ['nails', 'الأظافر'],
@@ -1105,7 +1116,11 @@
               : 'أناقتك');
     let categories = type === 'brand'
       ? PRODUCT_CATEGORIES
-      : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
+      : (type === 'clinic'
+          ? CLINIC_CATEGORIES
+          : (type === 'salon' || type === 'independent' || type === 'studio' || type === 'developer'
+              ? BEAUTY_PROVIDER_CIRCLES
+              : BEAUTY_PROVIDER_CIRCLES));
     if (window.__MIRA_TAXONOMY_LANE__ === 'occasions' && type !== 'brand') {
       categories = [['occasions', 'مناسباتك']];
     } else if (

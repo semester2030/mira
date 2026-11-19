@@ -4,6 +4,10 @@
  */
 (function () {
   const ORB_BY_SERVICE_CAT = {
+    'beauty.salons': 'assets/e2b-ref/orbs/hair.png',
+    'beauty.skin_centers': 'assets/e2b-ref/orbs/skin.png',
+    'beauty.spa': 'assets/e2b-ref/orbs/spa.png',
+    'beauty.experts': 'assets/e2b-ref/orbs/makeup.png',
     hair: 'assets/e2b-ref/orbs/hair.png',
     skin: 'assets/e2b-ref/orbs/skin.png',
     makeup: 'assets/e2b-ref/orbs/makeup.png',
@@ -13,8 +17,6 @@
     henna: 'assets/e2b-ref/orbs/spa.png',
     care: 'assets/e2b-ref/orbs/spa.png',
     spa: 'assets/e2b-ref/orbs/spa.png',
-    laser: 'assets/e2b-ref/orbs/body.png',
-    teeth: 'assets/e2b-ref/orbs/face.png',
     face: 'assets/e2b-ref/orbs/face.png',
     body: 'assets/e2b-ref/orbs/body.png',
     occasions: 'assets/e2b-ref/orbs/occasions_types.png',
@@ -28,9 +30,30 @@
     salon_makeup: 'assets/e2b-ref/orbs/makeup.png',
     salon_care: 'assets/e2b-ref/orbs/spa.png',
     clinic_skin: 'assets/e2b-ref/orbs/skin.png',
-    clinic_laser: 'assets/e2b-ref/orbs/body.png',
     clinic_consult: 'assets/e2b-ref/orbs/face.png',
-    clinic_teeth: 'assets/e2b-ref/orbs/face.png',
+  };
+
+  const MEDICAL_CAT_BLOCKED = new Set([
+    'laser',
+    'teeth',
+    'beauty.clinics',
+    'beauty.clinic.laser',
+    'beauty.clinic.teeth',
+    'beauty.clinic.derm',
+  ]);
+
+  const BEAUTY_PROVIDER_ORDER = [
+    'beauty.salons',
+    'beauty.skin_centers',
+    'beauty.spa',
+    'beauty.experts',
+  ];
+
+  const BEAUTY_PROVIDER_LABELS = {
+    'beauty.salons': 'الصالونات',
+    'beauty.skin_centers': 'مراكز العناية بالبشرة',
+    'beauty.spa': 'السبا والاسترخاء',
+    'beauty.experts': 'خبيرات الجمال',
   };
 
   let beautyTaxonomyDoc = null;
@@ -70,37 +93,69 @@
     return ORB_BY_SERVICE_CAT[catId] || ORB_BY_SERVICE_CAT.care;
   }
 
-  function beautyLeavesForCategory(catId) {
-    if (!beautyTaxonomyDoc || !Array.isArray(beautyTaxonomyDoc.nodes)) return [];
-    const partnerType = (document.body.dataset.partnerType || 'salon').replace(/^developer$/, 'salon');
-    const salonMap = {
+  function taxonomyNodeById(id) {
+    if (!beautyTaxonomyDoc || !Array.isArray(beautyTaxonomyDoc.nodes) || !id) return null;
+    return beautyTaxonomyDoc.nodes.find((n) => n && n.id === id) || null;
+  }
+
+  function isMedicalNode(n) {
+    if (!n) return true;
+    const id = String(n.id || '');
+    if (n.medicalOnly || n.blockedForNewRegistration) return true;
+    if (MEDICAL_CAT_BLOCKED.has(id)) return true;
+    if (id.includes('clinic.laser') || id.includes('clinic.teeth') || id === 'beauty.clinics') return true;
+    return false;
+  }
+
+  function legacySpecialtyToBeautyParent(catId) {
+    const map = {
       hair: 'beauty.hair',
       makeup: 'beauty.makeup',
       nails: 'beauty.nails',
       care: 'beauty.spa',
       spa: 'beauty.spa',
-      // Salon cosmetic face care (not medical derm).
       skin: 'beauty.face_care',
       lashes_brows: 'beauty.lashes_brows',
       hair_removal: 'beauty.hair_removal',
       henna: 'beauty.henna',
     };
-    const clinicMap = {
-      hair: 'beauty.clinic.derm',
-      skin: 'beauty.clinic.derm',
-      laser: 'beauty.clinic.laser',
-      teeth: 'beauty.clinic.teeth',
-    };
-    const parentMap = partnerType === 'clinic' ? clinicMap : salonMap;
-    const parentId = parentMap[catId] || (String(catId).indexOf('beauty.') === 0 ? catId : null);
-    if (!parentId) return [];
+    return map[catId] || null;
+  }
+
+  /** Specialty groups under a provider (or legacy specialty id). */
+  function beautyGroupsForProvider(providerId) {
+    if (!beautyTaxonomyDoc || !Array.isArray(beautyTaxonomyDoc.nodes)) return [];
+    if (MEDICAL_CAT_BLOCKED.has(providerId) || String(providerId).indexOf('beauty.clinic') === 0) return [];
+    const parentId = legacySpecialtyToBeautyParent(providerId) || providerId;
+    const parent = taxonomyNodeById(parentId);
+    const childIds = parent && Array.isArray(parent.children) ? parent.children.slice() : [];
+    // Experts may list shared specialty ids that keep parentId under salons.
+    const nodes = childIds.length
+      ? childIds.map(taxonomyNodeById).filter(Boolean)
+      : beautyTaxonomyDoc.nodes.filter((n) => n && n.parentId === parentId);
+    return nodes
+      .filter((n) => n && !n.browseOnly && !isMedicalNode(n) && Array.isArray(n.children) && n.children.length)
+      .sort((a, b) => (a.sort || 0) - (b.sort || 0) || String(a.id).localeCompare(String(b.id)))
+      .map((n) => ({
+        id: n.id,
+        label: n.labelAr,
+        suggestedName: n.labelAr,
+        category: providerId,
+        imageKey: n.imageKey,
+        icon: n.icon,
+        taxonomyGroup: true,
+      }));
+  }
+
+  function beautyLeavesForCategory(catId) {
+    if (!beautyTaxonomyDoc || !Array.isArray(beautyTaxonomyDoc.nodes)) return [];
+    if (MEDICAL_CAT_BLOCKED.has(catId) || String(catId).indexOf('beauty.clinic') === 0) return [];
+    const parentId = legacySpecialtyToBeautyParent(catId) || catId;
     return beautyTaxonomyDoc.nodes
       .filter((n) => {
-        if (!n || n.parentId !== parentId || n.browseOnly || n.writeEnabled === false) return false;
+        if (!n || n.parentId !== parentId || n.browseOnly || isMedicalNode(n)) return false;
+        if (n.writeEnabled === false) return false;
         if (n.children && n.children.length) return false;
-        // Clinic «شعر» = scalp/hair medical eval only — never salon color/cut fields.
-        if (partnerType === 'clinic' && catId === 'hair') return String(n.id).indexOf('hair_eval') >= 0;
-        if (partnerType === 'clinic' && catId === 'skin') return String(n.id).indexOf('hair_eval') < 0;
         return true;
       })
       .sort((a, b) => (a.sort || 0) - (b.sort || 0) || String(a.id).localeCompare(String(b.id)))
@@ -116,7 +171,22 @@
       }));
   }
 
-  const LABEL_BY_ID = {
+  /** Sub-orbs: groups under provider, else writable leaves under specialty. */
+  function beautySubItemsForSelection(catId, groupId) {
+    if (groupId) return beautyLeavesForCategory(groupId);
+    const groups = beautyGroupsForProvider(catId);
+    if (groups.length) return groups;
+    return beautyLeavesForCategory(catId);
+  }
+
+  function profileIdToTemplateId(profileId) {
+    if (!profileId) return null;
+    const raw = String(profileId).trim();
+    if (raw.indexOf('service.') === 0) return raw.slice('service.'.length);
+    return raw;
+  }
+
+  const LABEL_BY_ID = Object.assign({}, BEAUTY_PROVIDER_LABELS, {
     hair: 'الشعر',
     skin: 'البشرة',
     makeup: 'المكياج',
@@ -126,13 +196,18 @@
     henna: 'الحناء',
     care: 'السبا',
     spa: 'السبا',
-    laser: 'الليزر',
-    teeth: 'الأسنان',
     occasions: 'مناسباتك',
-  };
+    'beauty.hair': 'الشعر',
+    'beauty.makeup': 'المكياج',
+    'beauty.nails': 'الأظافر',
+    'beauty.lashes_brows': 'الرموش والحواجب',
+    'beauty.hair_removal': 'إزالة الشعر',
+    'beauty.henna': 'الحناء',
+    'beauty.face_care': 'العناية بالوجه',
+  });
 
-  /** Preferred display order matching ref-2 (RTL visual: hair … spa). */
-  const MAIN_ORDER = [
+  /** Preferred display order: four provider circles, then legacy specialties, occasions. */
+  const MAIN_ORDER = BEAUTY_PROVIDER_ORDER.concat([
     'hair',
     'makeup',
     'nails',
@@ -142,12 +217,11 @@
     'skin',
     'care',
     'spa',
-    'laser',
-    'teeth',
     'occasions',
-  ];
+  ]);
 
   let selectedCatId = null;
+  let selectedGroupId = null;
   let selectedSubId = null;
   let syncingFromForm = false;
   let formWired = false;
@@ -323,17 +397,27 @@
       });
       ensureKindToggle(host);
       host.append(
-        el('p', { className: 'e2b-cat-heading', text: 'تصنيف الخدمة' }),
+        el('p', { className: 'e2b-cat-heading', text: 'نوع مقدّم الخدمة' }),
         el('div', {
           className: 'e2b-circle-list e2b-circle-list-horizontal',
           id: 'e2cMainCircles',
           'data-testid': 'e2c-main-circles',
         }),
-        el('p', { className: 'e2b-cat-heading e2c-sub-heading', text: 'النوع الفرعي' }),
+        el('p', {
+          className: 'e2b-cat-heading e2c-sub-heading',
+          'data-testid': 'e2c-sub-heading',
+          text: 'مجموعة الخدمات',
+        }),
         el('div', {
           className: 'e2b-circle-list e2b-circle-list-horizontal e2c-sub-circles',
           id: 'e2cSubCircles',
           'data-testid': 'e2c-sub-circles',
+        }),
+        el('p', {
+          className: 'e2b-cat-heading e2c-detail-heading',
+          'data-testid': 'e2c-detail-heading',
+          hidden: 'hidden',
+          text: 'تفاصيل الخدمة',
         }),
       );
       form.insertBefore(host, form.firstChild);
@@ -439,31 +523,60 @@
     section.classList.add('e2b-panel', 'e2b-split', 'e2c-service-panel');
   }
 
-  function ensureSalonExtendedCategories(sel) {
+  function ensureBeautyProviderCategories(sel) {
     if (!sel) return;
-    const partnerType = (document.body.dataset.partnerType || 'salon').replace(/^developer$/, 'salon');
-    if (partnerType !== 'salon' && partnerType !== 'independent' && partnerType !== 'studio') return;
-    const needed = [
-      ['lashes_brows', 'الرموش والحواجب'],
-      ['hair_removal', 'إزالة الشعر'],
-      ['henna', 'الحناء'],
-    ];
-    needed.forEach(([id, label]) => {
-      if ([...sel.options].some((o) => o.value === id)) return;
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = label;
-      sel.appendChild(opt);
+    // Strip medical options from the live select (production #/services/edit path).
+    Array.from(sel.options).forEach((o) => {
+      const v = String(o.value || '');
+      if (
+        MEDICAL_CAT_BLOCKED.has(v) ||
+        v.includes('clinic.laser') ||
+        v.includes('clinic.teeth') ||
+        v === 'laser' ||
+        v === 'teeth'
+      ) {
+        o.remove();
+      }
     });
+    const lane = window.__MIRA_TAXONOMY_LANE__ || '';
+    if (lane === 'occasions') return;
+    const partnerType = document.body.dataset.partnerType || 'salon';
+    // Developer + beauty partners: ensure the four provider circles exist.
+    if (
+      partnerType === 'developer' ||
+      partnerType === 'salon' ||
+      partnerType === 'independent' ||
+      partnerType === 'studio' ||
+      partnerType === 'spa' ||
+      partnerType === 'clinic'
+    ) {
+      BEAUTY_PROVIDER_ORDER.forEach((id) => {
+        if ([...sel.options].some((o) => o.value === id)) return;
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = BEAUTY_PROVIDER_LABELS[id] || id;
+        sel.appendChild(opt);
+      });
+    }
   }
 
   function categoriesFromForm(form) {
     const sel = form && form.querySelector('select[name="category"]');
     if (!sel) return [];
-    ensureSalonExtendedCategories(sel);
+    ensureBeautyProviderCategories(sel);
     const lane = window.__MIRA_TAXONOMY_LANE__ || '';
     let cats = Array.from(sel.options)
       .filter((o) => o.value)
+      .filter((o) => {
+        const v = String(o.value);
+        return !(
+          MEDICAL_CAT_BLOCKED.has(v) ||
+          v === 'laser' ||
+          v === 'teeth' ||
+          v.includes('clinic.laser') ||
+          v.includes('clinic.teeth')
+        );
+      })
       .map((o) => ({
         id: o.value,
         labelAr: LABEL_BY_ID[o.value] || o.textContent || o.value,
@@ -482,8 +595,13 @@
         ];
       }
     } else {
-      // Normal beauty/salon: never mix in occasions root from a sticky lane lock.
-      cats = cats.filter((c) => c.id !== 'occasions' && String(c.id).indexOf('occasions.') !== 0);
+      // Prefer the four provider circles when present; drop legacy specialty orbs.
+      const providers = cats.filter((c) => BEAUTY_PROVIDER_ORDER.indexOf(c.id) >= 0);
+      if (providers.length) {
+        cats = providers;
+      } else {
+        cats = cats.filter((c) => c.id !== 'occasions' && String(c.id).indexOf('occasions.') !== 0);
+      }
     }
     cats.sort((a, b) => {
       const ia = MAIN_ORDER.indexOf(a.id);
@@ -510,12 +628,63 @@
     return [];
   }
 
+  function setSubHeading(form, text) {
+    const host = form && form.querySelector('[data-testid="e2c-orb-host"]');
+    const heading =
+      (host && host.querySelector('[data-testid="e2c-sub-heading"]')) ||
+      document.querySelector('[data-testid="e2c-sub-heading"]');
+    if (heading) heading.textContent = text || 'مجموعة الخدمات';
+  }
+
+  function setDetailHeading(form, label) {
+    const host = form && form.querySelector('[data-testid="e2c-orb-host"]');
+    let heading =
+      (host && host.querySelector('[data-testid="e2c-detail-heading"]')) ||
+      document.querySelector('[data-testid="e2c-detail-heading"]');
+    if (!heading && host) {
+      heading = el('p', {
+        className: 'e2b-cat-heading e2c-detail-heading',
+        'data-testid': 'e2c-detail-heading',
+        text: '',
+      });
+      host.appendChild(heading);
+    }
+    if (!heading) return;
+    if (!label) {
+      heading.hidden = true;
+      heading.textContent = 'تفاصيل الخدمة';
+      return;
+    }
+    heading.hidden = false;
+    heading.textContent = 'تفاصيل ' + label;
+  }
+
   function paintSubOrbs(form, catId) {
     const host = subCirclesHost(form);
     if (!host) return;
     host.replaceChildren();
-    const beautyLeaves = beautyLeavesForCategory(catId);
-    const templates = beautyLeaves.length ? beautyLeaves : templatesForCategory(catId);
+    const items = beautySubItemsForSelection(catId, selectedGroupId);
+    const templates = items.length ? items : templatesForCategory(catId).filter((t) => !t.blockedForNewRegistration);
+    const showingGroups = !selectedGroupId && items.some((t) => t.taxonomyGroup);
+    setSubHeading(form, showingGroups ? 'مجموعة الخدمات' : selectedGroupId ? 'الخدمة الفرعية' : 'الخدمة الفرعية');
+    if (selectedGroupId) {
+      const back = el(
+        'button',
+        {
+          type: 'button',
+          className: 'btn btn-ghost e2c-group-back',
+          'data-testid': 'e2c-group-back',
+          text: '← رجوع للمجموعات',
+          onClick: () => {
+            selectedGroupId = null;
+            selectedSubId = null;
+            setDetailHeading(form, null);
+            paintSubOrbs(form, catId);
+          },
+        },
+      );
+      host.appendChild(back);
+    }
     if (!templates.length) {
       host.appendChild(
         el('p', {
@@ -531,18 +700,35 @@
       const orb = el('span', { className: 'e2b-circle-orb' });
       orb.style.backgroundImage = "url('" + orbUrl + "')";
       if (t.imageKey) orb.setAttribute('data-image-key', t.imageKey);
+      const selected =
+        t.taxonomyGroup ? selectedGroupId === t.id : selectedSubId === t.id;
       const btn = el(
         'button',
         {
           type: 'button',
-          className: 'e2b-circle' + (selectedSubId === t.id ? ' is-selected' : ''),
-          'data-testid': 'e2c-sub-circle',
+          className: 'e2b-circle' + (selected ? ' is-selected' : ''),
+          'data-testid': t.taxonomyGroup ? 'e2c-group-circle' : 'e2c-sub-circle',
           'data-template-id': t.id,
           'data-subcategory-id': t.taxonomyLeaf ? t.id : '',
+          'data-group-id': t.taxonomyGroup ? t.id : '',
           'data-category-id': catId,
           'data-orb-src': orbUrl,
           'data-image-key': t.imageKey || '',
-          onClick: () => selectSub(t.id, { fromCircle: true, taxonomyLeaf: !!t.taxonomyLeaf, profileId: t.profileId }),
+          onClick: () => {
+            if (t.taxonomyGroup) {
+              selectedGroupId = t.id;
+              selectedSubId = null;
+              setDetailHeading(form, null);
+              paintSubOrbs(form, catId);
+              return;
+            }
+            selectSub(t.id, {
+              fromCircle: true,
+              taxonomyLeaf: !!t.taxonomyLeaf,
+              profileId: t.profileId,
+              label: t.label || t.suggestedName || t.id,
+            });
+          },
         },
         [orb, el('span', { className: 'e2b-circle-label', text: t.label || t.suggestedName || t.id })],
       );
@@ -554,13 +740,16 @@
     opts = opts || {};
     selectedSubId = templateId || null;
     document.querySelectorAll('#e2cSubCircles .e2b-circle').forEach((b) => {
-      b.classList.toggle('is-selected', b.getAttribute('data-template-id') === templateId);
+      b.classList.toggle(
+        'is-selected',
+        b.getAttribute('data-template-id') === templateId || b.getAttribute('data-group-id') === templateId,
+      );
     });
     const form = resolveForm();
     if (!form || !templateId || opts.fromSync) return;
-    // Beauty taxonomy leaf: persist subcategory id + sticky profile; do not force wrong template.
+    // Beauty taxonomy leaf: persist subcategory id + bridge profile → serviceTemplateId.
     if (opts.taxonomyLeaf || String(templateId).indexOf('beauty.') === 0) {
-      let sub = form.querySelector('input[name="subcategory"]');
+      let sub = form.querySelector('input[name="subcategory"], select[name="subcategory"]');
       if (!sub) {
         sub = document.createElement('input');
         sub.type = 'hidden';
@@ -570,6 +759,21 @@
       syncingFromForm = true;
       sub.value = templateId;
       if (opts.profileId) window.__MIRA_LANE_PROFILE_ID__ = opts.profileId;
+      const tmplId = profileIdToTemplateId(opts.profileId);
+      const sel = form.querySelector('select[name="serviceTemplateId"]');
+      if (sel && tmplId) {
+        if (![...sel.options].some((o) => o.value === tmplId)) {
+          const opt = document.createElement('option');
+          opt.value = tmplId;
+          opt.textContent = opts.label || tmplId;
+          sel.appendChild(opt);
+        }
+        if (sel.value !== tmplId) {
+          sel.value = tmplId;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+      setDetailHeading(form, opts.label || LABEL_BY_ID[templateId] || templateId);
       sub.dispatchEvent(new Event('change', { bubbles: true }));
       syncingFromForm = false;
       return;
@@ -581,6 +785,7 @@
       sel.dispatchEvent(new Event('change', { bubbles: true }));
       syncingFromForm = false;
     }
+    setDetailHeading(form, opts.label || LABEL_BY_ID[templateId] || templateId);
   }
 
   function paintOrbs(form) {
@@ -645,7 +850,11 @@
     opts = opts || {};
     const same = selectedCatId === catId;
     selectedCatId = catId || null;
-    if (!same && !opts.preserveSub) selectedSubId = null;
+    if (!same && !opts.preserveSub) {
+      selectedSubId = null;
+      selectedGroupId = null;
+      setDetailHeading(resolveForm(), null);
+    }
     const form = resolveForm();
     const host = mainCirclesHost(form);
     (host ? host.querySelectorAll('.e2b-circle') : []).forEach((b) => {
@@ -659,6 +868,12 @@
     const catSel = form && form.querySelector('select[name="category"]');
     if (catSel && catId && catSel.value !== catId && !opts.fromSync) {
       syncingFromForm = true;
+      if (![...catSel.options].some((o) => o.value === catId)) {
+        const opt = document.createElement('option');
+        opt.value = catId;
+        opt.textContent = LABEL_BY_ID[catId] || catId;
+        catSel.appendChild(opt);
+      }
       catSel.value = catId;
       catSel.dispatchEvent(new Event('change', { bubbles: true }));
       syncingFromForm = false;
@@ -953,6 +1168,7 @@
     restoreProductHosts();
     activeFormId = null;
     selectedCatId = null;
+    selectedGroupId = null;
     selectedSubId = null;
   }
 

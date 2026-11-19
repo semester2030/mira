@@ -399,6 +399,32 @@ export class CatalogContentService {
     const queued = await this.prisma.$transaction(async (tx) => {
       const row = await this.lockOwner(tx, kind, id);
       if (row.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
+      if (kind === 'service') {
+        const medicalKeys = [
+          String((row as { category?: string | null }).category || ''),
+          String((row as { subcategory?: string | null }).subcategory || ''),
+          String((row as { draftCategory?: string | null }).draftCategory || ''),
+          String((row as { draftSubcategory?: string | null }).draftSubcategory || ''),
+        ]
+          .map((v) => v.trim())
+          .filter(Boolean);
+        const blocked = medicalKeys.some(
+          (key) =>
+            key === 'laser' ||
+            key === 'teeth' ||
+            key.includes('clinic.laser') ||
+            key.includes('clinic.teeth') ||
+            key === 'beauty.clinics' ||
+            key.startsWith('beauty.clinic.'),
+        );
+        if (blocked) {
+          throw new BadRequestException({
+            message: 'هذه الخدمة الطبية خارج نطاق ميرا ولا يمكن نشرها من جديد',
+            messageAr: 'هذه الخدمة الطبية خارج نطاق ميرا ولا يمكن نشرها من جديد',
+            code: 'MEDICAL_SERVICE_BLOCKED',
+          });
+        }
+      }
       const media = await tx.catalogMedia.findMany({ where: { ownerKind: kind, ownerId: id } });
       const hasImage = media.some((item) => item.kind === 'image' && !item.pendingRemoval);
       const hasVideo = media.some((item) => item.kind === 'video' && !item.pendingRemoval);
