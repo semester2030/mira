@@ -1,0 +1,1648 @@
+{
+  "schemaVersion": 1,
+  "source": "MIRA-Cursor-Kit/reference/catalog/catalog-reference.json",
+  "notesAr": "دليل تشغيل: تعريف الخدمة منفصل عن عرض المقدّم وعن لقطة الحجز. taxonomyLeafId يربط الاكتشاف.",
+  "providerCount": 22,
+  "serviceCount": 74,
+  "inScopeServiceCount": 74,
+  "providers": [
+    {
+      "id": "SA",
+      "nameAr": "صالون أو مشغل نسائي متعدد الخدمات",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "منشأة",
+      "groupLabelsAr": "الشعر • المكياج • الأظافر • الرموش والحواجب • العناية بالبشرة • إزالة الشعر غير الطبية • الحناء والنقش",
+      "welcomeCopyAr": "اجمعي خدمات الصالون في قائمة واحدة تختار منها العميلة.",
+      "partnerTypes": [
+        "salon"
+      ]
+    },
+    {
+      "id": "HR",
+      "nameAr": "مصففة شعر أو استوديو شعر",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الشعر",
+      "welcomeCopyAr": "عرّفي عميلاتك بقصّاتك وألوانك وتسريحاتك.",
+      "partnerTypes": [
+        "salon"
+      ]
+    },
+    {
+      "id": "MU",
+      "nameAr": "خبيرة مكياج أو استوديو مكياج",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "المكياج",
+      "welcomeCopyAr": "اعرضي أساليب المكياج التي تحمل لمستك.",
+      "partnerTypes": [
+        "salon"
+      ]
+    },
+    {
+      "id": "NA",
+      "nameAr": "متخصصة أظافر أو استوديو أظافر",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الأظافر",
+      "welcomeCopyAr": "اختاري خدمات العناية والتصاميم التي تنفّذينها.",
+      "partnerTypes": [
+        "salon"
+      ]
+    },
+    {
+      "id": "LB",
+      "nameAr": "متخصصة رموش وحواجب أو استوديو",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الرموش والحواجب",
+      "welcomeCopyAr": "أبرزي خيارات الرموش والحواجب المتاحة لديك.",
+      "partnerTypes": [
+        "salon"
+      ]
+    },
+    {
+      "id": "BC",
+      "nameAr": "مركز عناية بالبشرة والجمال",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "منشأة؛ الفرد بحسب الأهلية لكل نشاط",
+      "groupLabelsAr": "العناية بالبشرة • إزالة الشعر غير الطبية",
+      "welcomeCopyAr": "عرّفي العميلة بجلسات العناية التي يمكنها حجزها.",
+      "partnerTypes": [
+        "salon",
+        "clinic"
+      ]
+    },
+    {
+      "id": "SP",
+      "nameAr": "سبا أو مركز استرخاء وعناية بالجسم",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "منشأة بحسب النشاط",
+      "groupLabelsAr": "السبا والعناية بالجسم",
+      "welcomeCopyAr": "اعرضي طقوس العناية ومدّة كل تجربة.",
+      "partnerTypes": [
+        "salon"
+      ]
+    },
+    {
+      "id": "HN",
+      "nameAr": "نقّاشة حناء أو استوديو حناء",
+      "domainAr": "الجمال والعناية",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الحناء والنقش",
+      "welcomeCopyAr": "اختاري النقوش والباقات التي تزيّنين بها مناسبات عميلاتك.",
+      "partnerTypes": [
+        "salon"
+      ]
+    },
+    {
+      "id": "ST",
+      "nameAr": "منسّقة أزياء أو استوديو تنسيق إطلالات",
+      "domainAr": "الأناقة • توسع اختياري",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "تنسيق الإطلالة",
+      "welcomeCopyAr": "ساعدي العميلة في جمع قطعها في إطلالة واحدة.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "AT",
+      "nameAr": "أتيليه خياطة وتعديل فساتين وعباءات",
+      "domainAr": "الأناقة • توسع اختياري",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "التفصيل والتعديلات",
+      "welcomeCopyAr": "عرّفي العميلة بمواعيد القياس والتعديلات التي تقبلينها.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "VN",
+      "nameAr": "مشغّل قاعة أو قصر أفراح أو قاعة فندق أو استراحة مناسبة",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "منشأة أو مشغّل مؤهل للموقع",
+      "groupLabelsAr": "القاعات وأماكن الاحتفال • الكوش والمداخل • تنسيق الطاولات والورد والديكور • بوفيه وأركان الطعام والحلويات",
+      "welcomeCopyAr": "عرّفينا بمساحتك وما يشمله حجز المناسبة.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "PL",
+      "nameAr": "منظّمة مناسبات أو مكتب تنسيق حفلات",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "تنظيم وباقات حفلات • الكوش والمداخل • تنسيق الطاولات والورد والديكور • الضيافة والاستقبال • صبّابات ومضيفات • الدعوات وتنظيم الحضور • تجهيز العروس • تجارب الحفل",
+      "welcomeCopyAr": "حددي أي تفاصيل من يوم المناسبة سيتولاها فريقك.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "DE",
+      "nameAr": "مصمّمة كوش ومداخل أو استوديو ديكور وورد",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الكوش والمداخل • تنسيق الطاولات والورد والديكور",
+      "welcomeCopyAr": "حوّلي نماذج أعمالك إلى كوش وتنسيقات قابلة للطلب.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "HO",
+      "nameAr": "فريق استقبال وضيافة أو منشأة تشغيل مضيفات",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد للخدمة الشخصية أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "welcomeCopyAr": "عرّفي صاحبة المناسبة بمن يستقبل ضيفاتها وما يشمله العرض.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "CA",
+      "nameAr": "مطبخ ضيافة أو متعهد إعاشة أو مقدم ركن طعام وحلويات",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "منشأة أو منتج مؤهل بحسب النشاط",
+      "groupLabelsAr": "بوفيه وأركان الطعام والحلويات",
+      "welcomeCopyAr": "اعرضي قائمتك وطريقة التقديم والعدد الذي تخدمينه.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "PH",
+      "nameAr": "مصوّرة أو استوديو تصوير وتغطية",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "التصوير وتغطية الحفل • تجارب الحفل",
+      "welcomeCopyAr": "عرّفي العميلة بساعات التغطية وما تستلمه بعد الحفل.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "AV",
+      "nameAr": "فريق صوت وإضاءة أو استوديو تجهيز تقني",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد متخصص أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "تجهيزات الصوت والإضاءة",
+      "welcomeCopyAr": "حددي التجهيزات التي سيوفرها فريقك للحفل.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "RE",
+      "nameAr": "مؤجّر أثاث ومستلزمات حفلات",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "تأجير الأثاث والتجهيزات",
+      "welcomeCopyAr": "أضيفي القطع المتاحة للإيجار مع التوصيل والاسترجاع.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "IN",
+      "nameAr": "مصمّمة دعوات أو استوديو قرطاسية مناسبات",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الدعوات وتنظيم الحضور",
+      "welcomeCopyAr": "اعرضي تصاميم الدعوات وخيارات الطباعة والتسليم.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "GF",
+      "nameAr": "منسّقة هدايا وتوزيعات أو استوديو تغليف",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "الهدايا والتوزيعات المخصّصة",
+      "welcomeCopyAr": "قدّمي توزيعات مخصّصة باسم صاحبة المناسبة.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "PF",
+      "nameAr": "مقدّم ركن عطور وبخور للمناسبات",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "أركان العطور والبخور",
+      "welcomeCopyAr": "اختاري الأركان التي يمكن تجهيزها في موقع الحفل.",
+      "partnerTypes": [
+        "brand"
+      ]
+    },
+    {
+      "id": "BR",
+      "nameAr": "منسّقة تجهيز العروس أو فريق مرافقة العروس",
+      "domainAr": "المناسبات",
+      "accountTypeNoteAr": "فرد أو منشأة بحسب الأهلية",
+      "groupLabelsAr": "تجهيز العروس",
+      "welcomeCopyAr": "عرّفي العروس بخدمات المرافقة والتجهيز في يومها.",
+      "partnerTypes": [
+        "brand"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "id": "S025",
+      "nameAr": "قص شعر",
+      "domain": "beauty_and_style",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "serviceFieldNotesAr": "نوع القص • هل يشمل التصفيف؟",
+      "suggestedPhrasesAr": [
+        "اختاري القَصّة وراجعي ما يشمله الموعد."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S026",
+      "nameAr": "تصفيف واستشوار",
+      "domain": "beauty_and_style",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "serviceFieldNotesAr": "أسلوب التصفيف • شمول الغسيل",
+      "suggestedPhrasesAr": [
+        "اختاري التصفيف الذي يناسب يومك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S027",
+      "nameAr": "تسريحة مناسبة",
+      "domain": "beauty_and_style",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "serviceFieldNotesAr": "مرفوعة/منسدلة • إكسسوار أو طرحة",
+      "suggestedPhrasesAr": [
+        "احفظي إلهامك واختاري تسريحتك للمناسبة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S028",
+      "nameAr": "صبغة جذور",
+      "domain": "beauty_and_style",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "serviceFieldNotesAr": "نطاق اللون • ما يشمله السعر",
+      "suggestedPhrasesAr": [
+        "جدّدي لون الجذور بموعد واضح التفاصيل."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S029",
+      "nameAr": "صبغ شعر أو خصل",
+      "domain": "beauty_and_style",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "serviceFieldNotesAr": "التقنية • أساس تحديد السعر",
+      "suggestedPhrasesAr": [
+        "تصفّحي تقنيات اللون التي تقدّمها المصففة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S030",
+      "nameAr": "جلسة عناية بالشعر",
+      "domain": "beauty_and_style",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "serviceFieldNotesAr": "نوع العناية • الشمول",
+      "suggestedPhrasesAr": [
+        "اختاري جلسة العناية وما تحبين إضافته إليها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S031",
+      "nameAr": "مكياج ناعم",
+      "domain": "beauty_and_style",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "serviceFieldNotesAr": "درجة كثافة الإطلالة • الرموش مشمولة؟",
+      "suggestedPhrasesAr": [
+        "إطلالة هادئة تختارين تفاصيلها مع خبيرة المكياج."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S032",
+      "nameAr": "مكياج سهرة",
+      "domain": "beauty_and_style",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "serviceFieldNotesAr": "نوع المناسبة • الإضافات",
+      "suggestedPhrasesAr": [
+        "نسّقي مكياج السهرة مع فستانك وألوانك المفضلة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S033",
+      "nameAr": "مكياج عروس",
+      "domain": "beauty_and_style",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "serviceFieldNotesAr": "بروفة مشمولة؟ • وقت الجاهزية • المرافقة",
+      "suggestedPhrasesAr": [
+        "من البروفة إلى وقت الزفّة، اختاري ما تحتاجينه ليومك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S034",
+      "nameAr": "بروفة مكياج",
+      "domain": "beauty_and_style",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "serviceFieldNotesAr": "عدد الإطلالات • تاريخ المناسبة",
+      "suggestedPhrasesAr": [
+        "جرّبي أسلوب المكياج قبل موعد المناسبة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S035",
+      "nameAr": "مانيكير",
+      "domain": "beauty_and_style",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "يدين/قدمين • التقنية • المختصة",
+      "serviceFieldNotesAr": "لون مشمول؟ • نوع الطلاء",
+      "suggestedPhrasesAr": [
+        "اختاري العناية واللون لليدين."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S036",
+      "nameAr": "بديكير",
+      "domain": "beauty_and_style",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "يدين/قدمين • التقنية • المختصة",
+      "serviceFieldNotesAr": "ما تشمله الجلسة • نوع الطلاء",
+      "suggestedPhrasesAr": [
+        "حددي تفاصيل عناية القدمين قبل الحجز."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S037",
+      "nameAr": "تركيب أظافر",
+      "domain": "beauty_and_style",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "يدين/قدمين • التقنية • المختصة",
+      "serviceFieldNotesAr": "نوع التركيب • الطول • إزالة سابقة؟",
+      "suggestedPhrasesAr": [
+        "اختاري الطول والشكل من أعمال المتخصصة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S038",
+      "nameAr": "تصميم أظافر",
+      "domain": "beauty_and_style",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "يدين/قدمين • التقنية • المختصة",
+      "serviceFieldNotesAr": "عدد الأظافر • مستوى التصميم",
+      "suggestedPhrasesAr": [
+        "اختاري رسمة تحبينها وحددي تفاصيل تنفيذها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S039",
+      "nameAr": "تركيب رموش",
+      "domain": "beauty_and_style",
+      "groupAr": "الرموش والحواجب",
+      "providerTypeIds": [
+        "SA",
+        "LB"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • الأسلوب • مدة الجلسة",
+      "serviceFieldNotesAr": "الكثافة • مجموعة كاملة أو تعبئة",
+      "suggestedPhrasesAr": [
+        "اختاري كثافة الرموش والأسلوب الذي تفضلينه."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S040",
+      "nameAr": "رفع رموش",
+      "domain": "beauty_and_style",
+      "groupAr": "الرموش والحواجب",
+      "providerTypeIds": [
+        "SA",
+        "LB"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • الأسلوب • مدة الجلسة",
+      "serviceFieldNotesAr": "ما تشمله الجلسة",
+      "suggestedPhrasesAr": [
+        "تعرّفي على خطوات الخدمة كما تصفها المتخصصة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S041",
+      "nameAr": "تنسيق حواجب",
+      "domain": "beauty_and_style",
+      "groupAr": "الرموش والحواجب",
+      "providerTypeIds": [
+        "SA",
+        "LB"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • الأسلوب • مدة الجلسة",
+      "serviceFieldNotesAr": "طريقة التنسيق • إضافة تلوين إن توفر",
+      "suggestedPhrasesAr": [
+        "حددي أسلوب ترتيب الحواجب مع المتخصصة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S098",
+      "nameAr": "تقشير تجميلي سطحي للوجه",
+      "domain": "beauty_and_style",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "serviceFieldNotesAr": "نوع المستحضر التجميلي المستخدم • الخطوات المشمولة",
+      "suggestedPhrasesAr": [
+        "اطّلعي على مستحضر التقشير وخطوات الجلسة قبل اختيار موعدك."
+      ],
+      "taxonomyLeafId": "beauty.face_care.peel",
+      "inScope": true,
+      "profileIdHint": "service.salon_care"
+    },
+    {
+      "id": "S042",
+      "nameAr": "تنظيف تجميلي سطحي",
+      "domain": "beauty_and_style",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "serviceFieldNotesAr": "خطوات الجلسة التجميلية",
+      "suggestedPhrasesAr": [
+        "تعرّفي على خطوات التنظيف قبل اختيار موعدك."
+      ],
+      "taxonomyLeafId": "beauty.face_care.cleanse",
+      "inScope": true,
+      "profileIdHint": "service.salon_care"
+    },
+    {
+      "id": "S043",
+      "nameAr": "ترطيب وماسك",
+      "domain": "beauty_and_style",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "serviceFieldNotesAr": "نوع الماسك • المدة",
+      "suggestedPhrasesAr": [
+        "اختاري جلسة ترطيب تتناسب مع وقتك وتفضيلاتك."
+      ],
+      "taxonomyLeafId": "beauty.face_care.hydrate",
+      "inScope": true,
+      "profileIdHint": "service.salon_care"
+    },
+    {
+      "id": "S044",
+      "nameAr": "عناية قبل المكياج",
+      "domain": "beauty_and_style",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "serviceFieldNotesAr": "وقت المكياج • الخطوات المشمولة",
+      "suggestedPhrasesAr": [
+        "جهّزي إطلالتك بجلسة عناية تسبق المكياج."
+      ],
+      "taxonomyLeafId": "beauty.face_care.pre_makeup",
+      "inScope": true,
+      "profileIdHint": "service.salon_care"
+    },
+    {
+      "id": "S045",
+      "nameAr": "إزالة بالشمع أو الحلاوة",
+      "domain": "beauty_and_style",
+      "groupAr": "إزالة الشعر غير الطبية",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "الطريقة (شمع/حلاوة/خيط) • المنطقة • المختصة",
+      "serviceFieldNotesAr": "المناطق المشمولة • طريقة التسعير",
+      "suggestedPhrasesAr": [
+        "اختاري المنطقة والطريقة التي تفضلينها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S046",
+      "nameAr": "إزالة بالخيط",
+      "domain": "beauty_and_style",
+      "groupAr": "إزالة الشعر غير الطبية",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "الطريقة (شمع/حلاوة/خيط) • المنطقة • المختصة",
+      "serviceFieldNotesAr": "منطقة الوجه • ما يشمله السعر",
+      "suggestedPhrasesAr": [
+        "راجعي المناطق المتاحة وحددي موعدك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S047",
+      "nameAr": "حمام مغربي",
+      "domain": "beauty_and_style",
+      "groupAr": "السبا والعناية بالجسم",
+      "providerTypeIds": [
+        "SP"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "نوع التجربة • المدة • المرافق المشمولة",
+      "serviceFieldNotesAr": "الباقة • الخطوات المشمولة",
+      "suggestedPhrasesAr": [
+        "اختاري طقوس الحمام المغربي ووقتها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S048",
+      "nameAr": "جلسة استرخاء غير علاجية",
+      "domain": "beauty_and_style",
+      "groupAr": "السبا والعناية بالجسم",
+      "providerTypeIds": [
+        "SP"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "نوع التجربة • المدة • المرافق المشمولة",
+      "serviceFieldNotesAr": "نوع الجلسة • غرفة منفردة أو مشتركة",
+      "suggestedPhrasesAr": [
+        "خصّصي وقتًا للاسترخاء واختاري تفاصيل تجربتك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S049",
+      "nameAr": "عناية وتقشير للجسم",
+      "domain": "beauty_and_style",
+      "groupAr": "السبا والعناية بالجسم",
+      "providerTypeIds": [
+        "SP"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "نوع التجربة • المدة • المرافق المشمولة",
+      "serviceFieldNotesAr": "تجميلي سطحي فقط • المستحضرات المعلنة",
+      "suggestedPhrasesAr": [
+        "اطّلعي على خطوات العناية بالجسم قبل الحجز."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S050",
+      "nameAr": "نقش حناء فردي",
+      "domain": "beauty_and_style",
+      "groupAr": "الحناء والنقش",
+      "providerTypeIds": [
+        "HN",
+        "SA"
+      ],
+      "bookingModeNoteAr": "موعد أو مناسبة",
+      "groupFieldNotesAr": "نوع النقش • المنطقة • عدد العميلات",
+      "serviceFieldNotesAr": "يد واحدة/يدان • مدى امتداد النقش",
+      "suggestedPhrasesAr": [
+        "اختاري نقشتك من نماذج أعمال النقّاشة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S051",
+      "nameAr": "ركن حناء للمناسبة",
+      "domain": "beauty_and_style",
+      "groupAr": "الحناء والنقش",
+      "providerTypeIds": [
+        "HN",
+        "SA"
+      ],
+      "bookingModeNoteAr": "موعد أو مناسبة",
+      "groupFieldNotesAr": "نوع النقش • المنطقة • عدد العميلات",
+      "serviceFieldNotesAr": "عدد النقّاشات • الساعات • موقع الركن",
+      "suggestedPhrasesAr": [
+        "أضيفي ركن حناء لضيوفك واختاري ساعات حضوره."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S052",
+      "nameAr": "تنسيق إطلالة مناسبة",
+      "domain": "beauty_and_style",
+      "groupAr": "تنسيق الإطلالة",
+      "providerTypeIds": [
+        "ST"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "حضوري/عن بعد • مدة اللقاء • ما يُسلّم للعميلة",
+      "serviceFieldNotesAr": "نوع المناسبة • عدد الإطلالات",
+      "suggestedPhrasesAr": [
+        "اجمعي الفستان والإكسسوارات في إطلالة واحدة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S053",
+      "nameAr": "تنسيق خزانة",
+      "domain": "beauty_and_style",
+      "groupAr": "تنسيق الإطلالة",
+      "providerTypeIds": [
+        "ST"
+      ],
+      "bookingModeNoteAr": "موعد",
+      "groupFieldNotesAr": "حضوري/عن بعد • مدة اللقاء • ما يُسلّم للعميلة",
+      "serviceFieldNotesAr": "عدد القطع أو الساعات • نطاق الجلسة",
+      "suggestedPhrasesAr": [
+        "اكتشفي تنسيقات جديدة من قطع خزانتك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S054",
+      "nameAr": "تعديل فستان",
+      "domain": "beauty_and_style",
+      "groupAr": "التفصيل والتعديلات",
+      "providerTypeIds": [
+        "AT"
+      ],
+      "bookingModeNoteAr": "طلب وتحديد موعد",
+      "groupFieldNotesAr": "نوع القطعة • موعد القياس • تاريخ التسليم",
+      "serviceFieldNotesAr": "نوع التعديل • عدد البروفات",
+      "suggestedPhrasesAr": [
+        "حددي التعديلات واحجزي بروفة الفستان."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S055",
+      "nameAr": "تفصيل عباءة",
+      "domain": "beauty_and_style",
+      "groupAr": "التفصيل والتعديلات",
+      "providerTypeIds": [
+        "AT"
+      ],
+      "bookingModeNoteAr": "طلب وتحديد موعد",
+      "groupFieldNotesAr": "نوع القطعة • موعد القياس • تاريخ التسليم",
+      "serviceFieldNotesAr": "من يوفّر القماش؟ • عدد البروفات",
+      "suggestedPhrasesAr": [
+        "اختاري قصة العباءة واتّفقي على تفاصيل القياس والتسليم."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S056",
+      "nameAr": "حجز قاعة مناسبة",
+      "domain": "occasions",
+      "groupAr": "القاعات وأماكن الاحتفال",
+      "providerTypeIds": [
+        "VN"
+      ],
+      "bookingModeNoteAr": "طلب حجز أو عرض سعر",
+      "groupFieldNotesAr": "المدينة والموقع • السعة الدنيا والعليا • الفترات • مدة الاستخدام",
+      "serviceFieldNotesAr": "الحضور • التجهيزات المشمولة • دخول التجهيز والخروج",
+      "suggestedPhrasesAr": [
+        "اختاري قاعة تناسب عدد ضيفاتك ووقت احتفالك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S057",
+      "nameAr": "باقة قاعة مع ضيافة",
+      "domain": "occasions",
+      "groupAr": "القاعات وأماكن الاحتفال",
+      "providerTypeIds": [
+        "VN"
+      ],
+      "bookingModeNoteAr": "طلب حجز أو عرض سعر",
+      "groupFieldNotesAr": "المدينة والموقع • السعة الدنيا والعليا • الفترات • مدة الاستخدام",
+      "serviceFieldNotesAr": "سعر الضيفة الإضافية • عدد الضيفات المشمول • القائمة",
+      "suggestedPhrasesAr": [
+        "شوفي ما تجمعه باقة القاعة والضيافة في طلب واحد."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S058",
+      "nameAr": "حجز مساحة خارجية",
+      "domain": "occasions",
+      "groupAr": "القاعات وأماكن الاحتفال",
+      "providerTypeIds": [
+        "VN"
+      ],
+      "bookingModeNoteAr": "طلب حجز أو عرض سعر",
+      "groupFieldNotesAr": "المدينة والموقع • السعة الدنيا والعليا • الفترات • مدة الاستخدام",
+      "serviceFieldNotesAr": "بديل الطقس • المساحة • التجهيزات",
+      "suggestedPhrasesAr": [
+        "تصفّحي المساحة الخارجية وخطة التجهيز ليومك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S059",
+      "nameAr": "تخطيط وتنظيم كامل",
+      "domain": "occasions",
+      "groupAr": "تنظيم وباقات حفلات",
+      "providerTypeIds": [
+        "PL"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "نوع المناسبة • المدينة • عدد الضيفات • نطاق المسؤولية",
+      "serviceFieldNotesAr": "المهام المشمولة • الموردون المشمولون • مراحل التسليم",
+      "suggestedPhrasesAr": [
+        "من أول اختيار إلى يوم الحفل، حددي التفاصيل التي يتولّاها فريق التنظيم."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S060",
+      "nameAr": "تنسيق يوم المناسبة",
+      "domain": "occasions",
+      "groupAr": "تنظيم وباقات حفلات",
+      "providerTypeIds": [
+        "PL"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "نوع المناسبة • المدينة • عدد الضيفات • نطاق المسؤولية",
+      "serviceFieldNotesAr": "ساعات التغطية • عدد المنسقات • جدول اليوم",
+      "suggestedPhrasesAr": [
+        "خلّي فريق التنسيق يتابع تفاصيل يومك في الوقت المتفق عليه."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S061",
+      "nameAr": "تنسيق خطوبة منزلية",
+      "domain": "occasions",
+      "groupAr": "تنظيم وباقات حفلات",
+      "providerTypeIds": [
+        "PL"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "نوع المناسبة • المدينة • عدد الضيفات • نطاق المسؤولية",
+      "serviceFieldNotesAr": "مساحة الموقع • دخول الفريق • الخدمات المشمولة",
+      "suggestedPhrasesAr": [
+        "رتّبي خطوبتك في البيت بباقة تناسب المساحة وعدد الضيفات."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S062",
+      "nameAr": "تنسيق كوشة",
+      "domain": "occasions",
+      "groupAr": "الكوش والمداخل",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "bookingModeNoteAr": "باقة أو عرض سعر",
+      "groupFieldNotesAr": "الموقع • الأبعاد • التركيب والفك • نافذة الدخول",
+      "serviceFieldNotesAr": "عرض المنصة وارتفاعها • الألوان • الإضاءة المشمولة",
+      "suggestedPhrasesAr": [
+        "اختاري كوشة تعكس ذوقك وتناسب مساحة القاعة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S063",
+      "nameAr": "تنسيق مدخل",
+      "domain": "occasions",
+      "groupAr": "الكوش والمداخل",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "bookingModeNoteAr": "باقة أو عرض سعر",
+      "groupFieldNotesAr": "الموقع • الأبعاد • التركيب والفك • نافذة الدخول",
+      "serviceFieldNotesAr": "أبعاد المدخل • لوحة أسماء أو ورد",
+      "suggestedPhrasesAr": [
+        "استقبلي ضيفاتك بمدخل مصمّم للمناسبة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S064",
+      "nameAr": "تنسيق طاولات",
+      "domain": "occasions",
+      "groupAr": "تنسيق الطاولات والورد والديكور",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "الموقع • لوحة الألوان • تاريخ التجهيز والفك",
+      "serviceFieldNotesAr": "عدد الطاولات وأشكالها • المحتويات لكل طاولة",
+      "suggestedPhrasesAr": [
+        "اختاري تنسيقًا يجمع طاولات الحفل على طابع واحد."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S065",
+      "nameAr": "تنسيق ورد للموقع",
+      "domain": "occasions",
+      "groupAr": "تنسيق الطاولات والورد والديكور",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "الموقع • لوحة الألوان • تاريخ التجهيز والفك",
+      "serviceFieldNotesAr": "طبيعي أو صناعي • عدد الترتيبات • بدائل موسمية",
+      "suggestedPhrasesAr": [
+        "حددي ألوان الورد والأركان التي تريدين تزيينها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S066",
+      "nameAr": "باقة عروس حسب الطلب",
+      "domain": "occasions",
+      "groupAr": "تنسيق الطاولات والورد والديكور",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "الموقع • لوحة الألوان • تاريخ التجهيز والفك",
+      "serviceFieldNotesAr": "شكل الباقة • نوع الورد • وقت التسليم",
+      "suggestedPhrasesAr": [
+        "خصّصي باقة ورد ترافق إطلالتك في يوم المناسبة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S067",
+      "nameAr": "استقبال الضيفات",
+      "domain": "occasions",
+      "groupAr": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "providerTypeIds": [
+        "HO",
+        "PL"
+      ],
+      "bookingModeNoteAr": "بالساعة أو بالفريق",
+      "groupFieldNotesAr": "عدد الفريق • عدد الضيفات • وقت البداية والنهاية • الموقع",
+      "serviceFieldNotesAr": "مدخل أو أكثر • المهام • آلية قائمة الدخول",
+      "suggestedPhrasesAr": [
+        "اختاري فريق استقبال يرحّب بضيفاتك وينظّم دخولهن."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S068",
+      "nameAr": "صبّ قهوة وخدمة ضيافة",
+      "domain": "occasions",
+      "groupAr": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "providerTypeIds": [
+        "HO",
+        "PL"
+      ],
+      "bookingModeNoteAr": "بالساعة أو بالفريق",
+      "groupFieldNotesAr": "عدد الفريق • عدد الضيفات • وقت البداية والنهاية • الموقع",
+      "serviceFieldNotesAr": "من يوفّر القهوة والأواني؟ • عدد الصبّابات",
+      "suggestedPhrasesAr": [
+        "رتّبي خدمة القهوة بوضوح: الفريق، الساعات وما يشمله العرض."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S069",
+      "nameAr": "إشراف صالة وضيافة",
+      "domain": "occasions",
+      "groupAr": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "providerTypeIds": [
+        "HO",
+        "PL"
+      ],
+      "bookingModeNoteAr": "بالساعة أو بالفريق",
+      "groupFieldNotesAr": "عدد الفريق • عدد الضيفات • وقت البداية والنهاية • الموقع",
+      "serviceFieldNotesAr": "توزيع الفريق • المهام ضمن القاعة",
+      "suggestedPhrasesAr": [
+        "حددي من يتابع الطاولات وفريق التقديم أثناء الحفل."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S070",
+      "nameAr": "بوفيه مناسبات",
+      "domain": "occasions",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "bookingModeNoteAr": "للضيفة أو للباقة",
+      "groupFieldNotesAr": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "serviceFieldNotesAr": "الأصناف • عدد الأطباق • الطاقم والأدوات",
+      "suggestedPhrasesAr": [
+        "اختاري قائمة ضيافة تناسب عدد ضيفاتك وطابع الحفل."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S071",
+      "nameAr": "ركن قهوة أو مشروبات",
+      "domain": "occasions",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "bookingModeNoteAr": "للضيفة أو للباقة",
+      "groupFieldNotesAr": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "serviceFieldNotesAr": "عدد الأكواب • طاقم الباريستا • الأجهزة",
+      "suggestedPhrasesAr": [
+        "أضيفي ركنًا للمشروبات وحددي ما يُحضّر في الموقع."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S072",
+      "nameAr": "ركن حلويات",
+      "domain": "occasions",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "bookingModeNoteAr": "للضيفة أو للباقة",
+      "groupFieldNotesAr": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "serviceFieldNotesAr": "عدد القطع أو الضيفات • العرض والأدوات",
+      "suggestedPhrasesAr": [
+        "نسّقي طاولة حلويات بأصناف تناسب ضيافتك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S073",
+      "nameAr": "كيكة مناسبة مخصّصة",
+      "domain": "occasions",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "bookingModeNoteAr": "للضيفة أو للباقة",
+      "groupFieldNotesAr": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "serviceFieldNotesAr": "عدد الحصص • النكهة • الطبقات • التوصيل",
+      "suggestedPhrasesAr": [
+        "اختاري نكهة الكيكة وتصميمها وعدد الحصص."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S074",
+      "nameAr": "ضيافة سعودية",
+      "domain": "occasions",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "bookingModeNoteAr": "للضيفة أو للباقة",
+      "groupFieldNotesAr": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "serviceFieldNotesAr": "القائمة: قهوة وتمور أو غيرها • الكمية • شمول التقديم",
+      "suggestedPhrasesAr": [
+        "اختاري أصناف الضيافة السعوديّة وطريقة تقديمها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S075",
+      "nameAr": "تصوير فوتوغرافي",
+      "domain": "occasions",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "bookingModeNoteAr": "باقة أو بالساعات",
+      "groupFieldNotesAr": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "serviceFieldNotesAr": "عدد الصور المعدّلة • عدد المصوّرات • طريقة التسليم",
+      "suggestedPhrasesAr": [
+        "اختاري ساعات التصوير وعدد الصور التي تستلمينها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S076",
+      "nameAr": "فيديو مناسبة",
+      "domain": "occasions",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "bookingModeNoteAr": "باقة أو بالساعات",
+      "groupFieldNotesAr": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "serviceFieldNotesAr": "مدة الفيلم النهائي • شكل المونتاج • عدد المصوّرات",
+      "suggestedPhrasesAr": [
+        "حددي اللحظات التي تريدين جمعها في فيلم المناسبة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S077",
+      "nameAr": "تصوير فوري أو كشك صور",
+      "domain": "occasions",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "bookingModeNoteAr": "باقة أو بالساعات",
+      "groupFieldNotesAr": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "serviceFieldNotesAr": "عدد الطبعات • ساعات التشغيل • تصميم الإطار",
+      "suggestedPhrasesAr": [
+        "أضيفي ركن صور فورية يحمل طابع مناسبتك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S078",
+      "nameAr": "تغطية قصيرة للجوال",
+      "domain": "occasions",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "bookingModeNoteAr": "باقة أو بالساعات",
+      "groupFieldNotesAr": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "serviceFieldNotesAr": "عدد المقاطع • اتجاه الفيديو • التسليم والمشاركة بإذن",
+      "suggestedPhrasesAr": [
+        "اختاري مقاطع قصيرة توثّق تفاصيل يومك بطريقتك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S079",
+      "nameAr": "نظام صوت للحفل",
+      "domain": "occasions",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "serviceFieldNotesAr": "عدد السماعات والميكروفونات • متطلبات الكهرباء",
+      "suggestedPhrasesAr": [
+        "اختاري تجهيز الصوت المناسب لمساحة الحفل."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S080",
+      "nameAr": "إضاءة القاعة والمنصة",
+      "domain": "occasions",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "serviceFieldNotesAr": "مناطق الإضاءة • الألوان • نقاط الكهرباء",
+      "suggestedPhrasesAr": [
+        "حددي أجواء القاعة ومناطق الإضاءة مع الفريق."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S081",
+      "nameAr": "تشغيل صوت وزفّة",
+      "domain": "occasions",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "serviceFieldNotesAr": "قائمة المقاطع المصرح بها • توقيت الزفّة • البروفة",
+      "suggestedPhrasesAr": [
+        "نسّقي إشارة دخولك وتوقيت الزفّة مع مشغّل الصوت."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S082",
+      "nameAr": "شاشات عرض",
+      "domain": "occasions",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "bookingModeNoteAr": "عرض سعر أو باقة",
+      "groupFieldNotesAr": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "serviceFieldNotesAr": "العدد والأبعاد • مصدر العرض • مكان التركيب",
+      "suggestedPhrasesAr": [
+        "اعرضي صور المناسبة على شاشة تناسب مساحة القاعة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S083",
+      "nameAr": "تأجير طاولات وكراسي",
+      "domain": "occasions",
+      "groupAr": "تأجير الأثاث والتجهيزات",
+      "providerTypeIds": [
+        "RE"
+      ],
+      "bookingModeNoteAr": "إيجار لمدة محددة",
+      "groupFieldNotesAr": "بداية ونهاية الإيجار • الكمية المتاحة • التوصيل والاستلام • التأمين إن طُلب",
+      "serviceFieldNotesAr": "العدد لكل نوع • المقاسات • السعر للوحدة",
+      "suggestedPhrasesAr": [
+        "اختاري الطاولات والكراسي المناسبة لتوزيع ضيفاتك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S084",
+      "nameAr": "تأجير جلسات وكنب",
+      "domain": "occasions",
+      "groupAr": "تأجير الأثاث والتجهيزات",
+      "providerTypeIds": [
+        "RE"
+      ],
+      "bookingModeNoteAr": "إيجار لمدة محددة",
+      "groupFieldNotesAr": "بداية ونهاية الإيجار • الكمية المتاحة • التوصيل والاستلام • التأمين إن طُلب",
+      "serviceFieldNotesAr": "عدد القطع ومقاساتها • الأقمشة • حالة التسليم",
+      "suggestedPhrasesAr": [
+        "صمّمي ركن جلوس يتناسب مع ألوان المكان."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S085",
+      "nameAr": "تأجير أدوات ضيافة",
+      "domain": "occasions",
+      "groupAr": "تأجير الأثاث والتجهيزات",
+      "providerTypeIds": [
+        "RE"
+      ],
+      "bookingModeNoteAr": "إيجار لمدة محددة",
+      "groupFieldNotesAr": "بداية ونهاية الإيجار • الكمية المتاحة • التوصيل والاستلام • التأمين إن طُلب",
+      "serviceFieldNotesAr": "الوحدات في الطقم • العدد • سياسة الكسر",
+      "suggestedPhrasesAr": [
+        "رتّبي أدوات التقديم بحسب عدد الطاولات والضيفات."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S086",
+      "nameAr": "دعوة رقمية",
+      "domain": "occasions",
+      "groupAr": "الدعوات وتنظيم الحضور",
+      "providerTypeIds": [
+        "IN",
+        "PL"
+      ],
+      "bookingModeNoteAr": "طلب تصميم أو عرض سعر",
+      "groupFieldNotesAr": "نوع المناسبة • تاريخ التسليم • عدد التعديلات",
+      "serviceFieldNotesAr": "صورة أو فيديو أو رابط • اللغة • بيانات المناسبة",
+      "suggestedPhrasesAr": [
+        "صمّمي دعوة تحمل اسم المناسبة وتفاصيلها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S087",
+      "nameAr": "دعوات مطبوعة",
+      "domain": "occasions",
+      "groupAr": "الدعوات وتنظيم الحضور",
+      "providerTypeIds": [
+        "IN",
+        "PL"
+      ],
+      "bookingModeNoteAr": "طلب تصميم أو عرض سعر",
+      "groupFieldNotesAr": "نوع المناسبة • تاريخ التسليم • عدد التعديلات",
+      "serviceFieldNotesAr": "العدد • الورق والتشطيب • التوصيل",
+      "suggestedPhrasesAr": [
+        "اختاري ملمس الورق وتصميم الدعوات المطبوعة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S088",
+      "nameAr": "إدارة تأكيد الحضور",
+      "domain": "occasions",
+      "groupAr": "الدعوات وتنظيم الحضور",
+      "providerTypeIds": [
+        "IN",
+        "PL"
+      ],
+      "bookingModeNoteAr": "طلب تصميم أو عرض سعر",
+      "groupFieldNotesAr": "نوع المناسبة • تاريخ التسليم • عدد التعديلات",
+      "serviceFieldNotesAr": "عدد المدعوات • قناة الرد • صلاحيات الاطلاع • مدة الاحتفاظ",
+      "suggestedPhrasesAr": [
+        "تابعي ردود المدعوات وحددي من يطّلع على القائمة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S089",
+      "nameAr": "توزيعات بأسماء الضيفات",
+      "domain": "occasions",
+      "groupAr": "الهدايا والتوزيعات المخصّصة",
+      "providerTypeIds": [
+        "GF"
+      ],
+      "bookingModeNoteAr": "طلب تنفيذ بالكمية",
+      "groupFieldNotesAr": "العدد • الحد الأدنى • مهلة التنفيذ • موعد التسليم",
+      "serviceFieldNotesAr": "طريقة التخصيص • عينة أو اعتماد تصميم • التغليف",
+      "suggestedPhrasesAr": [
+        "اجعلي لكل ضيفة تذكارًا يحمل اسمها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S090",
+      "nameAr": "تغليف هدايا المناسبة",
+      "domain": "occasions",
+      "groupAr": "الهدايا والتوزيعات المخصّصة",
+      "providerTypeIds": [
+        "GF"
+      ],
+      "bookingModeNoteAr": "طلب تنفيذ بالكمية",
+      "groupFieldNotesAr": "العدد • الحد الأدنى • مهلة التنفيذ • موعد التسليم",
+      "serviceFieldNotesAr": "مصدر الهدية • خامة التغليف • بطاقة الإهداء",
+      "suggestedPhrasesAr": [
+        "اختاري التغليف والبطاقة ليصل الإهداء بلمستك."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S091",
+      "nameAr": "تجهيز ركن توزيعات",
+      "domain": "occasions",
+      "groupAr": "الهدايا والتوزيعات المخصّصة",
+      "providerTypeIds": [
+        "GF"
+      ],
+      "bookingModeNoteAr": "طلب تنفيذ بالكمية",
+      "groupFieldNotesAr": "العدد • الحد الأدنى • مهلة التنفيذ • موعد التسليم",
+      "serviceFieldNotesAr": "مساحة الركن • عدد القطع • شمول التركيب",
+      "suggestedPhrasesAr": [
+        "اجمعي توزيعات الحفل في ركن يناسب تصميم المكان."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S092",
+      "nameAr": "ركن بخور",
+      "domain": "occasions",
+      "groupAr": "أركان العطور والبخور",
+      "providerTypeIds": [
+        "PF"
+      ],
+      "bookingModeNoteAr": "بالركن أو بالساعات",
+      "groupFieldNotesAr": "المدة • عدد الضيفات • مساحة الركن • الطاقم",
+      "serviceFieldNotesAr": "أنواع البخور • السماح باستخدامه في الموقع • التهوية",
+      "suggestedPhrasesAr": [
+        "أضيفي ركن بخور بالتنسيق مع القاعة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S093",
+      "nameAr": "ركن عطور للضيفات",
+      "domain": "occasions",
+      "groupAr": "أركان العطور والبخور",
+      "providerTypeIds": [
+        "PF"
+      ],
+      "bookingModeNoteAr": "بالركن أو بالساعات",
+      "groupFieldNotesAr": "المدة • عدد الضيفات • مساحة الركن • الطاقم",
+      "serviceFieldNotesAr": "الروائح المتاحة • عدد العينات أو العبوات",
+      "suggestedPhrasesAr": [
+        "اختاري الروائح وطريقة تقديمها للضيفات."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S094",
+      "nameAr": "مرافقة وتجهيز العروس",
+      "domain": "occasions",
+      "groupAr": "تجهيز العروس",
+      "providerTypeIds": [
+        "BR",
+        "PL"
+      ],
+      "bookingModeNoteAr": "بالساعات أو بالباقة",
+      "groupFieldNotesAr": "الموقع • وقت الجاهزية • نطاق المرافقة • ساعات الحضور",
+      "serviceFieldNotesAr": "المهام • من يقدّم الشعر والمكياج إن شملا؟",
+      "suggestedPhrasesAr": [
+        "اختاري من ترافقك وتنسّق تفاصيل جاهزيتك يوم المناسبة."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S095",
+      "nameAr": "تنسيق جدول العروس",
+      "domain": "occasions",
+      "groupAr": "تجهيز العروس",
+      "providerTypeIds": [
+        "BR",
+        "PL"
+      ],
+      "bookingModeNoteAr": "بالساعات أو بالباقة",
+      "groupFieldNotesAr": "الموقع • وقت الجاهزية • نطاق المرافقة • ساعات الحضور",
+      "serviceFieldNotesAr": "المواعيد المسلّمة من العروس • آلية التنسيق",
+      "suggestedPhrasesAr": [
+        "اجمعي مواعيد الشعر والمكياج والتصوير في جدول واحد."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S096",
+      "nameAr": "دفتر ضيوف تفاعلي",
+      "domain": "occasions",
+      "groupAr": "تجارب الحفل",
+      "providerTypeIds": [
+        "PH",
+        "PL"
+      ],
+      "bookingModeNoteAr": "بالساعات أو بالركن",
+      "groupFieldNotesAr": "مساحة الركن • الساعات • عدد المشرفين • التوصيل والتركيب",
+      "serviceFieldNotesAr": "كتابي أو صوتي • طريقة التسليم • خصوصية التسجيل",
+      "suggestedPhrasesAr": [
+        "اجمعي كلمات ضيفاتك في تذكار يبقى بعد الحفل."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    },
+    {
+      "id": "S097",
+      "nameAr": "محطة تصوير تفاعلية",
+      "domain": "occasions",
+      "groupAr": "تجارب الحفل",
+      "providerTypeIds": [
+        "PH",
+        "PL"
+      ],
+      "bookingModeNoteAr": "بالساعات أو بالركن",
+      "groupFieldNotesAr": "مساحة الركن • الساعات • عدد المشرفين • التوصيل والتركيب",
+      "serviceFieldNotesAr": "نوع التجربة • عدد المشاركات • تسليم الملفات",
+      "suggestedPhrasesAr": [
+        "أضيفي تجربة تصوير قصيرة ودعي ضيفاتك يحتفظن بذكراها."
+      ],
+      "taxonomyLeafId": null,
+      "inScope": true,
+      "profileIdHint": null
+    }
+  ],
+  "journey1": {
+    "providerTypeId": "BC",
+    "serviceIds": [
+      "S042",
+      "S043"
+    ],
+    "taxonomyLeaves": [
+      "beauty.face_care.cleanse",
+      "beauty.face_care.hydrate"
+    ]
+  }
+}

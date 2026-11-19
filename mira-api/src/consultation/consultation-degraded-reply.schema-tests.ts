@@ -7,6 +7,8 @@ import {
   buildDegradedAdvisorReply,
   claimsMiraCatalogProduct,
   isProductOrCatalogAsk,
+  marketplaceOfferFacts,
+  marketplaceOfferIncludesReply,
   resolveMoistureDisplay,
   severityLabelAr,
   stripInventedMiraCatalogClaims,
@@ -41,6 +43,28 @@ console.log('pass severity_ar');
   const sunscreen = buildDegradedAdvisorReply('ما أهمية واقي الشمس في روتيني؟', []);
   assert.match(sunscreen, /واقي الشمس/);
   console.log('pass sunscreen_advice');
+}
+
+{
+  const facts = marketplaceOfferFacts({
+    id: 'svc-1',
+    kind: 'service',
+    nameAr: 'تنظيف تجميلي سطحي',
+    descriptionAr: 'تنظيف لطيف وترطيب خفيف لمدة ٤٥ دقيقة',
+    priceHalalas: 15000,
+    availability: true,
+    durationMin: 45,
+    partnerNameAr: 'مركز عناية تجريبي',
+  });
+  const reply = marketplaceOfferIncludesReply('وش تشمل الجلسة؟', facts);
+  assert.match(String(reply), /تنظيف لطيف وترطيب خفيف/);
+  assert.match(String(reply), /تنظيف تجميلي سطحي/);
+  const degraded = buildDegradedAdvisorReply('وش تشمل الجلسة؟', facts);
+  assert.equal(degraded, reply);
+  // General «يشمل» without an open offer must not claim missing session description.
+  assert.equal(marketplaceOfferIncludesReply('وش يشمل روتيني الصباحي؟', []), null);
+  assert.equal(marketplaceOfferIncludesReply('وش يشمل روتيني الصباحي؟', facts), null);
+  console.log('pass marketplace_offer_includes');
 }
 
 assert.equal(isProductOrCatalogAsk('ابي نفس هذا المنتج'), true);

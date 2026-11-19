@@ -57,4 +57,13 @@ export class CreateConsultationSessionDto {
   @ValidateNested()
   @Type(() => ConsultationFaceSelectionDto)
   face?: ConsultationFaceSelectionDto;
+
+  /** Published marketplace offer the customer is viewing (product or service). */
+  @IsOptional()
+  @IsUUID()
+  marketplaceOfferId?: string;
+
+  @IsOptional()
+  @IsIn(['product', 'service'])
+  marketplaceOfferKind?: 'product' | 'service';
 }

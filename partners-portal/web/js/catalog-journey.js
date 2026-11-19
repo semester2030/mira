@@ -1031,11 +1031,26 @@
     async function refreshDescriptionPhrases() {
       const subId = subcategory && subcategory.value ? String(subcategory.value) : '';
       phraseList.innerHTML = '';
-      if (!subId || !taxonomyCache || !taxonomyCache.descriptionPhrases) {
+      if (!subId) {
         phraseBox.hidden = true;
         return;
       }
-      const phrases = taxonomyCache.descriptionPhrases[subId] || [];
+      let phrases =
+        (taxonomyCache && taxonomyCache.descriptionPhrases && taxonomyCache.descriptionPhrases[subId]) ||
+        [];
+      // Journey-1 fallback: template phrases when taxonomy bag is empty (S042/S043).
+      if ((!phrases || !phrases.length) && window.ServiceTemplates) {
+        const tmpl =
+          window.ServiceTemplates.byId(subId) ||
+          (window.ServiceTemplates.templates || []).find(
+            (t) => t.taxonomyLeafId === subId || t.catalogGuideServiceId === subId,
+          );
+        if (tmpl && Array.isArray(tmpl.suggestedPhrasesAr) && tmpl.suggestedPhrasesAr.length) {
+          phrases = tmpl.suggestedPhrasesAr.map(function (textAr, ix) {
+            return { id: (tmpl.catalogGuideServiceId || tmpl.id) + '_local_' + (ix + 1), textAr: textAr };
+          });
+        }
+      }
       if (!phrases.length) {
         phraseBox.hidden = true;
         return;

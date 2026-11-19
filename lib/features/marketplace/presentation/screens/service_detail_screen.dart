@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/marketplace_copy.dart';
+import '../../../../core/navigation/route_args.dart';
 import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../../../shared/widgets/ask_mira_entry.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../data/catalog_price.dart';
@@ -13,6 +15,8 @@ import '../../data/discover_availability_context.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../intro_video_booking.dart';
+import '../booking_basket.dart';
+import 'booking_basket_screen.dart';
 import '../widgets/catalog_detail_media_section.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
@@ -251,11 +255,61 @@ class ServiceDetailScreen extends StatelessWidget {
               ),
             const SizedBox(height: 24),
             PremiumButton(
-              label: 'طلب الموعد',
+              label: service.bookingEnabled ? 'طلب الموعد' : 'الحجز غير متاح',
               icon: Icons.event_available_outlined,
               variant: PremiumButtonVariant.gold,
-              onPressed: () => _requestAppointment(context),
+              onPressed: service.bookingEnabled ? () => _requestAppointment(context) : null,
             ),
+            if (service.bookingEnabled && !service.id.startsWith('preview-')) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                key: const Key('add_to_booking_basket'),
+                onPressed: () {
+                  final added = BookingBasket.instance.add(service);
+                  final msg = added
+                      ? 'أُضيفت إلى حجزك (${BookingBasket.instance.length})'
+                      : 'هذه الخدمة في حجزك مسبقاً أو السلة ممتلئة';
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                },
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('أضيفي لحجزك'),
+              ),
+              if (BookingBasket.instance.length >= 1)
+                TextButton(
+                  key: const Key('open_booking_basket'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const BookingBasketScreen(),
+                      ),
+                    );
+                  },
+                  child: Text('افتحي حجزك (${BookingBasket.instance.length})'),
+                ),
+            ],
+            if (!service.id.startsWith('preview-')) ...[
+              const SizedBox(height: 12),
+              AskMiraEntry(
+                contextLine: 'اسألي ميرا عن «${service.nameAr}» من بيانات المقدّم',
+                suggestions: const [
+                  'وش تشمل الجلسة؟',
+                  'كم مدة الجلسة؟',
+                  'وين تكون الجلسة؟',
+                ],
+                routeArgs: (question) => AdvisorRouteArgs.marketplaceOffer(
+                  offerId: service.id,
+                  offerKind: 'service',
+                  partnerId: service.partnerId,
+                  initialQuestion: question ?? 'وش تشمل الجلسة؟',
+                  discussionFocus: [
+                    'خدمة: ${service.nameAr}',
+                    if ((service.descriptionAr ?? '').trim().isNotEmpty)
+                      'وصف المقدّم: ${service.descriptionAr!.trim()}',
+                    'المركز: ${service.partnerNameAr}',
+                  ].join(' · '),
+                ),
+              ),
+            ],
             if (phone.isNotEmpty && !service.id.startsWith('preview-')) ...[
               const SizedBox(height: 8),
               TextButton.icon(

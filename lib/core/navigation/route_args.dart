@@ -67,6 +67,10 @@ class AdvisorRouteArgs {
   final String? discussionFocus;
   /// Phase 9I — Face Result / Guidance context for frozen Advisor chat.
   final FaceAdvisorContext? faceContext;
+  /// Published marketplace offer (product/service) the customer is viewing.
+  final String? marketplaceOfferId;
+  final String? marketplaceOfferKind;
+  final String? marketplacePartnerId;
 
   const AdvisorRouteArgs({
     this.skinReport,
@@ -76,7 +80,27 @@ class AdvisorRouteArgs {
     this.initialQuestion,
     this.discussionFocus,
     this.faceContext,
+    this.marketplaceOfferId,
+    this.marketplaceOfferKind,
+    this.marketplacePartnerId,
   });
+
+  /// Catalog service / product detail → Ask Mira with the open offer.
+  factory AdvisorRouteArgs.marketplaceOffer({
+    required String offerId,
+    required String offerKind,
+    String? partnerId,
+    String? initialQuestion,
+    String? discussionFocus,
+  }) {
+    return AdvisorRouteArgs(
+      marketplaceOfferId: offerId,
+      marketplaceOfferKind: offerKind,
+      marketplacePartnerId: partnerId,
+      initialQuestion: initialQuestion,
+      discussionFocus: discussionFocus,
+    );
+  }
 
   /// Skin-only legacy entry (Phase 2).
   factory AdvisorRouteArgs.skin(SkinReport report, {String? initialQuestion}) {

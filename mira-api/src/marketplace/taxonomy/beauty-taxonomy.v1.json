@@ -807,6 +807,7 @@
       "children": [
         "beauty.face_care.cleanse",
         "beauty.face_care.hydrate",
+        "beauty.face_care.peel",
         "beauty.face_care.pre_makeup"
       ],
       "writeEnabled": false,
@@ -815,7 +816,8 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
       ]
     },
     {
@@ -828,6 +830,7 @@
       "children": [],
       "writeEnabled": true,
       "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S042",
       "offerKind": "service",
       "placeModesAllowed": [
         "branch",
@@ -837,7 +840,8 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
       ]
     },
     {
@@ -850,6 +854,7 @@
       "children": [],
       "writeEnabled": true,
       "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S043",
       "offerKind": "service",
       "placeModesAllowed": [
         "branch",
@@ -859,7 +864,32 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
+      ]
+    },
+    {
+      "id": "beauty.face_care.peel",
+      "parentId": "beauty.face_care",
+      "labelAr": "تقشير تجميلي سطحي للوجه",
+      "sort": 25,
+      "active": true,
+      "imageKey": "beauty.face_care.peel",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S098",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "spa",
+        "clinic"
       ]
     },
     {
@@ -872,6 +902,7 @@
       "children": [],
       "writeEnabled": true,
       "profileId": "service.salon_care",
+      "catalogGuideServiceId": "S044",
       "offerKind": "service",
       "placeModesAllowed": [
         "branch",
@@ -881,7 +912,8 @@
         "salon",
         "studio",
         "independent",
-        "spa"
+        "spa",
+        "clinic"
       ]
     },
     {

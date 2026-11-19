@@ -7,7 +7,9 @@ import { resolveFaceSelection, sanitizeFaceSelection } from './consultation-face
 import { CreateConsultationSessionDto } from '../dto/create-session.dto';
 import { UpdateConsultationContextDto } from '../dto/update-session-context.dto';
 import { ConsultationSessionResponseDto } from '../dto/consultation-response.dto';
-import { MceContextSnapshotV1 } from '../contracts/mce-context-snapshot.v1';
+import { MceContextSnapshotV1, MceFactEntry } from '../contracts/mce-context-snapshot.v1';
+import { marketplaceOfferFacts } from './consultation-scope';
+import { publicProductCommerce } from '../../marketplace/commerce-public';
 import { MceGroundingPipelineService } from './mce-grounding-pipeline.service';
 import { MceContextSnapshotService } from './mce-context-snapshot.service';
 
@@ -46,11 +48,32 @@ const STARTERS_ATELIER = [
   'ماذا يعني رفض QEL؟',
 ];
 
+const STARTERS_SERVICE_OFFER = [
+  'وش تشمل الجلسة؟',
+  'كم مدة الجلسة؟',
+  'وين تكون الجلسة؟',
+  'هل أقدر أحجز أكثر من خدمة؟',
+];
+
+const STARTERS_PRODUCT_OFFER = [
+  'وش يحتوي المنتج؟',
+  'ما المقاس أو الحجم المتاح؟',
+  'كيف أطلبه؟',
+  'هل في سياسة استرجاع؟',
+];
+
 export function pickSuggestedStarters(snapshot?: {
   skin?: unknown;
   outfit?: unknown;
   atelier?: unknown;
+  marketplaceOfferId?: string;
+  marketplaceOfferKind?: string;
 }): string[] {
+  if (snapshot?.marketplaceOfferId) {
+    return snapshot.marketplaceOfferKind === 'product'
+      ? STARTERS_PRODUCT_OFFER
+      : STARTERS_SERVICE_OFFER;
+  }
   if (snapshot?.atelier && !snapshot?.skin && !snapshot?.outfit) return STARTERS_ATELIER;
   if (snapshot?.skin && snapshot?.outfit) return STARTERS_FUSION;
   if (snapshot?.outfit) return STARTERS_OUTFIT;
@@ -119,16 +142,45 @@ export class ConsultationSessionService {
       grounding.contentHash = createHash('sha256').update(JSON.stringify(grounding.snapshot)).digest('hex').slice(0, 32);
     }
 
+    let marketplaceMeta: {
+      marketplaceOfferId: string;
+      marketplaceOfferKind: 'product' | 'service';
+      marketplaceOfferTitleAr?: string;
+    } | null = null;
+    if (dto.marketplaceOfferId) {
+      const offerFacts = await this.loadMarketplaceOfferFacts(
+        dto.marketplaceOfferId,
+        dto.marketplaceOfferKind ?? 'service',
+      );
+      if (offerFacts) {
+        grounding.factRegistry.push(...offerFacts.facts);
+        const snap = grounding.snapshot as MceContextSnapshotV1 & {
+          marketplaceOfferId?: string;
+          marketplaceOfferKind?: string;
+        };
+        snap.marketplaceOfferId = offerFacts.meta.marketplaceOfferId;
+        snap.marketplaceOfferKind = offerFacts.meta.marketplaceOfferKind;
+        marketplaceMeta = offerFacts.meta;
+        grounding.contentHash = createHash('sha256')
+          .update(JSON.stringify(grounding.snapshot))
+          .digest('hex')
+          .slice(0, 32);
+      }
+    }
+
     const session = await this.prisma.consultationSession.create({
       data: {
         userId,
         locale,
         occasionId: dto.occasionId ?? grounding.snapshot.occasionId,
         planTier,
-        titleAr: sessionTitle(grounding.snapshot),
+        titleAr: marketplaceMeta?.marketplaceOfferTitleAr
+          ? `استشارة عرض — ${marketplaceMeta.marketplaceOfferTitleAr}`
+          : sessionTitle(grounding.snapshot),
         metadataJson: {
           ...(dto.statedGoalAr ? { statedGoalAr: dto.statedGoalAr } : {}),
           ...(dto.face ? { faceSelection: sanitizeFaceSelection(dto.face) } : {}),
+          ...(marketplaceMeta ?? {}),
         } as Prisma.InputJsonValue,
       },
     });
@@ -242,6 +294,95 @@ export class ConsultationSessionService {
     });
   }
 
+  private async loadMarketplaceOfferFacts(
+    offerId: string,
+    kind: 'product' | 'service',
+  ): Promise<{
+    facts: MceFactEntry[];
+    meta: {
+      marketplaceOfferId: string;
+      marketplaceOfferKind: 'product' | 'service';
+      marketplaceOfferTitleAr?: string;
+    };
+  } | null> {
+    if (kind === 'product') {
+      const product = await this.prisma.product.findFirst({
+        where: {
+          id: offerId,
+          active: true,
+          contentStatus: 'published',
+          catalogSource: 'catalog',
+          partner: { status: 'active' },
+        },
+        include: { partner: true },
+      });
+      if (!product) return null;
+      const commerce = publicProductCommerce(product);
+      // Never claim in-stock when quantity is untracked (stockAvailable true-by-default means unknown).
+      const availability =
+        product.stockQty == null ? null : commerce.stockAvailable === true;
+      return {
+        facts: marketplaceOfferFacts({
+          id: product.id,
+          kind: 'product',
+          nameAr: product.nameAr,
+          descriptionAr: product.descriptionAr,
+          priceHalalas: product.priceHalalas,
+          availability,
+          partnerNameAr: product.partner.nameAr,
+        }) as MceFactEntry[],
+        meta: {
+          marketplaceOfferId: product.id,
+          marketplaceOfferKind: 'product',
+          marketplaceOfferTitleAr: product.nameAr,
+        },
+      };
+    }
+    const service = await this.prisma.service.findFirst({
+      where: {
+        id: offerId,
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        partner: { status: 'active' },
+      },
+      include: { partner: true },
+    });
+    if (!service) return null;
+    return {
+      facts: marketplaceOfferFacts({
+        id: service.id,
+        kind: 'service',
+        nameAr: service.nameAr,
+        descriptionAr: service.descriptionAr,
+        priceHalalas: service.priceHalalas,
+        availability: service.bookingEnabled,
+        durationMin: service.durationMin,
+        partnerNameAr: service.partner.nameAr,
+      }) as MceFactEntry[],
+      meta: {
+        marketplaceOfferId: service.id,
+        marketplaceOfferKind: 'service',
+        marketplaceOfferTitleAr: service.nameAr,
+      },
+    };
+  }
+
+  /** Live re-read of the open offer so description/pause edits apply mid-chat. */
+  async refreshMarketplaceOfferFacts(session: {
+    metadataJson?: unknown;
+  }): Promise<MceFactEntry[] | null> {
+    const meta =
+      session.metadataJson && typeof session.metadataJson === 'object' && !Array.isArray(session.metadataJson)
+        ? (session.metadataJson as Record<string, unknown>)
+        : null;
+    const offerId = typeof meta?.marketplaceOfferId === 'string' ? meta.marketplaceOfferId : '';
+    if (!offerId) return null;
+    const kind = meta?.marketplaceOfferKind === 'product' ? 'product' : 'service';
+    const loaded = await this.loadMarketplaceOfferFacts(offerId, kind);
+    return loaded?.facts ?? null;
+  }
+
   toDto(
     row: {
       id: string;
@@ -253,7 +394,7 @@ export class ConsultationSessionService {
       createdAt: Date;
       updatedAt: Date;
     },
-    snapshot?: MceContextSnapshotV1,
+    snapshot?: MceContextSnapshotV1 & { marketplaceOfferId?: string },
   ): ConsultationSessionResponseDto {
     return {
       id: row.id,

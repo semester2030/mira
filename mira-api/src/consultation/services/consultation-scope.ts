@@ -430,12 +430,133 @@ export function resolveMoistureDisplay(
   };
 }
 
+/** Facts grounded on the open marketplace offer (provider description/price — never invented). */
+export function marketplaceOfferFacts(input: {
+  id: string;
+  kind: 'product' | 'service';
+  nameAr: string;
+  descriptionAr?: string | null;
+  priceHalalas?: number | null;
+  /** Services: bookingEnabled. Products: only when stock is tracked (stockAvailable). */
+  availability?: boolean | null;
+  durationMin?: number | null;
+  partnerNameAr?: string | null;
+}): Array<{
+  id: string;
+  labelAr: string;
+  valueAr: string;
+  confidence: 'high' | 'medium' | 'low';
+  commercial?: { subjectAr: string; priceAmount?: string; currency?: 'SAR'; availability?: boolean };
+}> {
+  type OfferFact = {
+    id: string;
+    labelAr: string;
+    valueAr: string;
+    confidence: 'high' | 'medium' | 'low';
+    commercial?: { subjectAr: string; priceAmount?: string; currency?: 'SAR'; availability?: boolean };
+  };
+  const title = String(input.nameAr ?? '').trim() || 'العرض';
+  const kindLabel = input.kind === 'service' ? 'اسم الجلسة' : 'اسم المنتج';
+  const commercial: OfferFact['commercial'] = { subjectAr: title };
+  if (input.availability === true || input.availability === false) {
+    commercial.availability = input.availability;
+  }
+  if (typeof input.priceHalalas === 'number' && Number.isFinite(input.priceHalalas)) {
+    commercial.priceAmount = (input.priceHalalas / 100).toFixed(input.priceHalalas % 100 === 0 ? 0 : 2);
+    commercial.currency = 'SAR';
+  }
+  const facts: OfferFact[] = [
+    {
+      id: `marketplace.offer.title.${input.id}`,
+      labelAr: kindLabel,
+      valueAr: title,
+      confidence: 'high',
+      commercial,
+    },
+    {
+      id: `marketplace.offer.kind.${input.id}`,
+      labelAr: 'نوع العرض',
+      valueAr: input.kind === 'service' ? 'جلسة' : 'منتج',
+      confidence: 'high',
+    },
+  ];
+  const desc = String(input.descriptionAr ?? '').trim();
+  if (desc) {
+    facts.push({
+      id: `marketplace.offer.description.${input.id}`,
+      labelAr: input.kind === 'service' ? 'وصف الجلسة من المقدّم' : 'وصف المنتج من المقدّم',
+      valueAr: desc,
+      confidence: 'high',
+    });
+  }
+  if (input.kind === 'service' && typeof input.durationMin === 'number' && input.durationMin > 0) {
+    facts.push({
+      id: `marketplace.offer.duration.${input.id}`,
+      labelAr: 'مدة الجلسة',
+      valueAr: `${input.durationMin} دقيقة`,
+      confidence: 'high',
+    });
+  }
+  const partner = String(input.partnerNameAr ?? '').trim();
+  if (partner) {
+    facts.push({
+      id: `marketplace.offer.partner.${input.id}`,
+      labelAr: 'المقدّم',
+      valueAr: partner,
+      confidence: 'high',
+    });
+  }
+  return facts;
+}
+
+function hasOpenMarketplaceOffer(
+  facts: Array<{ id: string; labelAr?: string; valueAr?: string }>,
+): boolean {
+  return facts.some((f) => f.id.startsWith('marketplace.offer.'));
+}
+
+/** True when the question is about the open offer — not a general skin/routine ask. */
+export function isOpenOfferIncludesQuestion(message: string): boolean {
+  const text = message.trim();
+  if (!text) return false;
+  // General routine / skin questions must not steal the offer-includes path.
+  if (/روتين|بشرتي|صباحي|مسائي/.test(text) && !/(الجلسة|هذه الجلسة|الخدمة|العرض|المنتج)/.test(text)) {
+    return false;
+  }
+  return /تشمل|يشمل|وش في|وش فيه|ماذا تشمل|وش تشمل|ما تشمل|محتوى الجلسة|تفاصيل الجلسة|عن الجلسة|عن المنتج|محتوى المنتج/.test(
+    text,
+  );
+}
+
+/** Local reply when the customer asks what the *open* service/product includes. */
+export function marketplaceOfferIncludesReply(
+  message: string,
+  facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
+): string | null {
+  const text = message.trim();
+  if (!text) return null;
+  if (!hasOpenMarketplaceOffer(facts)) return null;
+  if (!isOpenOfferIncludesQuestion(text)) return null;
+  const desc = facts.find((f) => f.id.startsWith('marketplace.offer.description.'));
+  const title = facts.find((f) => f.id.startsWith('marketplace.offer.title.'));
+  const kind = facts.find((f) => f.id.startsWith('marketplace.offer.kind.'));
+  const isProduct = kind?.valueAr === 'منتج';
+  const noun = isProduct ? 'المنتج' : 'الجلسة';
+  if (!desc?.valueAr?.trim()) {
+    return `لا يوجد وصف منشور من المقدّم لـ${noun} حالياً، لذلك لن أخمن المحتوى.`;
+  }
+  const name = title?.valueAr?.trim() || noun;
+  return `حسب وصف المقدّم لـ«${name}»: ${desc.valueAr.trim()}`;
+}
+
 /** Offline advisor when LLM_API_KEY is missing — facts only, no invented scores. */
 export function buildDegradedAdvisorReply(
   message: string,
   facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
 ): string {
   const text = message.trim();
+  const offerIncludes = marketplaceOfferIncludesReply(text, facts);
+  if (offerIncludes) return offerIncludes;
   const asksMoisture = /ترطيب/.test(text);
   const asksSunscreen = /واقي.?الشمس|sunscreen|spf/i.test(text);
   const asksProduct = isProductOrCatalogAsk(text);
