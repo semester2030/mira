@@ -277,7 +277,14 @@
     addLink('orders', 'الطلبات');
     addLink('bookings', 'الحجوزات');
     addLink('settings', 'الإعدادات');
-    addLink('ads', 'إعلانات المشاهير');
+    // Salon/clinic: Discover main ad is separate from «خدماتي». Brands keep celebrity ads label.
+    addLink(
+      'ads',
+      partnerType === 'salon' || partnerType === 'clinic' ? 'إعلاني الرئيسي' : 'إعلانات المشاهير',
+    );
+    if (partnerType === 'salon' || partnerType === 'clinic') {
+      VIEWS.ads.title = 'إعلاني الرئيسي';
+    }
 
     var stage = document.createElement('div');
     stage.className = 'portal-stage';

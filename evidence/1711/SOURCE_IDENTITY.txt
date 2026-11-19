@@ -1,0 +1,11 @@
+resolvedPath: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706
+branch: mira/discover-speed-multi-media
+fixCommit: 306b90c
+docsHead: b36b7ce
+bundleId: app.mira.beauty
+buildNumber: 2026111711
+install: devicectl in-place (no flutter uninstall)
+device: 00008110-00191986268BA01E
+apiBase: https://mira-api-n4p3.onrender.com/api/v1
+apiHealth: {"status":"ok","service":"mira-api","timestamp":"2026-11-18T10:39:44.625Z","phas
+devicePerf: OPEN — awaiting user timed session

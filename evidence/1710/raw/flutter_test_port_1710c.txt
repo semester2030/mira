@@ -1,0 +1,453 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.13.1 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.3.0 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.4 available)
+  video_player_avfoundation 2.12.0 (2.12.4 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+99 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart                                                                       00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart                                                                       00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_AUDIO mute_req playerId=480580682 role=active at=2026-11-18T10:22:37.950817Z
+MIRA_DISCOVER_AUDIO mute_done playerId=480580682 role=active ms=2
+MIRA_DISCOVER_AUDIO pause_done playerId=480580682 role=active ms=2
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=480580682
+MIRA_DISCOVER_AUDIO mute_req playerId=480580682 role=unknown at=2026-11-18T10:22:37.954025Z
+MIRA_DISCOVER_AUDIO mute_done playerId=480580682 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=480580682 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9uehfjpk transition=2 build=2026111710 mediaId=null offer=slide-b playerId=744218057 firstFrameMs=4 source=0 cacheSource=0 cacheBytes=null audioCutMs=3 audible=0 initStart=3 initDone=4 playStart=4 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uehfjpk transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=3 firstFrameMs=4 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=744218057 at=2026-11-18T10:22:37.957999Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=744218057 firstFrameMs=4 audible=1
+00:02 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:02 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: video then image detaches the player                                         00:02 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: video then image detaches the player                                         
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uehz5wk transition=1 build=2026111710 mediaId=null offer=slide-a playerId=657563408 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uehz5wk transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=657563408 at=2026-11-18T10:22:38.810359Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=657563408 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=657563408 role=unknown at=2026-11-18T10:22:38.833394Z
+MIRA_DISCOVER_AUDIO mute_done playerId=657563408 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=657563408 role=unknown ms=0
+00:02 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: video then image detaches the player                                         00:02 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                                00:02 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                                
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uehzpuh transition=1 build=2026111710 mediaId=null offer=slide-a playerId=720831965 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uehzpuh transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=720831965 at=2026-11-18T10:22:38.836158Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=720831965 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=720831965 role=active at=2026-11-18T10:22:38.858946Z
+MIRA_DISCOVER_AUDIO mute_done playerId=720831965 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=720831965 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=720831965
+MIRA_DISCOVER_AUDIO mute_req playerId=720831965 role=unknown at=2026-11-18T10:22:38.859603Z
+MIRA_DISCOVER_AUDIO mute_done playerId=720831965 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=720831965 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9uehzpuh transition=2 build=2026111710 mediaId=null offer=slide-b playerId=807519828 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uehzpuh transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=807519828 at=2026-11-18T10:22:38.861628Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=807519828 firstFrameMs=1 audible=1
+00:02 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                                00:02 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach of A may finish pause after B attach without harming B                00:02 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach of A may finish pause after B attach without harming B                
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uei0sft transition=1 build=2026111710 mediaId=null offer=slide-a playerId=10633807 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uei0sft transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=10633807 at=2026-11-18T10:22:38.886014Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=10633807 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=10633807 role=unknown at=2026-11-18T10:22:38.886510Z
+MIRA_DISCOVER_AUDIO mute_done playerId=10633807 role=unknown ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uei0sft transition=3 build=2026111710 mediaId=null offer=slide-b playerId=427945006 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uei0sft transition=3 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=427945006 at=2026-11-18T10:22:38.892702Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=427945006 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO pause_done playerId=10633807 role=unknown ms=6
+00:02 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach of A may finish pause after B attach without harming B                00:02 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                     00:02 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                     
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_AUDIO mute_req playerId=134190195 role=active at=2026-11-18T10:22:38.926949Z
+MIRA_DISCOVER_AUDIO mute_done playerId=134190195 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=134190195 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=134190195
+MIRA_DISCOVER_AUDIO mute_req playerId=134190195 role=unknown at=2026-11-18T10:22:38.927715Z
+MIRA_DISCOVER_AUDIO mute_done playerId=134190195 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=134190195 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9uei0zge transition=2 build=2026111710 mediaId=null offer=slide-b playerId=864111926 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uei0zge transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=864111926 at=2026-11-18T10:22:38.928512Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=864111926 firstFrameMs=1 audible=1
+00:03 +5: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                     00:03 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: release during init prevents play                                            
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +6: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                     00:03 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: pause during init leaves player stopped                                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +7: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                     00:03 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: init failure then retry succeeds                                             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueigw8w transition=2 build=2026111710 mediaId=null offer=slide-a playerId=315385717 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueigw8w transition=2 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=315385717 at=2026-11-18T10:22:39.638860Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=315385717 firstFrameMs=0 audible=1
+00:03 +8: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                     00:03 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: repeated init failure stays failed                                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +9: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                     00:03 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: runtime error after ready marks failed                                       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueihhin transition=1 build=2026111710 mediaId=null offer=slide-a playerId=642989724 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueihhin transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+00:03 +10: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: only one active player and dispose on release                               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueiimqs transition=1 build=2026111710 mediaId=null offer=slide-a playerId=970507164 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueiimqs transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=970507164 at=2026-11-18T10:22:39.718475Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=970507164 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=970507164 role=active at=2026-11-18T10:22:39.741018Z
+MIRA_DISCOVER_AUDIO mute_done playerId=970507164 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=970507164 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=970507164
+MIRA_DISCOVER_AUDIO mute_req playerId=970507164 role=unknown at=2026-11-18T10:22:39.741662Z
+MIRA_DISCOVER_AUDIO mute_done playerId=970507164 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=970507164 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ueiimqs transition=2 build=2026111710 mediaId=null offer=slide-b playerId=295072539 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueiimqs transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=295072539 at=2026-11-18T10:22:39.742479Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=295072539 firstFrameMs=1 audible=1
+00:03 +11: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: setVolume that finishes after pause does not play                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +12: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: mute survives the next attach and stays muted after first frame             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueijq3t transition=1 build=2026111710 mediaId=null offer=slide-a playerId=294752707 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueijq3t transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=294752707 at=2026-11-18T10:22:39.769404Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=294752707 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO mute_req playerId=294752707 role=active at=2026-11-18T10:22:39.769771Z
+MIRA_DISCOVER_AUDIO mute_done playerId=294752707 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=294752707 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=294752707
+MIRA_DISCOVER_AUDIO mute_req playerId=294752707 role=unknown at=2026-11-18T10:22:39.770399Z
+MIRA_DISCOVER_AUDIO mute_done playerId=294752707 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=294752707 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ueijq3t transition=2 build=2026111710 mediaId=null offer=slide-b playerId=602351104 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueijq3t transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=602351104 at=2026-11-18T10:22:39.771629Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=602351104 firstFrameMs=1 audible=0
+00:03 +13: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: outgoing audio is cut before warm wait; speakers arm only after first frame 
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueijtk3 transition=1 build=2026111710 mediaId=null offer=slide-a playerId=515250551 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueijtk3 transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=515250551 at=2026-11-18T10:22:39.773980Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=515250551 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=515250551 role=active at=2026-11-18T10:22:39.787303Z
+MIRA_DISCOVER_AUDIO mute_done playerId=515250551 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=515250551 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=515250551
+MIRA_DISCOVER_AUDIO mute_req playerId=515250551 role=unknown at=2026-11-18T10:22:39.857402Z
+MIRA_DISCOVER_AUDIO mute_done playerId=515250551 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=515250551 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ueijtk3 transition=2 build=2026111710 mediaId=null offer=slide-b playerId=545166546 firstFrameMs=71 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=70 initDone=70 playStart=71 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueijtk3 transition=2 build=2026111710 mediaId=null offer=slide-b claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=71 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=545166546 at=2026-11-18T10:22:39.858618Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=545166546 firstFrameMs=71 audible=1
+00:03 +14: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal video→image→video keeps new attach after delayed cut completes
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: ready exposes the view as soon as initialize finishes                       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueilorf transition=1 build=2026111710 mediaId=null offer=slide-a playerId=179234695 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueilorf transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=179234695 at=2026-11-18T10:22:39.861142Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=179234695 firstFrameMs=0 audible=1
+00:03 +15: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: first_frame waits for progressing position after play, not initialize alone 
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueilqmn transition=1 build=2026111710 mediaId=null offer=slide-a playerId=798082630 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueilqmn transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=798082630 at=2026-11-18T10:22:39.863301Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=798082630 firstFrameMs=0 audible=1
+00:03 +16: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +16: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: settle timer includes warm wait (starts before pending warm completes)      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueils9u transition=1 build=2026111710 mediaId=null offer=slide-a playerId=309996361 firstFrameMs=100 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=100 initDone=100 playStart=100 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueils9u transition=1 build=2026111710 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=100 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=309996361 at=2026-11-18T10:22:39.988449Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=309996361 firstFrameMs=100 audible=1
+00:03 +17: /Users/fayez/Desktop/مراجع ... horizontal video→image→video keeps new attach after delayed cut completes                                                                                    00:03 +17: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +17: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal video→image→video keeps new attach after delayed cut completes
+MIRA_DISCOVER_FF session=sho9ueihtjk transition=1 build=2026111710 mediaId=null offer=mix-a playerId=1030501218 firstFrameMs=163 source=0 cacheSource=0 cacheBytes=null audioCutMs=155 audible=0 initStart=159 initDone=162 playStart=163 resolveMs=3 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueihtjk transition=1 build=2026111710 mediaId=null offer=mix-a claim=0 cache=0 bytes=null audioCutMs=155 firstFrameMs=163 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1030501218 at=2026-11-18T10:22:40.023851Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1030501218 firstFrameMs=163 audible=1
+
+Warning: A call to fling() with finder "Found 1 widget with type "PageView" (ignoring all but last): [
+  PageView(dependencies: [Directionality, ScrollConfiguration], state: _PageViewState#83e94(scrollDirection: horizontal, PageController#8e159(one client, offset 0.0), null)),
+]" derived an Offset (Offset(400.0, 300.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderClipRect#26368
+The hit test result at that offset is: HitTestResult(RenderDecoratedBox#f0cf8@Offset(400.0, 3.0), RenderStack#9658a@Offset(400.0, 300.0), RenderStack#bfc4f@Offset(400.0, 300.0), RenderRepaintBoundary#040f0@Offset(400.0, 300.0), RenderIndexedSemantics#0d986@Offset(400.0, 300.0), RenderSliverFillViewport@(mainAxis: 300.0, crossAxis: 400.0), _RenderSliverFractionalPadding@(mainAxis: 300.0, crossAxis: 400.0), RenderViewport#8a8f3@Offset(400.0, 300.0), RenderIgnorePointer#4a9f9@Offset(400.0, 300.0), RenderSemanticsAnnotations#205e0@Offset(400.0, 300.0), RenderPointerListener#98bc1@Offset(400.0, 300.0), RenderSemanticsGestureHandler#146dc@Offset(400.0, 300.0), RenderPointerListener#0a64b@Offset(400.0, 300.0), _RenderScrollSemantics#59d56@Offset(400.0, 300.0), RenderClipRect#11d0e@Offset(400.0, 300.0), RenderStack#c6334@Offset(400.0, 300.0), RenderCustomMultiChildLayoutBox#c857d@Offset(400.0, 300.0), _RenderInkFeatures#f19ba@Offset(400.0, 300.0), RenderPhysicalModel#39280@Offset(400.0, 300.0), RenderSemanticsAnnotations#a8b85@Offset(400.0, 300.0), RenderRepaintBoundary#c9844@Offset(400.0, 300.0), RenderIgnorePointer#6096a@Offset(400.0, 300.0), RenderAnimatedOpacity#73687@Offset(400.0, 300.0), RenderAnimatedOpacity#cc5de@Offset(400.0, 300.0), _RenderColoredBox#064b7@Offset(400.0, 300.0), RenderAnimatedOpacity#aebca@Offset(400.0, 300.0), RenderIgnorePointer#8e925@Offset(400.0, 300.0), RenderAnimatedOpacity#d2766@Offset(400.0, 300.0), RenderRepaintBoundary#52c81@Offset(400.0, 300.0), RenderSemanticsAnnotations#38558@Offset(400.0, 300.0), RenderOffstage#f803d@Offset(400.0, 300.0), RenderSemanticsAnnotations#a07a4@Offset(400.0, 300.0), _RenderTheater#9f220@Offset(400.0, 300.0), RenderAbsorbPointer#de42c@Offset(400.0, 300.0), RenderPointerListener#eccc6@Offset(400.0, 300.0), RenderSemanticsAnnotations#411c0@Offset(400.0, 300.0), RenderCustomPaint#7eaa3@Offset(400.0, 300.0), RenderSemanticsAnnotations#6f552@Offset(400.0, 300.0), RenderSemanticsAnnotations#cce77@Offset(400.0, 300.0), RenderTapRegionSurface#b6eb8@Offset(400.0, 300.0), RenderSemanticsAnnotations#26990@Offset(400.0, 300.0), RenderSemanticsAnnotations#a0657@Offset(400.0, 300.0), RenderSemanticsAnnotations#de626@Offset(400.0, 300.0), HitTestEntry<HitTestTarget>#485b6(_ReusableRenderView#7dcc1), HitTestEntry<HitTestTarget>#b77a6(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2081:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1865:12)
+#2      WidgetController.fling (package:flutter_test/src/controller.dart:1257:7)
+#3      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart:74:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "fling()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+
+Warning: A call to fling() with finder "Found 1 widget with type "PageView" (ignoring all but last): [
+  PageView(dependencies: [Directionality, ScrollConfiguration], state: _PageViewState#83e94(scrollDirection: horizontal, PageController#8e159(one client, offset 0.0), null)),
+]" derived an Offset (Offset(400.0, 300.0)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderClipRect#26368
+The hit test result at that offset is: HitTestResult(RenderDecoratedBox#f0cf8@Offset(400.0, 3.0), RenderStack#9658a@Offset(400.0, 300.0), RenderStack#bfc4f@Offset(400.0, 300.0), RenderRepaintBoundary#040f0@Offset(400.0, 300.0), RenderIndexedSemantics#0d986@Offset(400.0, 300.0), RenderSliverFillViewport@(mainAxis: 300.0, crossAxis: 400.0), _RenderSliverFractionalPadding@(mainAxis: 300.0, crossAxis: 400.0), RenderViewport#8a8f3@Offset(400.0, 300.0), RenderIgnorePointer#4a9f9@Offset(400.0, 300.0), RenderSemanticsAnnotations#205e0@Offset(400.0, 300.0), RenderPointerListener#98bc1@Offset(400.0, 300.0), RenderSemanticsGestureHandler#146dc@Offset(400.0, 300.0), RenderPointerListener#0a64b@Offset(400.0, 300.0), _RenderScrollSemantics#59d56@Offset(400.0, 300.0), RenderClipRect#11d0e@Offset(400.0, 300.0), RenderStack#c6334@Offset(400.0, 300.0), RenderCustomMultiChildLayoutBox#c857d@Offset(400.0, 300.0), _RenderInkFeatures#f19ba@Offset(400.0, 300.0), RenderPhysicalModel#39280@Offset(400.0, 300.0), RenderSemanticsAnnotations#a8b85@Offset(400.0, 300.0), RenderRepaintBoundary#c9844@Offset(400.0, 300.0), RenderIgnorePointer#6096a@Offset(400.0, 300.0), RenderAnimatedOpacity#73687@Offset(400.0, 300.0), RenderAnimatedOpacity#cc5de@Offset(400.0, 300.0), _RenderColoredBox#064b7@Offset(400.0, 300.0), RenderAnimatedOpacity#aebca@Offset(400.0, 300.0), RenderIgnorePointer#8e925@Offset(400.0, 300.0), RenderAnimatedOpacity#d2766@Offset(400.0, 300.0), RenderRepaintBoundary#52c81@Offset(400.0, 300.0), RenderSemanticsAnnotations#38558@Offset(400.0, 300.0), RenderOffstage#f803d@Offset(400.0, 300.0), RenderSemanticsAnnotations#a07a4@Offset(400.0, 300.0), _RenderTheater#9f220@Offset(400.0, 300.0), RenderAbsorbPointer#de42c@Offset(400.0, 300.0), RenderPointerListener#eccc6@Offset(400.0, 300.0), RenderSemanticsAnnotations#411c0@Offset(400.0, 300.0), RenderCustomPaint#7eaa3@Offset(400.0, 300.0), RenderSemanticsAnnotations#6f552@Offset(400.0, 300.0), RenderSemanticsAnnotations#cce77@Offset(400.0, 300.0), RenderTapRegionSurface#b6eb8@Offset(400.0, 300.0), RenderSemanticsAnnotations#26990@Offset(400.0, 300.0), RenderSemanticsAnnotations#a0657@Offset(400.0, 300.0), RenderSemanticsAnnotations#de626@Offset(400.0, 300.0), HitTestEntry<HitTestTarget>#173cf(_ReusableRenderView#7dcc1), HitTestEntry<HitTestTarget>#76a4f(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2081:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1865:12)
+#2      WidgetController.fling (package:flutter_test/src/controller.dart:1257:7)
+#3      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart:78:20)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+#6      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "fling()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+MIRA_DISCOVER_AUDIO mute_req playerId=1030501218 role=unknown at=2026-11-18T10:22:40.111202Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1030501218 role=unknown ms=6
+MIRA_DISCOVER_AUDIO pause_done playerId=1030501218 role=unknown ms=6
+00:03 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      00:04 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      00:05 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      00:06 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      00:07 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      00:08 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      00:08 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      
+MIRA_DISCOVER_SWIPE settle_timeout mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 timeoutMs=5017 audible=0
+00:08 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      00:08 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: park survives while next is warming (swipe-back reuses decoder)             00:08 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: park survives while next is warming (swipe-back reuses decoder)             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelo8bj transition=1 build=2026111710 mediaId=null offer=slide-a playerId=770666145 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelo8bj transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=770666145 at=2026-11-18T10:22:45.020012Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=770666145 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=770666145 role=active at=2026-11-18T10:22:45.020645Z
+MIRA_DISCOVER_AUDIO mute_done playerId=770666145 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=770666145 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=770666145
+MIRA_DISCOVER_AUDIO mute_req playerId=770666145 role=unknown at=2026-11-18T10:22:45.021918Z
+MIRA_DISCOVER_AUDIO mute_done playerId=770666145 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=770666145 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9uelo8bj transition=2 build=2026111710 mediaId=null offer=slide-b playerId=1030433763 firstFrameMs=2 source=0 cacheSource=0 cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=2 playStart=2 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelo8bj transition=2 build=2026111710 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1030433763 at=2026-11-18T10:22:45.023279Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1030433763 firstFrameMs=2 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=1030433763 role=active at=2026-11-18T10:22:45.055421Z
+MIRA_DISCOVER_AUDIO mute_req playerId=185027964 role=warm at=2026-11-18T10:22:45.055800Z
+MIRA_DISCOVER_AUDIO mute_req playerId=770666145 role=parked at=2026-11-18T10:22:45.056058Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1030433763 role=active ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=185027964 role=warm ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=770666145 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1030433763 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=185027964 role=warm ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=770666145 role=parked ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=1030433763
+MIRA_DISCOVER_AUDIO mute_req playerId=1030433763 role=unknown at=2026-11-18T10:22:45.057858Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1030433763 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1030433763 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9uelo8bj transition=3 build=2026111710 mediaId=null offer=slide-a playerId=770666145 firstFrameMs=3 source=2 cacheSource=null cacheBytes=null audioCutMs=2 audible=0 initStart=2 initDone=2 playStart=3 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelo8bj transition=3 build=2026111710 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=2 firstFrameMs=3 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=770666145 at=2026-11-18T10:22:45.059061Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=770666145 firstFrameMs=3 audible=1
+00:08 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: park survives while next is warming (swipe-back reuses decoder)             00:08 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: reactivating a parked clip requires new progress past prior position        00:08 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: reactivating a parked clip requires new progress past prior position        
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelp6qg transition=1 build=2026111710 mediaId=null offer=slide-a playerId=1058535015 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelp6qg transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1058535015 at=2026-11-18T10:22:45.063364Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1058535015 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=1058535015 role=unknown at=2026-11-18T10:22:45.063876Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1058535015 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1058535015 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=1058535015 role=parked at=2026-11-18T10:22:45.064909Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1058535015 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1058535015 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelp6qg transition=3 build=2026111710 mediaId=null offer=slide-a playerId=1058535015 firstFrameMs=42 source=2 cacheSource=null cacheBytes=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelp6qg transition=3 build=2026111710 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=42 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1058535015 at=2026-11-18T10:22:45.119617Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1058535015 firstFrameMs=42 audible=1
+00:08 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: reactivating a parked clip requires new progress past prior position        00:08 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach reuses in-flight warm controller instead of disposing it             00:08 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach reuses in-flight warm controller instead of disposing it             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelqhgo transition=1 build=2026111710 mediaId=null offer=slide-a playerId=274248785 firstFrameMs=22 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=22 initDone=22 playStart=22 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelqhgo transition=1 build=2026111710 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=22 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=274248785 at=2026-11-18T10:22:45.168731Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=274248785 firstFrameMs=22 audible=1
+00:08 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach reuses in-flight warm controller instead of disposing it             00:08 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: buildView stays opaque under cover; progress clears cover gate              00:08 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: buildView stays opaque under cover; progress clears cover gate              
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelrjux transition=1 build=2026111710 mediaId=null offer=slide-a playerId=501400832 firstFrameMs=33 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelrjux transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=33 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=501400832 at=2026-11-18T10:22:45.209043Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=501400832 firstFrameMs=33 audible=1
+00:08 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: buildView stays opaque under cover; progress clears cover gate              00:08 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: leaveSection parks sticky clip so return claims prepared                    00:08 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: leaveSection parks sticky clip so return claims prepared                    
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelsehp transition=1 build=2026111710 mediaId=null offer=slide-a playerId=146539139 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelsehp transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=146539139 at=2026-11-18T10:22:45.213440Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=146539139 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=146539139 role=active at=2026-11-18T10:22:45.214903Z
+MIRA_DISCOVER_AUDIO mute_done playerId=146539139 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=146539139 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=146539139
+MIRA_DISCOVER_AUDIO mute_req playerId=146539139 role=unknown at=2026-11-18T10:22:45.215925Z
+MIRA_DISCOVER_AUDIO mute_done playerId=146539139 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=146539139 role=unknown ms=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+MIRA_DISCOVER_AUDIO mute_req playerId=146539139 role=parked at=2026-11-18T10:22:45.216760Z
+MIRA_DISCOVER_AUDIO mute_done playerId=146539139 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=146539139 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelsehp transition=2 build=2026111710 mediaId=null offer=slide-a playerId=146539139 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelsehp transition=2 build=2026111710 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=146539139 at=2026-11-18T10:22:45.217749Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=146539139 firstFrameMs=0 audible=1
+00:08 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: leaveSection parks sticky clip so return claims prepared                    00:08 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach without first frame emits left_dark                                  00:08 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach without first frame emits left_dark                                  
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE left_dark mediaId=null offer=slide-a dwellMs=41 claim=0 cache=0 bytes=null audible=0
+MIRA_DISCOVER_AUDIO mute_req playerId=933321303 role=unknown at=2026-11-18T10:22:45.261882Z
+MIRA_DISCOVER_AUDIO mute_done playerId=933321303 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=933321303 role=unknown ms=0
+00:08 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach without first frame emits left_dark                                  00:08 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach claims unprimed warm (pos0) without cold reopen                      00:08 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach claims unprimed warm (pos0) without cold reopen                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ueltsmk transition=1 build=2026111710 mediaId=null offer=slide-a playerId=679998386 firstFrameMs=41 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ueltsmk transition=1 build=2026111710 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=41 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=679998386 at=2026-11-18T10:22:45.394205Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=679998386 firstFrameMs=41 audible=1
+00:08 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach claims unprimed warm (pos0) without cold reopen                      00:08 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with foreign ownerSlot does not mute active clip           00:08 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with foreign ownerSlot does not mute active clip           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelwdcm transition=1 build=2026111710 mediaId=null offer=slide-a playerId=227171871 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelwdcm transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=227171871 at=2026-11-18T10:22:45.398644Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=227171871 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO cut_skipped reason=not_owner owner=slide-b/0 active=slide-a/0
+MIRA_DISCOVER_AUDIO mute_req playerId=227171871 role=active at=2026-11-18T10:22:45.399759Z
+MIRA_DISCOVER_AUDIO mute_done playerId=227171871 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=227171871 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=227171871
+00:08 +27: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with foreign ownerSlot does not mute active clip           00:08 +27: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with stale generation is skipped                           00:08 +27: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with stale generation is skipped                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelwh4x transition=1 build=2026111710 mediaId=null offer=slide-a playerId=108054725 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelwh4x transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=108054725 at=2026-11-18T10:22:45.403381Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=108054725 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO cut_skipped reason=stale_generation cutGen=0 live=1
+00:08 +28: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with stale generation is skipped                           00:08 +28: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: A→image→A: delayed mute of old gen does not mute reattached A               00:08 +28: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: A→image→A: delayed mute of old gen does not mute reattached A               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uelwjvk transition=1 build=2026111710 mediaId=null offer=slide-a playerId=134760194 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelwjvk transition=1 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=134760194 at=2026-11-18T10:22:45.406842Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=134760194 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=134760194 role=active at=2026-11-18T10:22:45.407167Z
+MIRA_DISCOVER_AUDIO mute_req playerId=134760194 role=active at=2026-11-18T10:22:45.429187Z
+MIRA_DISCOVER_AUDIO mute_done playerId=134760194 role=active ms=44
+MIRA_DISCOVER_AUDIO mute_done playerId=134760194 role=active ms=22
+MIRA_DISCOVER_AUDIO pause_done playerId=134760194 role=active ms=45
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=134760194 role=active ms=23
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=134760194
+MIRA_DISCOVER_AUDIO mute_req playerId=134760194 role=unknown at=2026-11-18T10:22:45.453180Z
+MIRA_DISCOVER_AUDIO mute_done playerId=134760194 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=134760194 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9uelwjvk transition=2 build=2026111710 mediaId=null offer=slide-a playerId=686927899 firstFrameMs=24 source=0 cacheSource=0 cacheBytes=null audioCutMs=23 audible=0 initStart=24 initDone=24 playStart=24 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uelwjvk transition=2 build=2026111710 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=23 firstFrameMs=24 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=686927899 at=2026-11-18T10:22:45.454672Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=686927899 firstFrameMs=24 audible=1
+00:08 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: A→image→A: delayed mute of old gen does not mute reattached A               00:08 +29: All tests passed!                                                                                                                                                                           

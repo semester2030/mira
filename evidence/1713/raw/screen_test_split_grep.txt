@@ -1,0 +1,10 @@
+80:/// Real [DiscoverPresentationScreen] tests — fling and jump stay separate.
+86:  testWidgets('horizontal fling alone moves video→image→video pages', (tester) async {
+96:    await tester.fling(horizontalFinder, const Offset(-320, 0), 800);
+101:      reason: 'fling must reach image — do not hide failure with jumpToPage',
+104:    await tester.fling(horizontalFinder, const Offset(320, 0), 800);
+109:      reason: 'fling back must reach video — do not hide failure with jumpToPage',
+136:      pageController.jumpToPage(1);
+141:      pageController.jumpToPage(0);
+157:      pageController.jumpToPage(1);
+159:      pageController.jumpToPage(0);

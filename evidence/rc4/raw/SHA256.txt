@@ -1,0 +1,2 @@
+42f77ad96e1bf49e94025012fd9c5fe7759987f77ee9579edad994af9be8c179  mira-catalog-provider-rc4.zip
+b769f46a7a52724f79ef0f3d591c8c6e07cd89dfa6aa5e1ea8cbf1984e035dfa  mira-catalog-provider-rc4.patch

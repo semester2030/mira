@@ -1,0 +1,10 @@
+Analyzing 4 items...                                            
+
+   info • Dangling library doc comment • lib/features/marketplace/domain/commerce_models.dart:1:1 • dangling_library_doc_comments
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/marketplace/presentation/screens/booking_basket_screen.dart:101:21 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/marketplace/presentation/screens/booking_basket_screen.dart:102:21 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/marketplace/presentation/screens/booking_basket_screen.dart:111:21 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/marketplace/presentation/screens/booking_basket_screen.dart:112:21 • deprecated_member_use
+   info • Use the null-aware operator '?.' rather than an explicit 'null' comparison • lib/features/marketplace/presentation/screens/booking_visit_consecutive_screen.dart:237:23 • prefer_null_aware_operators
+
+6 issues found. (ran in 1.9s)

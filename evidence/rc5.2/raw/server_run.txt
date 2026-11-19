@@ -1,0 +1,4 @@
+PORT=3019
+health_http:200
+pid:44946
+command: PORT=3019 NODE_ENV=test node dist/main  (env from .env.rc7 keys only; secrets redacted)

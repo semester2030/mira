@@ -1,0 +1,200 @@
+Waiting for device with UDID 00008110-00191986268BA01E to become available...
+[connected:00008110-00191986268BA01E]
+Nov 18 13:59:32.604534 SpringBoard(CoverSheet)[35] <Debug>: <CSModalPresentationViewController: 0x91cc5de00> - Sending event <CSEvent: 0x91999ca20; type: AppearanceChanged; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.604616 locationd[76] <Debug>: visitKFFilteredPressure,nowAP,816692372.597669,nowAOP,15482843169,filteredPressure,94880.500000,pressureTimestamp,15480118079,kfElevation,595.931580,wallTimePressureCorrected,816692369.865968,wallTimeKFCorrected,816692372.553082,temperatureDerivative,0.000000,absAltUnc,4.872013
+Nov 18 13:59:32.604655 SpringBoard(CoverSheet)[35] <Debug>: <CSMainPageContentViewController: 0x91aaa0000> - Sending event <CSEvent: 0x91999ca20; type: AppearanceChanged; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.604695 SpringBoard(CoreFoundation)[35] <Debug>: found no value for key SPUIPrewarmSpotlightDisabled in CFPrefsSearchListSource<0x91af20680> (Domain: com.apple.spotlightui, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.604711 SpringBoard(CoverSheet)[35] <Debug>: <SBDashBoardCameraPageViewController: 0x91aaa0600> - Sending event <CSEvent: 0x91999ca20; type: AppearanceChanged; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.606807 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.606920 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.606964 SpringBoard(CoverSheet)[35] <Info>: <private> Event delivered.
+Nov 18 13:59:32.606981 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key SBCoverSheetProportionalAdaptiveTime in CFPrefsSource<0x100ba2040> (Domain: Volatile, User: , ByHost: No, Container: , Contents Need Refresh: No) via CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.607019 SpringBoard(CoverSheet)[35] <Notice>: Updating control center grabber alpha: 0.000000, scale: 1.000000, and blurRadius: 0.000000
+Nov 18 13:59:32.607034 SpringBoard(CoverSheet)[35] <Debug>: <private>: Ignoring behavior update from <private>.
+Nov 18 13:59:32.607057 SpringBoard(CoverSheet)[35] <Debug>: <private> <private> fromSender: <private>
+Nov 18 13:59:32.607075 SpringBoard(CoverSheet)[35] <Notice>: <private> Sending event: <private>
+Nov 18 13:59:32.607096 SpringBoard(CoverSheet)[35] <Debug>: <CSModalPresentationViewController: 0x91cc5de00> - Sending event <CSEvent: 0x91999edc0; type: IdleTimerWillRefresh; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.607127 configd[45] <Info>: Process interface quality: anpi0 (q=100)
+Nov 18 13:59:32.607146 lockdownd(libxpc.dylib)[87] <Debug>: [0xbeac33f00] '<private>': Transaction created
+Nov 18 13:59:32.607165 lockdownd[87] <Notice>: handle_get_value: <private>
+Nov 18 13:59:32.607181 SpringBoard(CoverSheet)[35] <Debug>: <CSMainPageContentViewController: 0x91aaa0000> - Sending event <CSEvent: 0x91999edc0; type: IdleTimerWillRefresh; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.607198 SpringBoard(CoverSheet)[35] <Debug>: <SBDashBoardCameraPageViewController: 0x91aaa0600> - Sending event <CSEvent: 0x91999edc0; type: IdleTimerWillRefresh; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.607209 SpringBoard(CoverSheet)[35] <Debug>: <private>: Ignoring behavior update from <private>.
+Nov 18 13:59:32.607220 SpringBoard(CoverSheet)[35] <Info>: <private> Event delivered.
+Nov 18 13:59:32.607231 wifid(CoreWiFi)[53] <Debug>: [corewifi] @[15482.844285] kevent: intf=anpi0 event=sif_mtu
+Nov 18 13:59:32.607241 contextstored(libxpc.dylib)[67] <Debug>: [0x927216840] 'com.apple.coreduet.app.in-focus': Transaction created
+Nov 18 13:59:32.607251 contextstored(KnowledgeMonitor)[67] <Debug>: Transition reason: <private>
+Nov 18 13:59:32.607260 contextstored(KnowledgeMonitor)[67] <Debug>: Transition reasons: <private>
+Nov 18 13:59:32.607270 contextstored(BiomeStreams)[67] <Info>: BMStoreSource.sendEvent
+Nov 18 13:59:32.607284 contextstored(BiomeStreams)[67] <Debug>: Event donation to stream: FrontBoard.DisplayElement with timestamp: 816692372.600134
+Nov 18 13:59:32.607294 contextstored(BiomeStreams)[67] <Info>: Subscription marker exists: NO for stream: FrontBoard.DisplayElement using domain: User
+Nov 18 13:59:32.607305 contextstored(BiomeStreams)[67] <Debug>: BMComputeSourceClient not notifying biomed because there are no downstream subscriptions for FrontBoard.DisplayElement found in storage domain: User
+Nov 18 13:59:32.607319 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Writing Modified event for identifier: com.apple.springboard.home-screen bundleIdentifier: (null)
+Nov 18 13:59:32.607328 audiomxd(MediaSafetyNet)[110] <Info>: Updated view state: Elsewhere
+Nov 18 13:59:32.607338 backboardd(libxpc.dylib)[70] <Debug>: [0x7499d0580] 'setClientConfig:shouldReset:reply:': Transaction created
+Nov 18 13:59:32.607346 contextstored(BiomeStreams)[67] <Info>: BMStoreSource.sendEvent
+Nov 18 13:59:32.607359 contextstored(BiomeStreams)[67] <Debug>: Event donation to stream: FrontBoard.DisplayElement with timestamp: 816692372.600134
+Nov 18 13:59:32.607380 contextstored(BiomeStreams)[67] <Info>: Subscription marker exists: NO for stream: FrontBoard.DisplayElement using domain: User
+Nov 18 13:59:32.607396 contextstored(BiomeStreams)[67] <Debug>: BMComputeSourceClient not notifying biomed because there are no downstream subscriptions for FrontBoard.DisplayElement found in storage domain: User
+Nov 18 13:59:32.607409 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Writing Modified event for identifier: <private> bundleIdentifier: (null)
+Nov 18 13:59:32.607419 contextstored(BiomeStreams)[67] <Info>: BMStoreSource.sendEvent
+Nov 18 13:59:32.607430 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.607452 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.607463 SpringBoard[35] <Notice>: 0x91a4e89c0 reconfigured attention timeouts:[3; 10.00]
+Nov 18 13:59:32.607482 SpringBoard(IdleTimerHosting)[35] <Info>: Enabled nonSampled attention lost timeout with: 3600.000000 seconds
+Nov 18 13:59:32.607498 SpringBoard(IdleTimerHosting)[35] <Notice>: <0x91a4e4550> - reconfigure attention client with configuration:<AWAttentionAwarenessConfiguration: 0x92b42d040> (identifier: com.apple.springboard.GlobalBacklightIdleTimer samplingInterval:       0.00000, samplingDelay:       0.00000, sampleWhileAbsent: false, retroactiveTimeoutMode: false, pollingFilter: false, continuousFaceDetectMode: false, activateAttentionDetection: true, activateEyeRelief: false, activateMotionDetection: false, unityStream: false, attentionLostTimeouts:      10.00000 nonSampledAttentionLostTimeoutEnable: true nonSampledAttentionLostTimeout:    3600.00000 notificationMask NONE mask Button|Keyboard|Pointer|GameController|GenericGesture attentionLostEventMask Button|Keyboard|Pointer|GameController|GenericGesture digitizerDisplayUUIDs (null) buttonDisplayUUIDs (null) keyboardDisplayUUIDs (null) tagIndex 851)
+Nov 18 13:59:32.607514 SpringBoard(CoreAnalytics)[35] <Info>: Dropping "com.apple.springboard.auto-lock" as it isn't used in any transform (not in the config or budgeted?)
+Nov 18 13:59:32.607525 SpringBoard[35] <Notice>: <SBBacklightIdleTimer: 0x91a4e89c0> sending idleTimerDidRefresh: to <SBIdleTimerPolicyAggregator: 0x91abe6f40>
+Nov 18 13:59:32.607535 SpringBoard[35] <Notice>: <SBBacklightIdleTimer: 0x91a4e89c0> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91a856b00>
+Nov 18 13:59:32.607549 contextstored(BiomeStreams)[67] <Debug>: Event donation to stream: FrontBoard.DisplayElement with timestamp: 816692372.600134
+Nov 18 13:59:32.607563 contextstored(BiomeStreams)[67] <Info>: Subscription marker exists: NO for stream: FrontBoard.DisplayElement using domain: User
+Nov 18 13:59:32.607572 contextstored(BiomeStreams)[67] <Debug>: BMComputeSourceClient not notifying biomed because there are no downstream subscriptions for FrontBoard.DisplayElement found in storage domain: User
+Nov 18 13:59:32.607584 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Writing Added event for identifier: <private> bundleIdentifier: (null)
+Nov 18 13:59:32.607593 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Current state BEGIN -----------------------
+Nov 18 13:59:32.607601 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Added event for identifier: <private> bundleIdentifier: (null)
+Nov 18 13:59:32.607610 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Modified event for identifier: <private> bundleIdentifier: (null)
+Nov 18 13:59:32.607620 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Modified event for identifier: com.apple.springboard.home-screen bundleIdentifier: (null)
+Nov 18 13:59:32.607628 contextstored(KnowledgeMonitor)[67] <Debug>: BMFrontBoardDisplayElement - Current state END   ------------------------
+Nov 18 13:59:32.607637 financed(CoreData)[987] <Error>: CoreData: warning: cache_handle_memory_pressure invoked for core 0x6a9240000 / D151A014-038D-4091-AF22-09D6AB710584
+Nov 18 13:59:32.607646 financed(CoreData)[987] <Error>: CoreData: warning: cache_handle_memory_pressure invoked for core 0x6a92bde00 / D151A014-038D-4091-AF22-09D6AB710584
+Nov 18 13:59:32.607654 financed(CoreData)[987] <Error>: CoreData: warning: cache_handle_memory_pressure invoked for core 0x6a9249040 / C4593204-AA9E-4DBA-A24C-3810CBAFEBC6
+Nov 18 13:59:32.607665 lockdownd(Security)[87] <Info>: SecKeyCreateSignature
+Nov 18 13:59:32.607674 lockdownd(Security)[87] <Info>: SecKeyCopyAttributes
+Nov 18 13:59:32.607681 lockdownd(Security)[87] <Info>: SecKeyCopyPublicBytes
+Nov 18 13:59:32.607718 contextstored(KnowledgeMonitor)[67] <Info>: Layout monitor filtered elements: <private>
+Nov 18 13:59:32.607733 contextstored(KnowledgeMonitor)[67] <Debug>: DKApplicationMonitor: transitioning due to <private> with App: <private> Others: [<private>, (null), (null)]
+Nov 18 13:59:32.607749 contextstored(KnowledgeMonitor)[67] <Info>: Frontmost application:
+Nov 18 13:59:32.607776 MercuryPosterExtension(BaseBoard)[260] <Debug>: [BSBlockSentinel:<private>] signaled! 2 of 2
+Nov 18 13:59:32.607791 MercuryPosterExtension(BaseBoard)[260] <Debug>: [BSBlockSentinel:<private>] dealloc
+Nov 18 13:59:32.607807 backboardd(AttentionAwareness)[70] <Notice>:   12739.70917: reset attention lost timeout for com.apple.springboard.GlobalBacklightIdleTimer at   12739.70916
+Nov 18 13:59:32.607823 backboardd(AttentionAwareness)[70] <Notice>:   12739.70974: updated config <AWRemoteClient: 0x74cf67100> (identifier: com.apple.springboard.GlobalBacklightIdleTimer samplingInterval:       0.00000 samplingDelay:       0.00000 sampleWhileAbsent: false retroactiveTimeoutMode: false pollingFilter: false continuousFaceDetectMode: false unityStream: false activateEyeRelief: false activateAttentionDetection: false activateMotionDetection: false activatePersonDetection: false attentionLostTimeouts: 10 nonSampledAttentionLostTimeoutEnabled true nonSampledAttentionLostTimeout       0.00000 notificationMask NONE mask AttentionLost|Button|Keyboard|Pointer|GameController|GenericGesture attentionLostEventMask AttentionLost|Button|Keyboard|Pointer|GameController|GenericGesture digitizerDisplayUUIDs (null) buttonDisplayUUIDs (null) keyboardDisplayUUIDs (null) tagIndex 851)
+Nov 18 13:59:32.607837 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91a856b00> sending idleTimerDidRefresh: to <SBIdleTimerGlobalCoordinator: 0x91a414780>
+Nov 18 13:59:32.607854 backboardd(libxpc.dylib)[70] <Debug>: [0x7499d0580] 'setClientConfig:shouldReset:reply:': Transaction released
+Nov 18 13:59:32.607869 contextstored(libxpc.dylib)[67] <Debug>: [0x927216840] 'com.apple.coreduet.app.in-focus': Transaction released
+Nov 18 13:59:32.607884 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91a856b00> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91af8d260>
+Nov 18 13:59:32.607897 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91af8d260> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91a856140>
+Nov 18 13:59:32.607917 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91a856140> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91a8579c0>
+Nov 18 13:59:32.607930 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91a8579c0> sending idleTimerDidRefresh: to <SBDashBoardIdleTimerProvider: 0x91cce2010>
+Nov 18 13:59:32.607954 SpringBoard[35] <Info>: SBDashBoardIdleTimerProvider - Idle timer refreshed <SBIdleTimerProxy: 0x91a8579c0>
+Nov 18 13:59:32.607965 SpringBoard(CoverSheet)[35] <Notice>: <private> Sending event: <private>
+Nov 18 13:59:32.607987 SpringBoard(CoverSheet)[35] <Debug>: <CSModalPresentationViewController: 0x91cc5de00> - Sending event <CSEvent: 0x91999c760; type: IdleTimerDidRefresh; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.608002 SpringBoard(CoverSheet)[35] <Debug>: <CSMainPageContentViewController: 0x91aaa0000> - Sending event <CSEvent: 0x91999c760; type: IdleTimerDidRefresh; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.608013 SpringBoard(CoverSheet)[35] <Debug>: <SBDashBoardCameraPageViewController: 0x91aaa0600> - Sending event <CSEvent: 0x91999c760; type: IdleTimerDidRefresh; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.608028 wifid(CoreWiFi)[53] <Debug>: [corewifi] @[15482.847412] -[CWFXPCRequestProxy __setupEventHandlers]_block_invoke (CWFXPCRequestProxy.m:4023) [iflist] CWFKernelEventMonitor: (anpi0) eventCode[0x00000003/3]/(sif_mtu)
+Nov 18 13:59:32.608046 SpringBoard(CoverSheet)[35] <Info>: <private> Event delivered.
+Nov 18 13:59:32.608063 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91af8d260> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91a84cec0>
+Nov 18 13:59:32.608158 locationd[76] <Debug>: [CLIoHidInterface] Skipping invalidated device with usage pair {65292, 24} in onEvent
+Nov 18 13:59:32.608178 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91a84cec0> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91a84e8c0>
+Nov 18 13:59:32.608188 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91a84e8c0> no observers for idleTimerDidRefresh:
+Nov 18 13:59:32.608197 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.608208 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91af8d260> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91906eb60>
+Nov 18 13:59:32.608217 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.608226 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91906eb60> no observers for idleTimerDidRefresh:
+Nov 18 13:59:32.608638 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91af8d260> sending idleTimerDidRefresh: to <SBIdleTimerProxy: 0x91a856100>
+Nov 18 13:59:32.608683 SpringBoard[35] <Notice>: <SBIdleTimerProxy: 0x91a856100> no observers for idleTimerDidRefresh:
+Nov 18 13:59:32.608705 SpringBoard[35] <Debug>: animation ticked with progress: 1.00 catchup: 1.00 adjustedProgress: 1.00 velocity: 0.00 forPresentationValue: true
+Nov 18 13:59:32.608721 locationd[76] <Debug>: [CLIoHidInterface] Skipping invalidated device with usage pair {65280, 50} in onEvent
+Nov 18 13:59:32.608740 SpringBoard(CoverSheet)[35] <Debug>: <private> presented = YES
+Nov 18 13:59:32.608753 locationd[76] <Debug>: {"msg":"pressure source updated with", "time_s":"816692369.865968227", "pressure":"<private>", "temperature":"<private>"}
+Nov 18 13:59:32.608774 SpringBoard(BaseBoard)[35] <Debug>: [BSBlockSentinel:<private>] signaled! 2 of 2
+Nov 18 13:59:32.608795 locationd[76] <Debug>: {"msg":"kfPressure source updated with", "timestamp_s":"<private>", "kfPressure":"<private>", "kfElevation":"<private>", "absAltUncertainty":"<private>"}
+Nov 18 13:59:32.608806 SpringBoard(CoverSheet)[35] <Notice>: <private> Sending event: <private>
+Nov 18 13:59:32.608815 UserEventAgent(USBEthernetSharing)[32] <Debug>: handling interface 0x5000b
+Nov 18 13:59:32.608832 SpringBoard(CoverSheet)[35] <Debug>: <CSModalPresentationViewController: 0x91cc5de00> - Sending event <CSEvent: 0x91a821600; type: ModalPresented; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.608845 sharingd[74] <Notice>: SystemUI changed: <private> -> <private>
+Nov 18 13:59:32.608855 SpringBoard(CoverSheet)[35] <Debug>: <CSMainPageContentViewController: 0x91aaa0000> - Sending event <CSEvent: 0x91a821600; type: ModalPresented; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.608874 sharingd[74] <Notice>: on lock screen: <private>
+Nov 18 13:59:32.608886 SpringBoard(CoverSheet)[35] <Debug>: <SBDashBoardCameraPageViewController: 0x91aaa0600> - Sending event <CSEvent: 0x91a821600; type: ModalPresented; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.608896 sharingd(CoreUtils)[74] <Notice>: System UI Changed 0x812 < LS Home Passcode >, CanTrigger yes
+Nov 18 13:59:32.608923 SpringBoard(CoverSheet)[35] <Info>: <private> Event delivered.
+Nov 18 13:59:32.608945 cameracaptured(CMCapture)[68] <Notice>: <<<< FigCaptureDisplayLayoutMonitor >>>> -[FigCaptureDisplayLayoutMonitor _parseFBSDisplayLayout:]: <FigCaptureDisplayLayoutMonitor: 0x65ccad080 Main Display> <FBSDisplayLayout: 0x65d9af9c0; displayIdentity: Main> {    bounds = {{0, 0}, {428, 926}};    interfaceOrientation = "portrait (1)";    backlightLevel = 100;    backlightState = 2;    elements = {        <SBSDisplayLayoutElement: 0x65da763e0; com.apple.springboard.home-screen; frame: {{0, 0}, {428, 926}}; level: 0; role: primary>;        <SBSDisplayLayoutElement: 0x65da76610; com.apple.lock-screen; frame: {{0, 0}, {428, 926}}; level: 1050; role: fullScreenModal>;        <SBSDisplayLayoutElement: 0x65da76680; com.apple.springboard.passcode; frame: {{0, 0}, {428, 926}}; level: 1050; role: embedded>;    }    timestamp = 18 November 2026 at 1:59:32 PM GMT+3;}
+Nov 18 13:59:32.608973 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.608988 cameracaptured(CMCapture)[68] <Notice>: <<<< FigCaptureDisplayLayoutMonitor >>>> -[FigCaptureDisplayLayoutMonitor _updateObserversWithLayout:]: <FigCaptureDisplayLayoutMonitor: 0x65ccad080 Main Display> <FigCaptureDisplayLayout: 0x65d9af600 11-18-2026 13:59:32, Main Display, foreground:[com.apple.springboard.passcode]>
+Nov 18 13:59:32.609007 SpringBoard(CoverSheet)[35] <Debug>: CSModalPresentationViewController: Got signal: <private>
+Nov 18 13:59:32.609018 cameracaptured(CMCapture)[68] <Notice>: <<<< FigCaptureClientApplicationStateMonitor >>>> -[FigCaptureClientApplicationStateMonitor _handleLayout:]: <private> Looking for com.apple.camera in the Main Display layout
+Nov 18 13:59:32.609028 SpringBoard[35] <Debug>: edge transitioned from: 0; to: 0
+Nov 18 13:59:32.609038 cameracaptured(CMCapture)[68] <Notice>: <<<< FigCaptureClientApplicationStateMonitor >>>> -[FigCaptureClientApplicationStateMonitor _updateClientStateCondition:newValue:]: <0x65c049a40[733][com.apple.camera]> Updating client state condition "_layoutState" with new value "Other Apps"
+Nov 18 13:59:32.609055 audiomxd(libxpc.dylib)[110] <Debug>: [0xb3f244980] 'getMXPropertyGenericPipe:propertyName:reply:': Transaction created
+Nov 18 13:59:32.609095 cameracaptured(MediaSafetyNet)[68] <Info>: Updated view state: Elsewhere
+Nov 18 13:59:32.609122 audiomxd(AudioSessionServer)[110] <Debug>:             MXAccessor.mm:51    GetProperty in mainProcessor for property PIDToInheritApplicationStateFrom: (null)
+Nov 18 13:59:32.609131 locationd[76] <Debug>: latest KF,pressure,<private>,absAltUnc,<private>
+Nov 18 13:59:32.609413 audiomxd(AudioSessionServer)[110] <Debug>: AudioSessionServerImpCommon.mm:324   { "action":"get_property", "session":{"ID":"0x6e047","name":"cameracaptured(68)","sibling_of":"0x6e046 Camera(733)"}, "details":{"key":"PIDToInheritApplicationStateFrom","value":null} }
+Nov 18 13:59:32.609445 locationd[76] <Debug>: average KF,elevation,<private>,averageTimestamp,<private>,aveAbsAltUnc,<private>
+Nov 18 13:59:32.609457 audiomxd(libxpc.dylib)[110] <Debug>: [0xb3f244980] 'getMXPropertyGenericPipe:propertyName:reply:': Transaction released
+Nov 18 13:59:32.609469 locationd[76] <Info>: absolute altitude corrected <private>, absolute altitude before correction <private>, weather <private>, timestamp <private>
+Nov 18 13:59:32.609481 configd[45] <Debug>: copy    :  9475 : State:/Network/Interface/anpi0/LinkQuality
+Nov 18 13:59:32.609562 locationd[76] <Info>: absolute altitude sent to clients <private>, accuracy <private>, precision <private>, status <private>, altitude source <private>, timestamp, <private>, bias uncertainty, <private>
+Nov 18 13:59:32.609607 wifid(CoreWiFi)[53] <Debug>: [corewifi] @[15482.855522] kevent: intf=anpi0 event=link_quality_metric_changed
+Nov 18 13:59:32.620126 mDNSResponder[150] <Notice>: SysEventCallBack -- event: KEV_DL_SIFMTU
+Nov 18 13:59:32.620222 wifid(CoreWiFi)[53] <Debug>: [corewifi] @[15482.855560] -[CWFXPCRequestProxy __setupEventHandlers]_block_invoke (CWFXPCRequestProxy.m:4023) [iflist] CWFKernelEventMonitor: (anpi0) eventCode[0x00000014/20]/(link_quality_metric_changed)
+Nov 18 13:59:32.620253 wifid(CoreWiFi)[53] <Notice>: [corewifi] @[15482.855595] kevent: intf=anpi0 event=link_on
+Nov 18 13:59:32.620279 wifid(CoreWiFi)[53] <Debug>: [corewifi] @[15482.855683] -[CWFXPCRequestProxy __setupEventHandlers]_block_invoke (CWFXPCRequestProxy.m:4015) [iflist] CWFKernelEventMonitor: (anpi0) eventCode[0x0000000d/13]/(link_on)
+Nov 18 13:59:32.620305 remoted[54] <Debug>: IOServiceAddInterestNotification match: type = 0xe0018300
+Nov 18 13:59:32.620317 SpringBoard(BaseBoard)[35] <Debug>: [BSBlockSentinel:<private>] dealloc
+Nov 18 13:59:32.620327 SpringBoard(BaseBoard)[35] <Debug>: [BSBlockSentinel:<private>] dealloc
+Nov 18 13:59:32.620350 mDNSResponder[150] <Notice>: SysEventCallBack -- event: KEV_DL_LINK_QUALITY_METRIC_CHANGED
+Nov 18 13:59:32.620368 mDNSResponder[150] <Notice>: SysEventCallBack -- event: KEV_DL_LINK_ON
+Nov 18 13:59:32.620377 mDNSResponder[150] <Notice>: SetNetworkChanged: Scheduling in 2000 ticks
+Nov 18 13:59:32.620386 remoted[54] <Notice>: [0x104f8ffb0] kIONetworkLinkStateActive
+Nov 18 13:59:32.620397 remoted[54] <Debug>: [0x104f8ffb0] advancing state from 0 to 1
+Nov 18 13:59:32.620407 lockdownd[87] <Notice>: handle_get_value: <private>
+Nov 18 13:59:32.620421 configd[45] <Debug>: Update interface link quality: anpi0: {
+    LinkQuality = 100;
+}
+Nov 18 13:59:32.622280 locationd[76] <Debug>: {"msg":"Pruning locations", "subHarvester":"Poi", "prunedLocationCount":<private>}
+Nov 18 13:59:32.622364 locationd[76] <Debug>: {"msg":"Pruning altitudes", "subHarvester":"Poi", "prunedAltitudeCount":<private>}
+Nov 18 13:59:32.622414 configd[45] <Debug>: set m   :  9475 : 1 set, 0 remove, 0 notify
+Nov 18 13:59:32.622434 configd[45] <Debug>: *set    :  9475 : State:/Network/Interface/anpi0/LinkQuality
+Nov 18 13:59:32.622465 configd[45] <Debug>: -->port : 58387 : port = 50179
+Nov 18 13:59:32.622476 configd[45] <Debug>: -->port : 166279 : port = 85219
+Nov 18 13:59:32.622486 SpringBoard(CoverSheet)[35] <Notice>: ---------------- [Behavior] Restricted capabilities: starting new ----------------
+Nov 18 13:59:32.622502 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from iris
+Nov 18 13:59:32.622526 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from local
+Nov 18 13:59:32.622539 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from landscape
+Nov 18 13:59:32.622549 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from screenOff
+Nov 18 13:59:32.622559 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from posterBoard
+Nov 18 13:59:32.622572 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from accessory
+Nov 18 13:59:32.622607 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: TodayCenter, ControlCenter, ProudLockUpdates, CoverSheetSpotlight from modal: CSPasscodeViewController
+Nov 18 13:59:32.622628 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from external provider: SBCarDoNotDisturbController
+Nov 18 13:59:32.622639 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: (none) from external provider: SBCoverSheetPresentationManager
+Nov 18 13:59:32.622655 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key ThermalLockoutEnabledBrickMode in CFPrefsPlistSource<0x100ba2a80> (Domain: com.apple.springboard, User: kCFPreferencesCurrentUser, ByHost: No, Container: (null), Contents Need Refresh: No) via CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622671 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key ThermalLockoutEnabledBrickMode in CFPrefsPlistSource<0x100ba2a80> (Domain: com.apple.springboard, User: kCFPreferencesCurrentUser, ByHost: No, Container: (null), Contents Need Refresh: No) via CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622705 SpringBoard(CoreFoundation)[35] <Debug>: found no value for key SBLockScreenCameraSwipeEnabled in CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622720 SpringBoard(SpringBoardFoundation)[35] <Debug>: Starting runloop cache period.
+Nov 18 13:59:32.622745 configd[45] <Notice>: Process interface link status active: anpi0
+Nov 18 13:59:32.622758 remoted[54] <Debug>: [0x104f8ffb0] addressing
+Nov 18 13:59:32.622767 SpringBoard(SpringBoardFoundation)[35] <Debug>: Runloop cached passcode state determined - not authenticated / revoked
+Nov 18 13:59:32.622776 backboardd(CoreMotion)[70] <Debug>: Ping timer fired, resetting watchdog
+Nov 18 13:59:32.622786 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key DisableOnLockScreen in CFPrefsPlistSource<0x91ad21300> (Domain: com.apple.mobilenotes, User: kCFPreferencesCurrentUser, ByHost: No, Container: (null), Contents Need Refresh: No) via CFPrefsSearchListSource<0x91ad21180> (Domain: com.apple.mobilenotes, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622795 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key ThermalLockoutEnabledBrickMode in CFPrefsPlistSource<0x100ba2a80> (Domain: com.apple.springboard, User: kCFPreferencesCurrentUser, ByHost: No, Container: (null), Contents Need Refresh: No) via CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622812 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key ThermalLockoutEnabledBrickMode in CFPrefsPlistSource<0x100ba2a80> (Domain: com.apple.springboard, User: kCFPreferencesCurrentUser, ByHost: No, Container: (null), Contents Need Refresh: No) via CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622830 SpringBoard(CoreFoundation)[35] <Debug>: found no value for key SBLockScreenCameraSwipeEnabled in CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622841 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key DisableOnLockScreen in CFPrefsPlistSource<0x91ad21300> (Domain: com.apple.mobilenotes, User: kCFPreferencesCurrentUser, ByHost: No, Container: (null), Contents Need Refresh: No) via CFPrefsSearchListSource<0x91ad21180> (Domain: com.apple.mobilenotes, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.622851 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: QuickNote from external provider: SBDashBoardPolicyBasedBehaviorProvider
+Nov 18 13:59:32.622859 SpringBoard(CoverSheet)[35] <Notice>: [Behavior] Restricted capabilities: setting active - TodayCenter, ControlCenter, QuickNote, ProudLockUpdates, CoverSheetSpotlight
+Nov 18 13:59:32.622875 SpringBoard(CoverSheet)[35] <Info>: Beginning appearance update for CSCSVC – displayLayoutDidUpdateLayout... --------
+Nov 18 13:59:32.622899 remoted[54] <Notice>: [0x104f8ffb0] ifname: anpi0
+Nov 18 13:59:32.622909 remoted[54] <Notice>: [0x104f8ffb0] ifindex: 21
+Nov 18 13:59:32.622919 remoted[54] <Notice>: [0x104f8ffb0] MAC Address: d2:0d:9d:5f:ab:b8
+Nov 18 13:59:32.622946 remoted[54] <Debug>: [0x104f8ffb0] advancing state from 1 to 2
+Nov 18 13:59:32.622955 remoted(libxpc.dylib)[54] <Debug>: [0x76cc55380] '<private>': Transaction created
+Nov 18 13:59:32.622974 remoted[54] <Notice>: ncmhost-5> Attached
+Nov 18 13:59:32.622986 SpringBoard(CoverSheet)[35] <Debug>: Appearance did change for reason [CSCSVC – displayLayoutDidUpdateLayout]...
+Nov 18 13:59:32.622995 SpringBoard(CoverSheet)[35] <Debug>: Added: <private>
+Nov 18 13:59:32.623009 SpringBoard(CoverSheet)[35] <Debug>: Removed: <private>
+Nov 18 13:59:32.623018 SpringBoard(CoverSheet)[35] <Notice>: <private> Sending event: <private>
+Nov 18 13:59:32.623036 SpringBoard(CoverSheet)[35] <Debug>: <CSModalPresentationViewController: 0x91cc5de00> - Sending event <CSEvent: 0x91999c980; type: AppearanceChanged; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.623050 SpringBoard(CoverSheet)[35] <Debug>: <CSMainPageContentViewController: 0x91aaa0000> - Sending event <CSEvent: 0x91999c980; type: AppearanceChanged; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.623069 SpringBoard(CoverSheet)[35] <Debug>: <SBDashBoardCameraPageViewController: 0x91aaa0600> - Sending event <CSEvent: 0x91999c980; type: AppearanceChanged; consumable: NO; stateless: NO> to non-active content view controllers: <private>
+Nov 18 13:59:32.623078 SpringBoard(CoverSheet)[35] <Info>: <private> Event delivered.
+Nov 18 13:59:32.623088 remoted[54] <Debug>: ncmhost-5> Properties: <private>
+Nov 18 13:59:32.623099 runningboardd(RunningBoard)[34] <Info>: PERF: Received request from [osservice<com.apple.SpringBoard>:35] (euid 501, auid 501) (persona (null)): statesForPredicate:descriptor:error:
+Nov 18 13:59:32.623107 runningboardd(RunningBoard)[34] <Info>: statesForPredicate
+Nov 18 13:59:32.623115 remoted[54] <Debug>: ncmhost-5> Public Properties: <private>
+Nov 18 13:59:32.623165 SpringBoard(RunningBoardServices)[35] <Debug>: Decoded RBSProcessHandle with IPC ID e3237f100000184
+Nov 18 13:59:32.623181 SpringBoard(CoreFoundation)[35] <Debug>: looked up value <private> for key SBCoverSheetProportionalAdaptiveTime in CFPrefsSource<0x100ba2040> (Domain: Volatile, User: , ByHost: No, Container: , Contents Need Refresh: No) via CFPrefsSearchListSource<0x100ba22e0> (Domain: com.apple.springboard, Container: (null) Non-launch persona: 0)
+Nov 18 13:59:32.623193 remoted[54] <Info>: Delivering device (client="pid/54")
+Nov 18 13:59:32.623205 configd[45] <Debug>: copy    :  9475 : State:/Network/Interface/anpi0/Link
+Nov 18 13:59:32.623216 configd[45] <Debug>: Update interface link status: anpi0: {
+    Active = 1;
+}

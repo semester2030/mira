@@ -1,0 +1,47 @@
+{
+  "note": "simulation of RC5.2 tip merge BEFORE lock — not a live customer transcript",
+  "ask": "بكم البديل؟",
+  "filteredAlternatives": [
+    {
+      "id": "svc-hydrate",
+      "titleAr": "ترطيب",
+      "priceSar": 120,
+      "action": "book"
+    }
+  ],
+  "rawDiscoveryOffers": [
+    {
+      "id": "svc-clean",
+      "titleAr": "تنظيف",
+      "priceSar": 150,
+      "action": "book"
+    },
+    {
+      "id": "svc-hydrate",
+      "titleAr": "ترطيب",
+      "priceSar": 120,
+      "action": "book"
+    }
+  ],
+  "discoverySideOffer": {
+    "id": "svc-clean",
+    "titleAr": "تنظيف",
+    "priceSar": 150,
+    "action": "book"
+  },
+  "finalCardsAfterAttachDiscoveryCards": [
+    {
+      "id": "svc-clean",
+      "titleAr": "تنظيف",
+      "priceSar": 150,
+      "action": "book"
+    },
+    {
+      "id": "svc-hydrate",
+      "titleAr": "ترطيب",
+      "priceSar": 120,
+      "action": "book"
+    }
+  ],
+  "bug": "open offer svc-clean reintroduced; side offer also open offer"
+}

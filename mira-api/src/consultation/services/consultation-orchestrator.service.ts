@@ -34,6 +34,11 @@ import { ConsultationDialogueService } from './consultation-attachment.service';
 import { answerCacheAllowed, consultationQuarantineApplies, readPinnedAttachmentIds } from './consultation-dialogue';
 import {
   buildDegradedAdvisorReply,
+  isAlternativesOrCompareAsk,
+  isAlternativesPriceOrCompareAsk,
+  isOpenOfferLiveAsk,
+  buildAlternativesConsultationTurn,
+  marketplaceOfferLiveAskReply,
   decideConsultationScope,
   guardScopeAnswer,
   historyForBeautyTurn,
@@ -311,6 +316,13 @@ export class ConsultationOrchestratorService {
       sessionId,
       dto.contextSnapshotId ?? session.activeSnapshotId ?? undefined,
     );
+    // Re-read open marketplace offer every turn. On withdraw/error, strip stale offer facts.
+    const offerState = await this.sessions.refreshMarketplaceOfferState(session);
+    if (offerState.status !== 'none') {
+      const withoutStale = loaded.factRegistry.filter((f) => !f.id.startsWith('marketplace.offer.'));
+      loaded.factRegistry = [...withoutStale, ...offerState.facts];
+      (loaded as { marketplaceOfferLiveStatus?: string }).marketplaceOfferLiveStatus = offerState.status;
+    }
 
     const mod = this.moderation.preCheck(dto.message, loaded.snapshot.user.isMinor);
     const history = await this.messages.recentPairs(sessionId, 8);
@@ -369,6 +381,30 @@ export class ConsultationOrchestratorService {
     let discoveryTurn: ConsultantTurnResult | null = null;
     let discoveryPayload: MceAssistantPayloadV1 | null = null;
     let discoverySessionPatch: SessionDiscoveryContext | null | undefined = undefined;
+    /** When true, final cards come only from discoveryPayload (alternatives filter) — never raw browse. */
+    let discoveryCardsLocked = false;
+
+    const askText = dto.message.trim();
+    const altPriceAsk = isAlternativesPriceOrCompareAsk(askText);
+    // Alternatives/compare must never hit open-offer price. When discovery is OFF, clarify now.
+    // When discovery is ON, search first then build the final turn (reply + cards) below.
+    if (!localReply && !mod.blocked && altPriceAsk && !this.discovery.enabled()) {
+      const turn = buildAlternativesConsultationTurn(askText, loaded.factRegistry, [], {
+        discoveryEnabled: false,
+        searchFailed: false,
+      });
+      if (turn) localReply = turn.answerAr;
+    }
+
+    // Open offer live state wins over discovery for includes/price/book about *this* offer only.
+    if (
+      !localReply &&
+      !mod.blocked &&
+      !isAlternativesOrCompareAsk(askText) &&
+      isOpenOfferLiveAsk(askText)
+    ) {
+      localReply = marketplaceOfferLiveAskReply(askText, loaded.factRegistry) ?? null;
+    }
 
     // Real partner catalog via MarketplaceService.browse — never RC5 fixtures here.
     if (!localReply && !mod.blocked && this.discovery.enabled()) {
@@ -458,6 +494,52 @@ export class ConsultationOrchestratorService {
       }
     }
 
+    // Alternatives/compare final turn: prefer published discovery cards with *their* prices;
+    // never leave an open-offer price answer for these asks.
+    // This path owns the final card list (including intentional empty) — lock against attachDiscoveryCards.
+    if (!mod.blocked && altPriceAsk) {
+      const searchFailed = discoveryTurn?.searchFailed === true;
+      const published = (discoveryTurn?.offers ?? []).map((o) => ({
+        id: o.id,
+        titleAr: o.titleAr,
+        kind: o.kind,
+        priceSar: o.priceSar ?? null,
+        inStock: o.inStock ?? null,
+        liveStatus: o.liveStatus ?? null,
+        // Derive from card action — ConsultantOfferCard does not expose bookingEnabled.
+        bookingEnabled:
+          o.kind === 'service' ? o.action === 'book' : o.kind === 'product' ? o.action === 'buy' : null,
+      }));
+      const turn = buildAlternativesConsultationTurn(askText, loaded.factRegistry, published, {
+        discoveryEnabled: this.discovery.enabled(),
+        searchFailed,
+      });
+      if (turn) {
+        localReply = turn.answerAr;
+        const lockedOffers = this.enrichLockedAlternativeCards(
+          turn.discoveryOffers,
+          discoveryTurn?.offers ?? [],
+        );
+        discoveryPayload = {
+          answerAr: turn.answerAr,
+          confidence: 'high',
+          intent: 'general',
+          citedFactIds: [],
+          suggestedQuestionsAr: turn.suggestedQuestionsAr,
+          blocked: false,
+          disclaimerAr: '',
+          replySource: turn.replySource,
+          discoveryOffers: lockedOffers,
+          discoverySideOffer: null,
+          searchFailed: turn.searchFailed,
+          searchErrorAr: searchFailed
+            ? discoveryTurn?.searchErrorAr ?? turn.answerAr
+            : discoveryTurn?.searchErrorAr ?? undefined,
+        };
+        discoveryCardsLocked = true;
+      }
+    }
+
     // Catalog discovery OFF: never invent Mira products via LLM — honest unavailable copy.
     if (!localReply && !mod.blocked && isProductOrCatalogAsk(dto.message.trim()) && !this.discoveryEnabled()) {
       localReply = buildDegradedAdvisorReply(dto.message.trim(), loaded.factRegistry);
@@ -505,11 +587,42 @@ export class ConsultationOrchestratorService {
       discoveryTurn,
       discoveryPayload,
       discoverySessionPatch,
+      discoveryCardsLocked,
     };
   }
 
   private discoveryEnabled(): boolean {
     return this.discovery.enabled();
+  }
+
+  /**
+   * Keep alternatives filter results (including empty). Enrich nav/media from matching browse cards
+   * by id — never reintroduce filtered-out offers (e.g. the open service).
+   */
+  private enrichLockedAlternativeCards(
+    filtered: Array<Record<string, unknown>>,
+    rawOffers: ConsultantOfferCard[],
+  ): Array<Record<string, unknown>> {
+    if (!filtered.length) return [];
+    const byId = new Map(rawOffers.map((o) => [o.id, o]));
+    return filtered.map((card) => {
+      const id = String(card.id ?? '').trim();
+      const raw = id ? byId.get(id) : undefined;
+      if (!raw) return { ...card };
+      return {
+        ...raw,
+        ...card,
+        id,
+        // Authoritative commercial fields from the alternatives turn.
+        priceSar: card.priceSar ?? raw.priceSar,
+        inStock: card.inStock !== undefined ? card.inStock : raw.inStock,
+        action: card.action ?? raw.action,
+        actionLabelAr: card.actionLabelAr ?? raw.actionLabelAr,
+        openPath: card.openPath ?? raw.openPath,
+        titleAr: card.titleAr ?? raw.titleAr,
+        kind: card.kind ?? raw.kind,
+      };
+    });
   }
 
   /** Map marketplace browse cards → grounding rows (id/price/stock from partner catalog). */
@@ -532,7 +645,18 @@ export class ConsultationOrchestratorService {
   private attachDiscoveryCards(
     payload: MceAssistantPayloadV1,
     turn: ConsultantTurnResult | null,
+    opts?: { lockPayloadCards?: boolean },
   ): MceAssistantPayloadV1 {
+    // Alternatives (and similar): payload already holds the only allowed card set — including [].
+    if (opts?.lockPayloadCards) {
+      return {
+        ...payload,
+        discoveryOffers: Array.isArray(payload.discoveryOffers) ? payload.discoveryOffers : [],
+        discoverySideOffer: payload.discoverySideOffer ?? null,
+        searchFailed: payload.searchFailed ?? false,
+        searchErrorAr: payload.searchErrorAr,
+      };
+    }
     if (!turn) {
       // Keep any liveness cards already placed on the payload (do not wipe).
       return {
@@ -855,11 +979,13 @@ export class ConsultationOrchestratorService {
       localReply?: string | null;
       discoveryTurn?: ConsultantTurnResult | null;
       discoveryPayload?: MceAssistantPayloadV1 | null;
+      discoveryCardsLocked?: boolean;
     },
     streamFactory?: () => AsyncIterable<string>,
   ): Promise<MceAssistantPayloadV1> {
     const discoveryTurn = ctx.discoveryTurn ?? null;
     const publishedOffers = this.offersFromDiscoveryTurn(discoveryTurn);
+    const lockCards = ctx.discoveryCardsLocked === true;
 
     // Discovery already claimed this turn with marketplace browse results.
     if (ctx.discoveryPayload) {
@@ -867,18 +993,37 @@ export class ConsultationOrchestratorService {
         ctx.discoveryPayload,
         ctx.factRegistry,
         ctx.userRow.contentAr,
-        this.validateOpts(publishedOffers),
+        {
+          ...this.validateOpts(publishedOffers),
+          // Locked alternatives answers cite published alt prices — not open-offer facts alone.
+          preserveGroundedAnswer: lockCards,
+        },
       );
-      return this.attachDiscoveryCards(
-        { ...guardScopeAnswer(grounded, ctx.userRow.contentAr), replySource: 'discovery' },
-        discoveryTurn,
-      );
+      // Re-apply locked cards after validate (empty list is intentional for alternatives).
+      const scoped: MceAssistantPayloadV1 = {
+        ...guardScopeAnswer(grounded, ctx.userRow.contentAr),
+        replySource: ctx.discoveryPayload.replySource ?? grounded.replySource ?? 'discovery',
+        discoveryOffers: Array.isArray(ctx.discoveryPayload.discoveryOffers)
+          ? ctx.discoveryPayload.discoveryOffers
+          : [],
+        discoverySideOffer: lockCards ? null : (ctx.discoveryPayload.discoverySideOffer ?? null),
+        searchFailed: ctx.discoveryPayload.searchFailed ?? grounded.searchFailed ?? false,
+        searchErrorAr: ctx.discoveryPayload.searchErrorAr ?? grounded.searchErrorAr,
+      };
+      return this.attachDiscoveryCards(scoped, discoveryTurn, { lockPayloadCards: lockCards });
     }
 
     if (ctx.localReply) {
       const catalogBlocked =
         isProductOrCatalogAsk(ctx.userRow.contentAr) && !this.discoveryEnabled();
       const replySource = catalogBlocked || !this.llm.isConfigured() ? 'degraded' : 'dialogue';
+      const ask = ctx.userRow.contentAr;
+      // Open-offer / alternatives local replies are already grounded — do not replace with GAP
+      // via serverCommercialTurnReply (open-offer demonstratives rarely match subjectAr).
+      const preserveLocal =
+        isOpenOfferLiveAsk(ask) ||
+        isAlternativesPriceOrCompareAsk(ask) ||
+        isAlternativesOrCompareAsk(ask);
       const validated = this.validator.validate(
         {
           answerAr: ctx.localReply,
@@ -892,9 +1037,14 @@ export class ConsultationOrchestratorService {
         },
         ctx.factRegistry,
         ctx.userRow.contentAr,
-        this.validateOpts(publishedOffers),
+        {
+          ...this.validateOpts(publishedOffers),
+          preserveGroundedAnswer: preserveLocal,
+        },
       );
-      return this.attachDiscoveryCards(guardScopeAnswer(validated, ctx.userRow.contentAr), discoveryTurn);
+      return this.attachDiscoveryCards(guardScopeAnswer(validated, ctx.userRow.contentAr), discoveryTurn, {
+        lockPayloadCards: lockCards,
+      });
     }
     if (ctx.mod.blocked && ctx.mod.safeReply) {
       return this.validator.blockedPayload(

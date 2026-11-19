@@ -135,7 +135,80 @@
       ],
     },
     {
-      id: 'clinic_laser', version: 1, label: 'إزالة الشعر بالليزر', category: 'laser', partnerTypes: ['clinic'],
+      // Journey-1 / S042 — cosmetic cleanse only (no medical diagnosis).
+      id: 'face_care_cleanse', version: 1, label: 'تنظيف تجميلي سطحي', category: 'care',
+      partnerTypes: ['salon', 'clinic'],
+      suggestedName: 'تنظيف تجميلي سطحي',
+      catalogGuideServiceId: 'S042',
+      taxonomyLeafId: 'beauty.face_care.cleanse',
+      suggestedPhrasesAr: ['تعرّفي على خطوات التنظيف قبل اختيار موعدك.'],
+      fields: [
+        field({ id: 'specialist', label: 'المختصة', type: 'text', sectionId: 'overview' }),
+        field({ id: 'care_kind', label: 'نوع العناية', type: 'text', sectionId: 'overview' }),
+        field({ id: 'duration_min', label: 'المدة', type: 'number', sectionId: 'duration_price', unit: 'دقيقة', required: true }),
+        field({ id: 'session_steps', label: 'خطوات الجلسة التجميلية', type: 'text', sectionId: 'includes', required: true }),
+        field({ id: 'includes', label: 'ما تتضمنه الجلسة', type: 'text', sectionId: 'includes' }),
+        field({ id: 'products_used', label: 'المستحضرات المستخدمة إن توفرت', type: 'text', sectionId: 'includes' }),
+        shared.place_mode, shared.prep_required, shared.policies,
+      ],
+    },
+    {
+      // Journey-1 / S043
+      id: 'face_care_hydrate', version: 1, label: 'ترطيب وماسك', category: 'care',
+      partnerTypes: ['salon', 'clinic'],
+      suggestedName: 'ترطيب وماسك',
+      catalogGuideServiceId: 'S043',
+      taxonomyLeafId: 'beauty.face_care.hydrate',
+      suggestedPhrasesAr: ['اختاري جلسة ترطيب تتناسب مع وقتك وتفضيلاتك.'],
+      fields: [
+        field({ id: 'specialist', label: 'المختصة', type: 'text', sectionId: 'overview' }),
+        field({ id: 'care_kind', label: 'نوع العناية', type: 'text', sectionId: 'overview' }),
+        field({ id: 'mask_kind', label: 'نوع الماسك', type: 'text', sectionId: 'overview', required: true }),
+        field({ id: 'duration_min', label: 'المدة', type: 'number', sectionId: 'duration_price', unit: 'دقيقة', required: true }),
+        field({ id: 'includes', label: 'ما تتضمنه الجلسة', type: 'text', sectionId: 'includes' }),
+        field({ id: 'products_used', label: 'المستحضرات المستخدمة إن توفرت', type: 'text', sectionId: 'includes' }),
+        shared.place_mode, shared.prep_required, shared.policies,
+      ],
+    },
+    {
+      // S098 — cosmetic peel (not pre-makeup).
+      id: 'face_care_peel', version: 1, label: 'تقشير تجميلي سطحي للوجه', category: 'care',
+      partnerTypes: ['salon', 'clinic'],
+      suggestedName: 'تقشير تجميلي سطحي للوجه',
+      catalogGuideServiceId: 'S098',
+      taxonomyLeafId: 'beauty.face_care.peel',
+      suggestedPhrasesAr: ['اطّلعي على مستحضر التقشير وخطوات الجلسة قبل اختيار موعدك.'],
+      fields: [
+        field({ id: 'specialist', label: 'المختصة', type: 'text', sectionId: 'overview' }),
+        field({ id: 'peel_product', label: 'نوع المستحضر التجميلي المستخدم', type: 'text', sectionId: 'overview', required: true }),
+        field({ id: 'duration_min', label: 'المدة', type: 'number', sectionId: 'duration_price', unit: 'دقيقة', required: true }),
+        field({ id: 'session_steps', label: 'الخطوات المشمولة', type: 'text', sectionId: 'includes', required: true }),
+        field({ id: 'includes', label: 'ما تتضمنه الجلسة', type: 'text', sectionId: 'includes' }),
+        shared.place_mode, shared.prep_required, shared.policies,
+      ],
+    },
+    {
+      // S044 — pre-makeup care.
+      id: 'face_care_pre_makeup', version: 1, label: 'عناية قبل المكياج', category: 'care',
+      partnerTypes: ['salon', 'clinic'],
+      suggestedName: 'عناية قبل المكياج',
+      catalogGuideServiceId: 'S044',
+      taxonomyLeafId: 'beauty.face_care.pre_makeup',
+      suggestedPhrasesAr: ['جهّزي إطلالتك بجلسة عناية تسبق المكياج.'],
+      fields: [
+        field({ id: 'specialist', label: 'المختصة', type: 'text', sectionId: 'overview' }),
+        field({ id: 'makeup_time', label: 'وقت المكياج', type: 'text', sectionId: 'overview' }),
+        field({ id: 'duration_min', label: 'المدة', type: 'number', sectionId: 'duration_price', unit: 'دقيقة', required: true }),
+        field({ id: 'session_steps', label: 'الخطوات المشمولة', type: 'text', sectionId: 'includes', required: true }),
+        field({ id: 'includes', label: 'ما تتضمنه الجلسة', type: 'text', sectionId: 'includes' }),
+        shared.place_mode, shared.prep_required, shared.policies,
+      ],
+    },
+    {
+      // Blocked from new registration — medical laser out of Mira scope.
+      id: 'clinic_laser', version: 1, label: 'إزالة الشعر بالليزر (خارج النطاق)', category: 'laser',
+      partnerTypes: [],
+      blockedForNewRegistration: true,
       suggestedName: 'جلسة ليزر',
       fields: [
         field({ id: 'laser_areas', label: 'المناطق المشمولة', type: 'multi', sectionId: 'overview', required: true,
@@ -165,7 +238,10 @@
       fields: [shared.session_kind, field({ id: 'includes', label: 'ما تشمله الخدمة', type: 'text', sectionId: 'includes' }), shared.place_mode, shared.prep_required, shared.policies],
     },
     {
-      id: 'clinic_teeth', version: 1, label: 'الأسنان (محدود)', category: 'teeth', partnerTypes: ['clinic'],
+      // Blocked from new registration — dental is out of Mira scope.
+      id: 'clinic_teeth', version: 1, label: 'الأسنان (خارج النطاق)', category: 'teeth',
+      partnerTypes: [],
+      blockedForNewRegistration: true,
       suggestedName: 'جلسة أسنان',
       fields: [
         field({ id: 'teeth_kind', label: 'نوع الجلسة', type: 'text', sectionId: 'overview', required: true }),
@@ -175,11 +251,18 @@
   ];
 
   function forPartner(partnerType, category) {
-    return templates.filter((t) => t.partnerTypes.indexOf(partnerType) >= 0 && (!category || t.category === category));
+    return templates.filter((t) =>
+      !t.blockedForNewRegistration &&
+      t.partnerTypes.indexOf(partnerType) >= 0 &&
+      (!category || t.category === category));
   }
 
   function byId(id) {
     return templates.find((t) => t.id === id) || null;
+  }
+
+  function byCatalogGuideServiceId(serviceId) {
+    return templates.find((t) => t.catalogGuideServiceId === serviceId) || null;
   }
 
   function isVisible(field, answers) {
@@ -197,7 +280,8 @@
     templates: templates,
     forPartner: forPartner,
     byId: byId,
+    byCatalogGuideServiceId: byCatalogGuideServiceId,
     isVisible: isVisible,
-    uncoveredNote: 'قالب الأسنان محدود. لا تُولَّد تشخيصات أو تعليمات طبية من ميرا.',
+    uncoveredNote: 'الأسنان والليزر الطبي خارج نطاق ميرا. العناية بالبشرة تقتصر على التجميل السطحي المعتمد في الدليل.',
   };
 })(window);

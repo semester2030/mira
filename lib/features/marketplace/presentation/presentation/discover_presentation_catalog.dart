@@ -161,14 +161,16 @@ abstract final class DiscoverPresentationCatalog {
   }
 
   /// Catalog rows do not receive generated hero images. Missing media stays missing.
-  /// Main slides follow [CatalogMainOfferKind]: images only, or one video (cover is not a slide).
+  /// Main slides: ordered mix up to 3 videos + 10 images; cover is never a slide.
   static PresentationSlide slideForOffer(DiscoverOffer offer) {
     final known = offer.product?.priceKnown ?? offer.service?.priceKnown ?? false;
     final halalas = offer.product?.priceHalalas ?? offer.service?.priceHalalas ?? 0;
     final price = known ? CatalogPrice.text(known: true, halalas: halalas) : null;
     final kind = CatalogOfferMedia.resolveKind(offer.media, offer.mainOfferKind);
     final mains = CatalogOfferMedia.mainSlides(offer.media, kind: kind);
-    final cover = kind == CatalogMainOfferKind.video ? CatalogOfferMedia.videoCover(offer.media) : null;
+    final cover = (kind == CatalogMainOfferKind.video || kind == CatalogMainOfferKind.gallery)
+        ? CatalogOfferMedia.videoCover(offer.media)
+        : null;
     return PresentationSlide(
       entityId: offer.id,
       partnerId: offer.partnerId,

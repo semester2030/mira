@@ -1,0 +1,577 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.13.1 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.3.0 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.4 available)
+  video_player_avfoundation 2.12.0 (2.12.4 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+99 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart                                                          00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart                                                          00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart                                                                  00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: slides keep ids and do not fail a real service on purpose               00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_swipe_latency_harness_test.dart: harness: 30 transitions median/p95 with warm path              
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=1 attempt=1795002338801333 build=2026111715 mediaId=null offer=open playerId=220080125 firstFrameMs=6 source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=2 audible=0 initStart=3 initDone=5 playStart=6 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=1 attempt=1795002338801333 build=2026111715 mediaId=null offer=open claim=0 cache=0 bytes=null audioCutMs=2 firstFrameMs=6 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338801333 at=2026-11-18T11:45:38.805697Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=6 audible=1 attempt=1795002338801333
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.809198Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.810675Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=3 attempt=1795002338811838 build=2026111715 mediaId=null offer=t-0 playerId=220080125 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=3 attempt=1795002338811838 build=2026111715 mediaId=null offer=t-0 claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338811838 at=2026-11-18T11:45:38.812268Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=1 audible=1 attempt=1795002338811838
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.813049Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.813665Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=5 attempt=1795002338814245 build=2026111715 mediaId=null offer=t-1 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=5 attempt=1795002338814245 build=2026111715 mediaId=null offer=t-1 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338814245 at=2026-11-18T11:45:38.814640Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338814245
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.814918Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=2
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.817305Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=7 attempt=1795002338818267 build=2026111715 mediaId=null offer=t-2 playerId=220080125 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=7 attempt=1795002338818267 build=2026111715 mediaId=null offer=t-2 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338818267 at=2026-11-18T11:45:38.818619Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=1 audible=1 attempt=1795002338818267
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.818882Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.819480Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=9 attempt=1795002338820004 build=2026111715 mediaId=null offer=t-3 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=9 attempt=1795002338820004 build=2026111715 mediaId=null offer=t-3 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338820004 at=2026-11-18T11:45:38.820998Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338820004
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.821378Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.821726Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=11 attempt=1795002338822397 build=2026111715 mediaId=null offer=t-4 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=11 attempt=1795002338822397 build=2026111715 mediaId=null offer=t-4 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338822397 at=2026-11-18T11:45:38.822709Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338822397
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.822967Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.823313Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=13 attempt=1795002338823929 build=2026111715 mediaId=null offer=t-5 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=13 attempt=1795002338823929 build=2026111715 mediaId=null offer=t-5 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338823929 at=2026-11-18T11:45:38.824244Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338823929
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.824663Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.825025Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=15 attempt=1795002338825569 build=2026111715 mediaId=null offer=t-6 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=15 attempt=1795002338825569 build=2026111715 mediaId=null offer=t-6 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338825569 at=2026-11-18T11:45:38.826069Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338825569
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.826330Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.826643Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=17 attempt=1795002338827167 build=2026111715 mediaId=null offer=t-7 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=17 attempt=1795002338827167 build=2026111715 mediaId=null offer=t-7 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338827167 at=2026-11-18T11:45:38.827660Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338827167
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.827929Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.828236Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=19 attempt=1795002338828817 build=2026111715 mediaId=null offer=t-8 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=19 attempt=1795002338828817 build=2026111715 mediaId=null offer=t-8 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338828817 at=2026-11-18T11:45:38.829244Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338828817
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.829518Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.829871Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=21 attempt=1795002338830448 build=2026111715 mediaId=null offer=t-9 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=21 attempt=1795002338830448 build=2026111715 mediaId=null offer=t-9 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338830448 at=2026-11-18T11:45:38.830952Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338830448
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.831313Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.831794Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=23 attempt=1795002338832462 build=2026111715 mediaId=null offer=t-10 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=23 attempt=1795002338832462 build=2026111715 mediaId=null offer=t-10 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338832462 at=2026-11-18T11:45:38.832752Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338832462
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.832990Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.833303Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=25 attempt=1795002338833898 build=2026111715 mediaId=null offer=t-11 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=25 attempt=1795002338833898 build=2026111715 mediaId=null offer=t-11 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338833898 at=2026-11-18T11:45:38.834181Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338833898
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.834517Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.835033Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=27 attempt=1795002338835514 build=2026111715 mediaId=null offer=t-12 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=27 attempt=1795002338835514 build=2026111715 mediaId=null offer=t-12 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338835514 at=2026-11-18T11:45:38.835884Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338835514
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.836270Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.836619Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=29 attempt=1795002338837072 build=2026111715 mediaId=null offer=t-13 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=29 attempt=1795002338837072 build=2026111715 mediaId=null offer=t-13 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338837072 at=2026-11-18T11:45:38.837331Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338837072
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.837794Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.838210Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=31 attempt=1795002338838801 build=2026111715 mediaId=null offer=t-14 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=31 attempt=1795002338838801 build=2026111715 mediaId=null offer=t-14 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338838801 at=2026-11-18T11:45:38.839096Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338838801
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.839338Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.839638Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=33 attempt=1795002338840183 build=2026111715 mediaId=null offer=t-15 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=33 attempt=1795002338840183 build=2026111715 mediaId=null offer=t-15 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338840183 at=2026-11-18T11:45:38.840461Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338840183
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.840683Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.841219Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=35 attempt=1795002338842009 build=2026111715 mediaId=null offer=t-16 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=35 attempt=1795002338842009 build=2026111715 mediaId=null offer=t-16 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338842009 at=2026-11-18T11:45:38.842306Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338842009
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.842596Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.842934Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=37 attempt=1795002338843330 build=2026111715 mediaId=null offer=t-17 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=37 attempt=1795002338843330 build=2026111715 mediaId=null offer=t-17 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338843330 at=2026-11-18T11:45:38.843576Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338843330
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.843825Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.844136Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=39 attempt=1795002338844569 build=2026111715 mediaId=null offer=t-18 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=39 attempt=1795002338844569 build=2026111715 mediaId=null offer=t-18 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338844569 at=2026-11-18T11:45:38.844818Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338844569
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.845038Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.845375Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=41 attempt=1795002338845915 build=2026111715 mediaId=null offer=t-19 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=41 attempt=1795002338845915 build=2026111715 mediaId=null offer=t-19 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338845915 at=2026-11-18T11:45:38.846746Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338845915
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.847011Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.847317Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=43 attempt=1795002338847777 build=2026111715 mediaId=null offer=t-20 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=43 attempt=1795002338847777 build=2026111715 mediaId=null offer=t-20 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338847777 at=2026-11-18T11:45:38.848020Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338847777
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.848610Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.849197Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=45 attempt=1795002338849617 build=2026111715 mediaId=null offer=t-21 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=45 attempt=1795002338849617 build=2026111715 mediaId=null offer=t-21 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338849617 at=2026-11-18T11:45:38.849973Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338849617
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.850246Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.850983Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=47 attempt=1795002338851574 build=2026111715 mediaId=null offer=t-22 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=47 attempt=1795002338851574 build=2026111715 mediaId=null offer=t-22 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338851574 at=2026-11-18T11:45:38.851928Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338851574
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.852190Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.852485Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=49 attempt=1795002338852863 build=2026111715 mediaId=null offer=t-23 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=49 attempt=1795002338852863 build=2026111715 mediaId=null offer=t-23 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338852863 at=2026-11-18T11:45:38.853118Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338852863
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.853312Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.853587Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=51 attempt=1795002338853982 build=2026111715 mediaId=null offer=t-24 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=51 attempt=1795002338853982 build=2026111715 mediaId=null offer=t-24 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338853982 at=2026-11-18T11:45:38.854212Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338853982
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.854422Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.854747Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=53 attempt=1795002338855223 build=2026111715 mediaId=null offer=t-25 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=53 attempt=1795002338855223 build=2026111715 mediaId=null offer=t-25 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338855223 at=2026-11-18T11:45:38.856228Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338855223
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.856486Z
+00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_swipe_latency_harness_test.dart: harness: 30 transitions median/p95 with warm path              
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.857018Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=55 attempt=1795002338857476 build=2026111715 mediaId=null offer=t-26 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=55 attempt=1795002338857476 build=2026111715 mediaId=null offer=t-26 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338857476 at=2026-11-18T11:45:38.857735Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338857476
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.857943Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.858261Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=57 attempt=1795002338858829 build=2026111715 mediaId=null offer=t-27 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=57 attempt=1795002338858829 build=2026111715 mediaId=null offer=t-27 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338858829 at=2026-11-18T11:45:38.859211Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338858829
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.859482Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.859793Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=59 attempt=1795002338860163 build=2026111715 mediaId=null offer=t-28 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=59 attempt=1795002338860163 build=2026111715 mediaId=null offer=t-28 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338860163 at=2026-11-18T11:45:38.860593Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338860163
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.860940Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=parked at=2026-11-18T11:45:38.861240Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouxknx transition=61 attempt=1795002338861735 build=2026111715 mediaId=null offer=t-29 playerId=220080125 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouxknx transition=61 attempt=1795002338861735 build=2026111715 mediaId=null offer=t-29 claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=220080125 attempt=1795002338861735 at=2026-11-18T11:45:38.862006Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=220080125 firstFrameMs=0 audible=1 attempt=1795002338861735
+MIRA_DISCOVER_AUDIO mute_req playerId=220080125 role=unknown at=2026-11-18T11:45:38.862233Z
+MIRA_DISCOVER_AUDIO mute_done playerId=220080125 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=220080125 role=unknown ms=0
+00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: horizontal fling alone moves video→image→video pages            
+MIRA_DISCOVER_FF session=sho9wouuk4r transition=1 attempt=1795002339023537 build=2026111715 mediaId=null offer=mix-screen playerId=651178000 firstFrameMs=177 source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=169 audible=0 initStart=173 initDone=175 playStart=177 resolveMs=4 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouuk4r transition=1 attempt=1795002339023537 build=2026111715 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=169 firstFrameMs=177 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=651178000 attempt=1795002339023537 at=2026-11-18T11:45:39.033077Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=651178000 firstFrameMs=177 audible=1 attempt=1795002339023537
+MIRA_DISCOVER_AUDIO mute_req playerId=651178000 role=active at=2026-11-18T11:45:39.125777Z
+MIRA_DISCOVER_AUDIO mute_done playerId=651178000 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=651178000 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=651178000
+MIRA_DISCOVER_AUDIO mute_req playerId=651178000 role=unknown at=2026-11-18T11:45:39.127603Z
+MIRA_DISCOVER_AUDIO mute_done playerId=651178000 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=651178000 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=651178000 role=parked at=2026-11-18T11:45:39.184693Z
+MIRA_DISCOVER_AUDIO mute_done playerId=651178000 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=651178000 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wouuk4r transition=3 attempt=1795002339185614 build=2026111715 mediaId=null offer=mix-screen playerId=651178000 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wouuk4r transition=3 attempt=1795002339185614 build=2026111715 mediaId=null offer=mix-screen claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=651178000 attempt=1795002339185614 at=2026-11-18T11:45:39.186256Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=651178000 firstFrameMs=1 audible=1 attempt=1795002339185614
+MIRA_DISCOVER_AUDIO mute_req playerId=651178000 role=unknown at=2026-11-18T11:45:39.220210Z
+MIRA_DISCOVER_AUDIO mute_done playerId=651178000 role=unknown ms=6
+MIRA_DISCOVER_AUDIO pause_done playerId=651178000 role=unknown ms=7
+00:02 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening details stops playback and return resumes only the active slot  00:02 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:02 +6: /Users/fayez/Desktop/مراجع ... PageController jump video→image→video: delayed cut does not release new attach                                                                                00:02 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: PageController jump video→image→video: delayed cut does not release new attach
+MIRA_DISCOVER_FF session=sho9wov71zc transition=1 attempt=1795002339272810 build=2026111715 mediaId=null offer=mix-screen playerId=60965536 firstFrameMs=25 source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=25 audible=0 initStart=25 initDone=25 playStart=25 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wov71zc transition=1 attempt=1795002339272810 build=2026111715 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=25 firstFrameMs=25 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=60965536 attempt=1795002339272810 at=2026-11-18T11:45:39.273571Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=60965536 firstFrameMs=25 audible=1 attempt=1795002339272810
+MIRA_DISCOVER_AUDIO mute_req playerId=60965536 role=active at=2026-11-18T11:45:39.287710Z
+MIRA_DISCOVER_AUDIO mute_req playerId=60965536 role=active at=2026-11-18T11:45:39.301166Z
+MIRA_DISCOVER_AUDIO mute_done playerId=60965536 role=active ms=31
+MIRA_DISCOVER_AUDIO mute_done playerId=60965536 role=active ms=18
+MIRA_DISCOVER_AUDIO pause_done playerId=60965536 role=active ms=32
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=60965536 role=active ms=19
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=60965536
+MIRA_DISCOVER_AUDIO mute_req playerId=60965536 role=unknown at=2026-11-18T11:45:39.321Z
+MIRA_DISCOVER_AUDIO mute_done playerId=60965536 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=60965536 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9wov71zc transition=2 attempt=1795002339320954 build=2026111715 mediaId=null offer=mix-screen playerId=973342569 firstFrameMs=20 source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=19 audible=0 initStart=20 initDone=20 playStart=20 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wov71zc transition=2 attempt=1795002339320954 build=2026111715 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=19 firstFrameMs=20 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=973342569 attempt=1795002339320954 at=2026-11-18T11:45:39.322003Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=973342569 firstFrameMs=20 audible=1 attempt=1795002339320954
+MIRA_DISCOVER_AUDIO mute_req playerId=973342569 role=active at=2026-11-18T11:45:39.336399Z
+MIRA_DISCOVER_AUDIO mute_req playerId=60965536 role=parked at=2026-11-18T11:45:39.336806Z
+MIRA_DISCOVER_AUDIO mute_done playerId=973342569 role=active ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=60965536 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=973342569 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=60965536 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=973342569
+MIRA_DISCOVER_AUDIO mute_req playerId=973342569 role=unknown at=2026-11-18T11:45:39.338287Z
+MIRA_DISCOVER_AUDIO mute_done playerId=973342569 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=973342569 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=60965536 role=unknown at=2026-11-18T11:45:39.338868Z
+MIRA_DISCOVER_AUDIO mute_done playerId=60965536 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=60965536 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=973342569 role=parked at=2026-11-18T11:45:39.354921Z
+MIRA_DISCOVER_AUDIO mute_done playerId=973342569 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=973342569 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9wov71zc transition=4 attempt=1795002339355900 build=2026111715 mediaId=null offer=mix-screen playerId=973342569 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null
+MIRA_DISCOVER_SWIPE settle session=sho9wov71zc transition=4 attempt=1795002339355900 build=2026111715 mediaId=null offer=mix-screen claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=973342569 attempt=1795002339355900 at=2026-11-18T11:45:39.356213Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=973342569 firstFrameMs=1 audible=1 attempt=1795002339355900
+MIRA_DISCOVER_AUDIO mute_req playerId=973342569 role=unknown at=2026-11-18T11:45:39.377757Z
+MIRA_DISCOVER_AUDIO mute_done playerId=973342569 role=unknown ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=973342569 role=unknown ms=1
+00:02 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening a service from its video stops that player                      00:02 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: opening a service from its video stops that player                      00:02 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: horizontal swipe moves to the next media of the same presentation       00:02 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: horizontal swipe moves to the next media of the same presentation       00:02 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: video init failure retries the same slot and can fail again             00:02 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: video init failure retries the same slot and can fail again            00:02 +10: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: a runtime error after ready is a video failure, separate from a missing image 00:02 +11: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: a runtime error after ready is a video failure, separate from a missing image 00:02 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: a late attach cannot play after a newer slot or after release          00:02 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: a late attach cannot play after a newer slot or after release          00:02 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: release during init never starts playback                              00:02 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: release during init never starts playback                              00:02 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: an old detach does not stop a newer slot that shares the file          00:02 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: an old detach does not stop a newer slot that shares the file          00:02 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: background during init does not leave the player running               00:02 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: background during init does not leave the player running               00:02 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: product chrome shows buy and store without fake success                00:02 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: product chrome shows buy and store without fake success                
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: exactly one matching candidate
+  Actual: _TextWidgetFinder:<Found 0 widgets with text "أضيفي للسلة": []>
+   Which: means none were found but one was expected
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart:553:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart line 553
+The test description was:
+  product chrome shows buy and store without fake success
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:02 +15 -1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: product chrome shows buy and store without fake success [E]         
+  Test failed. See exception logs above.
+  The test description was: product chrome shows buy and store without fake success
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart -p vm --plain-name 'product chrome shows buy and store without fake success'
+00:02 +15 -1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: preview buy does not open a transaction                             00:02 +15 -1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: preview buy does not open a transaction                             
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown running a test:
+The finder "Found 0 widgets with text "أضيفي للسلة": []" (used in a call to "tap()") could not find
+any matching widgets.
+
+When the exception was thrown, this was the stack:
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2013:7)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1865:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1045:7)
+#3      main.<anonymous closure> (file:///Users/fayez/Desktop/%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%20%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%20%D9%85%D9%8A%D8%B1%D8%A7%20/mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart:577:18)
+<asynchronous suspension>
+#4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+The test description was:
+  preview buy does not open a transaction
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:02 +15 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: preview buy does not open a transaction [E]                         
+  Test failed. See exception logs above.
+  The test description was: preview buy does not open a transaction
+  
+
+To run this test again: /Users/fayez/flutter/bin/cache/dart-sdk/bin/dart test /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart -p vm --plain-name 'preview buy does not open a transaction'
+00:02 +15 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: the ordinary route stays on catalog slides                          00:03 +15 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: the ordinary route stays on catalog slides                          00:03 +16 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: the ordinary route stays on catalog slides                          00:03 +16 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: an explicit preview uses the same screen and generated media        00:03 +17 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: an explicit preview uses the same screen and generated media        00:03 +17 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: mute icon follows the shared player after a vertical move           00:03 +18 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: mute icon follows the shared player after a vertical move           00:03 +18 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: clinic chrome shows appointment row                                 00:03 +19 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: clinic chrome shows appointment row                                 00:03 +19 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: empty presentation has an exit                                      00:03 +19 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: empty presentation has an exit                                      
+MIRA_BUILD_IDENTITY build=2026111715 session=sho9wovyg5z api=https://mira-api-n4p3.onrender.com/api/v1 useBackend=true
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+00:03 +20 -2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_presentation_test.dart: empty presentation has an exit                                      00:03 +20 -2: Some tests failed.                                                                                                                                                                       

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/config/mira_features.dart';
 import '../../../../core/face_gate/face_gate_result.dart';
+import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../face_analysis_experience/capture/capture.dart';
 import '../../../face_analysis_experience/presentation/analysis/analysis_motion.dart';
 import '../../../face_analysis_experience/presentation/capture/capture_mirror.dart';
@@ -205,8 +206,43 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
         widget.capturedImage == null &&
         !widget.isAnalyzing) {
       _mirrorCoordinator?.onLifecycleInterrupt();
-      _resumeCamera();
+      // After Settings → enable camera, re-probe permission (don't only resume).
+      if (_error != null ||
+          _controller == null ||
+          !(_controller?.value.isInitialized ?? false)) {
+        _initCamera(direction: _isFrontCamera ? CameraLensDirection.front : CameraLensDirection.back);
+      } else {
+        _resumeCamera();
+      }
     }
+  }
+
+  /// Maps permanent/temporary camera denial to Arabic copy (never raw English).
+  static String _friendlyCameraError(Object e) {
+    final raw = e.toString();
+    final lower = raw.toLowerCase();
+    if (lower.contains('cameraaccessdeniedwithoutprompt') ||
+        lower.contains('previously denied') ||
+        lower.contains('go to settings')) {
+      return 'الكاميرا مرفوضة لهذا التطبيق. افتحي الإعدادات وفعّلي الكاميرا لميرا.';
+    }
+    if (lower.contains('cameraaccessdenied') ||
+        (lower.contains('permission') && lower.contains('camera')) ||
+        lower.contains('notauthorized')) {
+      return 'يلزم السماح بالكاميرا لمتابعة تحليل الوجه.';
+    }
+    if (raw.contains('لم يتم العثور على كاميرا')) return raw;
+    return 'تعذر تشغيل الكاميرا';
+  }
+
+  bool get _isCameraPermissionDenied {
+    final e = _error;
+    if (e == null) return false;
+    final lower = e.toLowerCase();
+    return lower.contains('مرفوضة') ||
+        lower.contains('السماح بالكاميرا') ||
+        lower.contains('cameraaccessdenied') ||
+        lower.contains('settings');
   }
 
   Future<void> _initCamera({CameraLensDirection direction = CameraLensDirection.front}) async {
@@ -287,7 +323,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       if (!mounted) return;
       setState(() {
         _initializing = false;
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = _friendlyCameraError(e);
       });
     }
   }
@@ -481,19 +517,27 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
         ? '$_guideInstructionAr — $tip'
         : _guideInstructionAr;
     final camOk = _cameraHardwareReady;
+    final denied = _error != null && _isCameraPermissionDenied;
+    final titleAr = camOk
+        ? 'جاهزة للتصوير'
+        : (denied ? 'يلزم إذن الكاميرا' : 'جاري تجهيز الكاميرا');
     return FaceCaptureGuidanceVm(
       state: camOk
           ? FaceCaptureReadinessState.ready
           : FaceCaptureReadinessState.alignFace,
-      titleAr: camOk ? 'جاهزة للتصوير' : 'جاري تجهيز الكاميرا',
-      instructionAr: instruction,
-      accessibilityLabel: instruction,
-      severity: 0,
+      titleAr: titleAr,
+      instructionAr: denied
+          ? 'افتحي الإعدادات وفعّلي الكاميرا ثم ارجعي إلى ميرا.'
+          : instruction,
+      accessibilityLabel: denied ? titleAr : instruction,
+      severity: denied ? 2 : 0,
       isReady: camOk,
       canManualCapture: camOk && _shutterIdle,
       autoCaptureEligible: false,
       truthClass: FaceCaptureTruthClass.derivedCapturePolicy,
-      reasonCode: camOk ? 'camera_ready_manual' : 'camera_warming',
+      reasonCode: camOk
+          ? 'camera_ready_manual'
+          : (denied ? 'camera_permission_denied' : 'camera_warming'),
     );
   }
 
@@ -943,6 +987,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     }
 
     if (_error != null || controller == null || !controller.value.isInitialized) {
+      final denied = _isCameraPermissionDenied;
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -957,10 +1002,28 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                 style: AppTypography.bodyMedium.copyWith(color: AppColors.onPrimary),
               ),
               const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => _initCamera(),
-                child: const Text('إعادة المحاولة'),
-              ),
+              if (denied)
+                FilledButton(
+                  onPressed: () async {
+                    await MiraUrlLauncher.openAppSettings();
+                  },
+                  child: const Text('فتح الإعدادات'),
+                )
+              else
+                FilledButton(
+                  onPressed: () => _initCamera(),
+                  child: const Text('إعادة المحاولة'),
+                ),
+              if (denied) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => _initCamera(),
+                  child: Text(
+                    'أعد المحاولة بعد التفعيل',
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.onPrimary),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

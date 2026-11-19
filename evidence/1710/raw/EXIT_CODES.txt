@@ -1,0 +1,4 @@
+disk_exit=0
+port_exit=0
+sync_exit=0
+combined_note=see txt copies; *.log gitignored

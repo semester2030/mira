@@ -1,0 +1,1028 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.13.1 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.3.0 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.4 available)
+  video_player_avfoundation 2.12.0 (2.12.4 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+99 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart                                                                       00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart                                                                       00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_ATTEMPT attempt=1795014403484735 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014403484735 phase=end outcome=superseded mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014403540414 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=576767995 role=active at=2026-11-18T15:06:43.540920Z
+MIRA_DISCOVER_AUDIO mute_done playerId=576767995 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=576767995 role=active ms=2
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=576767995
+MIRA_DISCOVER_AUDIO mute_req playerId=576767995 role=unknown at=2026-11-18T15:06:43.543809Z
+MIRA_DISCOVER_AUDIO mute_done playerId=576767995 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=576767995 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014403540414 phase=play mediaId=null kind=cold_new app=unknown playerId=790623964
+MIRA_DISCOVER_FF session=shoa28dxob0 transition=2 attempt=1795014403540414 build=2026111718 mediaId=null offer=slide-b playerId=790623964 firstFrameMs=9 positionProgressMs=9 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=4 audible=0 initStart=4 initDone=7 playStart=8 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28dxob0 transition=2 attempt=1795014403540414 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=4 firstFrameMs=9 positionProgressMs=9 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=790623964 attempt=1795014403540414 at=2026-11-18T15:06:43.549828Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=790623964 firstFrameMs=9 audible=1 attempt=1795014403540414
+MIRA_DISCOVER_ATTEMPT attempt=1795014403540414 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=9 metric=position_not_pixels
+00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28dzhx4
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=65536 elapsedMs=29 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28dzhx4
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28e0al9
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=disk reused=65536 dl=0 elapsedMs=2 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28e0al9
+00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            
+MIRA_DISCOVER_LOCK hold_start mediaId=11111111-2222-3333-4444-555555555555 req=whoa28e0q10
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=finalize_part reused=32768 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=network_to_disk reused=0 dl=32768 elapsedMs=92 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=11111111-2222-3333-4444-555555555555 req=whoa28e0q10
+00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: reopen after partial prefix: serves local start, Range-fetches only the tail
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28e385r
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=partial reused=0 dl=10240 elapsedMs=20 err=incomplete_10240/2097152 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28e385r
+MIRA_DISCOVER_PHASE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee phase=proxy_kick_prefix need=262144 have=10240 chunk=1048576 prio=null
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28e4793
+MIRA_DISCOVER_PHASE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee phase=proxy_kick_prefix need=262144 have=10240 chunk=1048576 prio=null
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=disk_resume reused=10240 dl=251904 elapsedMs=7 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28e4793
+00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=whoa28e4wr6
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 source=partial reused=0 dl=8192 elapsedMs=31 err=incomplete_8192/2097152 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=whoa28e4wr6
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 req=whoa28e5mcz
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 req=whoa28e5mcz
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 req=whoa28e5pqy
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 req=whoa28e5pqy
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 req=whoa28e5s8n
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 req=whoa28e5s8n
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 req=whoa28e5ufe
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 req=whoa28e5ufe
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 req=whoa28e5wue
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 req=whoa28e5wue
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 req=whoa28e5z3b
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 req=whoa28e5z3b
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 req=whoa28e615r
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 req=whoa28e615r
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 req=whoa28e639l
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 req=whoa28e639l
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 req=whoa28e65e0
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 req=whoa28e65e0
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a req=whoa28e67fb
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a req=whoa28e67fb
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b req=whoa28e69jm
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b req=whoa28e69jm
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c req=whoa28e6c8g
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c req=whoa28e6c8g
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d req=whoa28e6ed8
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d req=whoa28e6ed8
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e req=whoa28e6gsp
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e req=whoa28e6gsp
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f req=whoa28e6j6r
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f source=network_error reused=0 dl=0 elapsedMs=2 err=non_video_body prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f req=whoa28e6j6r
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 req=whoa28e6m21
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 req=whoa28e6m21
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 req=whoa28e6otn
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 req=whoa28e6otn
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 req=whoa28e6r1a
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 req=whoa28e6r1a
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 req=whoa28e6tkf
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 req=whoa28e6tkf
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 req=whoa28e6vw1
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 req=whoa28e6vw1
+MIRA_DISCOVER_PHASE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 phase=proxy_kick_prefix need=262144 have=8192 chunk=1048576 prio=null
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=whoa28e794l
+MIRA_DISCOVER_PHASE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 phase=proxy_kick_prefix need=262144 have=8192 chunk=1048576 prio=null
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 source=disk_resume reused=8192 dl=253952 elapsedMs=7 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 req=whoa28e794l
+LOGICAL_20_IDS localFirst=8192 others=155648 prefix=8192 bodySize=2097152
+00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28e7wna
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/32768 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28e7wna
+MIRA_DISCOVER_PHASE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc phase=prefix_kick have=8192 need=1048576 blocking=0
+MIRA_DISCOVER_PHASE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc phase=proxy_kick_prefix need=262144 have=8192 chunk=1048576 prio=cccccccc-cccc-cccc-cccc-cccccccccccc
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28e8301
+FIRST_BYTE_MS=6 PREFIX_ARRIVED_BEFORE_TAIL_RELEASE=true
+COMPLETE_MS=11 STATS={mediaId: cccccccc-cccc-cccc-cccc-cccccccccccc, bytesFromDisk: 8192, bytesFromNetwork: 24576, contentLength: 32768, source: proxy_stream, requestStart: 0, requestEnd: 32767, firstByteMs: 2, completeMs: null} FULL_GETS=1 RANGE_STARTS=[8192]
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=disk_resume reused=8192 dl=24576 elapsedMs=10 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28e8301
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=whoa28e8cw2
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=whoa28e8cw2
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000001 req=whoa28e8fjj
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000001 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000001 req=whoa28e8fjj
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000002 req=whoa28e8hhc
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000002 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000002 req=whoa28e8hhc
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000003 req=whoa28e8jd9
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000003 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000003 req=whoa28e8jd9
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000004 req=whoa28e8lkb
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000004 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+AFTER20_FIRST_BYTE_MS=9
+AFTER20_COMPLETE_MS=36 RANGE_STARTS=[-1, 8192] localFirst=24576
+00:02 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:02 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:02 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:02 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock    00:02 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: video then image detaches the player                                        
+MIRA_DISCOVER_ATTEMPT attempt=1795014404399512 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404399512 phase=play mediaId=null kind=cold_new app=unknown playerId=173299751
+MIRA_DISCOVER_FF session=shoa28ehbb3 transition=1 attempt=1795014404399512 build=2026111718 mediaId=null offer=slide-a playerId=173299751 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ehbb3 transition=1 attempt=1795014404399512 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=173299751 attempt=1795014404399512 at=2026-11-18T15:06:44.401495Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=173299751 firstFrameMs=0 audible=1 attempt=1795014404399512
+MIRA_DISCOVER_ATTEMPT attempt=1795014404399512 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO mute_req playerId=173299751 role=unknown at=2026-11-18T15:06:44.426200Z
+MIRA_DISCOVER_AUDIO mute_done playerId=173299751 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=173299751 role=unknown ms=0
+00:02 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock    00:02 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                               
+MIRA_DISCOVER_ATTEMPT attempt=1795014404428149 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404428149 phase=play mediaId=null kind=cold_new app=unknown playerId=243038451
+MIRA_DISCOVER_FF session=shoa28ehxee transition=1 attempt=1795014404428149 build=2026111718 mediaId=null offer=slide-a playerId=243038451 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ehxee transition=1 attempt=1795014404428149 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=243038451 attempt=1795014404428149 at=2026-11-18T15:06:44.428908Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=243038451 firstFrameMs=0 audible=1 attempt=1795014404428149
+MIRA_DISCOVER_ATTEMPT attempt=1795014404428149 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014404451423 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=243038451 role=active at=2026-11-18T15:06:44.451661Z
+MIRA_DISCOVER_AUDIO mute_done playerId=243038451 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=243038451 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=243038451
+MIRA_DISCOVER_AUDIO mute_req playerId=243038451 role=unknown at=2026-11-18T15:06:44.452449Z
+MIRA_DISCOVER_AUDIO mute_done playerId=243038451 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=243038451 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404451423 phase=play mediaId=null kind=cold_new app=unknown playerId=623752679
+MIRA_DISCOVER_FF session=shoa28ehxee transition=2 attempt=1795014404451423 build=2026111718 mediaId=null offer=slide-b playerId=623752679 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ehxee transition=2 attempt=1795014404451423 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=623752679 attempt=1795014404451423 at=2026-11-18T15:06:44.453630Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=623752679 firstFrameMs=1 audible=1 attempt=1795014404451423
+MIRA_DISCOVER_ATTEMPT attempt=1795014404451423 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+00:02 +16: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                               00:02 +17: /Users/fayez/Desktop/مراجع ... complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET                                                                                  00:02 +17: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach of A may finish pause after B attach without harming B               
+MIRA_DISCOVER_ATTEMPT attempt=1795014404478402 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404478402 phase=play mediaId=null kind=cold_new app=unknown playerId=339404381
+MIRA_DISCOVER_FF session=shoa28ej06u transition=1 attempt=1795014404478402 build=2026111718 mediaId=null offer=slide-a playerId=339404381 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ej06u transition=1 attempt=1795014404478402 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=339404381 attempt=1795014404478402 at=2026-11-18T15:06:44.479287Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=339404381 firstFrameMs=0 audible=1 attempt=1795014404478402
+MIRA_DISCOVER_ATTEMPT attempt=1795014404478402 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO mute_req playerId=339404381 role=unknown at=2026-11-18T15:06:44.479656Z
+MIRA_DISCOVER_AUDIO mute_done playerId=339404381 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404486540 phase=start mediaId=null offer=slide-b app=unknown gen=3 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404486540 phase=play mediaId=null kind=cold_new app=unknown playerId=67330836
+MIRA_DISCOVER_FF session=shoa28ej06u transition=3 attempt=1795014404486540 build=2026111718 mediaId=null offer=slide-b playerId=67330836 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ej06u transition=3 attempt=1795014404486540 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=67330836 attempt=1795014404486540 at=2026-11-18T15:06:44.487578Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=67330836 firstFrameMs=0 audible=1 attempt=1795014404486540
+MIRA_DISCOVER_ATTEMPT attempt=1795014404486540 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO pause_done playerId=339404381 role=unknown ms=8
+00:02 +18: /Users/fayez/Desktop/مراجع ... complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET                                                                                  00:02 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    
+MIRA_DISCOVER_ATTEMPT attempt=1795014404489628 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404489628 phase=end outcome=superseded mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014404521358 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=393504167 role=active at=2026-11-18T15:06:44.521490Z
+MIRA_DISCOVER_AUDIO mute_done playerId=393504167 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=393504167 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=393504167
+MIRA_DISCOVER_AUDIO mute_req playerId=393504167 role=unknown at=2026-11-18T15:06:44.522231Z
+MIRA_DISCOVER_AUDIO mute_done playerId=393504167 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=393504167 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014404521358 phase=play mediaId=null kind=cold_new app=unknown playerId=549380818
+MIRA_DISCOVER_FF session=shoa28ej8uq transition=2 attempt=1795014404521358 build=2026111718 mediaId=null offer=slide-b playerId=549380818 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ej8uq transition=2 attempt=1795014404521358 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=549380818 attempt=1795014404521358 at=2026-11-18T15:06:44.523219Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=549380818 firstFrameMs=1 audible=1 attempt=1795014404521358
+MIRA_DISCOVER_ATTEMPT attempt=1795014404521358 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+00:02 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +27: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +28: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000004 req=whoa28e8lkb
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000005 req=whoa28e8nmw
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000005 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000005 req=whoa28e8nmw
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000006 req=whoa28e8pdd
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000006 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000006 req=whoa28e8pdd
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000007 req=whoa28e8r0f
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000007 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000007 req=whoa28e8r0f
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000008 req=whoa28e8tpp
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000008 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000008 req=whoa28e8tpp
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000009 req=whoa28e8vgf
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000009 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000009 req=whoa28e8vgf
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000a req=whoa28e8x95
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000a source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000a req=whoa28e8x95
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000b req=whoa28e8yzp
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000b source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000b req=whoa28e8yzp
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000c req=whoa28e90mo
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000c source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000c req=whoa28e90mo
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000d req=whoa28e92xz
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000d source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000d req=whoa28e92xz
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000e req=whoa28e94pu
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000e source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000e req=whoa28e94pu
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-00000000000f req=whoa28e96fb
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000f source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-00000000000f req=whoa28e96fb
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000010 req=whoa28e985i
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000010 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000010 req=whoa28e985i
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000011 req=whoa28e99ux
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000011 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000011 req=whoa28e99ux
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000012 req=whoa28e9box
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000012 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000012 req=whoa28e9box
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000013 req=whoa28e9dld
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000013 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000013 req=whoa28e9dld
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000014 req=whoa28e9fpk
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000014 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000014 req=whoa28e9fpk
+MIRA_DISCOVER_PHASE mediaId=dddddddd-dddd-dddd-dddd-000000000000 phase=prefix_kick have=8192 need=1048576 blocking=0
+MIRA_DISCOVER_PHASE mediaId=dddddddd-dddd-dddd-dddd-000000000000 phase=proxy_kick_prefix need=262144 have=8192 chunk=1048576 prio=dddddddd-dddd-dddd-dddd-000000000000
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=whoa28e9m6m
+MIRA_DISCOVER_PHASE mediaId=dddddddd-dddd-dddd-dddd-000000000000 phase=proxy_kick_prefix need=262144 have=8192 chunk=1048576 prio=dddddddd-dddd-dddd-dddd-000000000000
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=finalize_part reused=24576 dl=0 elapsedMs=0 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-000000000000 req=whoa28e9m6m
+MIRA_DISCOVER_LOCK hold_start mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee req=whoa28eahyh
+MIRA_DISCOVER_CACHE mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee req=whoa28eahyh
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28ebb85
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=1048576 elapsedMs=12 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28ebb85
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=whoa28ecs6z
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=network_to_disk reused=0 dl=1048576 elapsedMs=44 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=whoa28ecs6z
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28eejxq
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=1048576 elapsedMs=18 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee req=whoa28eejxq
+MIRA_DISCOVER_LOCK hold_start mediaId=f1111111-1111-1111-1111-111111111111 req=whoa28ef4t4
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=network_to_disk reused=0 dl=262144 elapsedMs=94 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f1111111-1111-1111-1111-111111111111 req=whoa28ef4t4
+MIRA_DISCOVER_LOCK hold_start mediaId=f2222222-2222-2222-2222-222222222222 req=whoa28ehact
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=disk_resume reused=24576 dl=106496 elapsedMs=7 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f2222222-2222-2222-2222-222222222222 req=whoa28ehact
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000040000 req=whoa28eip86
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=network_to_disk reused=0 dl=262144 elapsedMs=9 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000040000 req=whoa28eip86
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000040000 req=whoa28eiykc
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=disk reused=262144 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000040000 req=whoa28eiykc
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000080000 req=whoa28ej43n
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=network_to_disk reused=0 dl=524288 elapsedMs=11 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000080000 req=whoa28ej43n
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000080000 req=whoa28ejekf
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=disk reused=524288 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000080000 req=whoa28ejekf
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000100000 req=whoa28ejplf
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=finalize_part reused=1048576 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=network_to_disk reused=0 dl=1048576 elapsedMs=12 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000100000 req=whoa28ejplf
+MIRA_DISCOVER_LOCK hold_start mediaId=f3333333-3333-3333-3333-000000100000 req=whoa28ek1jo
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=disk reused=1048576 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f3333333-3333-3333-3333-000000100000 req=whoa28ek1jo
+MIRA_DISCOVER_LOCK hold_start mediaId=f6666666-6666-6666-6666-666666666666 req=whoa28ekko3
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=network_to_disk reused=0 dl=131072 elapsedMs=89 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f6666666-6666-6666-6666-666666666666 req=whoa28ekko3
+MIRA_DISCOVER_LOCK hold_start mediaId=deaddead-dead-dead-dead-deaddeaddead req=whoa28emm65
+MIRA_DISCOVER_CACHE mediaId=deaddead-dead-dead-dead-deaddeaddead source=network_error reused=0 dl=0 elapsedMs=3 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=deaddead-dead-dead-dead-deaddeaddead req=whoa28emm65
+MIRA_DISCOVER_LOCK hold_start mediaId=f7777777-7777-7777-7777-777777777777 req=whoa28emp35
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=finalize_part reused=49152 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=network_to_disk reused=0 dl=49152 elapsedMs=6 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f7777777-7777-7777-7777-777777777777 req=whoa28emp35
+MIRA_DISCOVER_LOCK hold_start mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28emxkt
+MIRA_DISCOVER_LOCK hold_start mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=whoa28enj60
+00:03 +30: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +30: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: release during init prevents play                                           
+MIRA_DISCOVER_ATTEMPT attempt=1795014405204724 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405204724 phase=end outcome=cancelled mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+00:03 +31: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +31: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: pause during init leaves player stopped                                     
+MIRA_DISCOVER_ATTEMPT attempt=1795014405240257 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405240257 phase=end outcome=cancelled mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+00:03 +32: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +32: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: init failure then retry succeeds                                            
+MIRA_DISCOVER_ATTEMPT attempt=1795014405242744 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405242744 phase=end outcome=error mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014405245459 phase=start mediaId=null offer=slide-a app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405245459 phase=play mediaId=null kind=cold_new app=unknown playerId=191405171
+MIRA_DISCOVER_FF session=shoa28ezdyk transition=2 attempt=1795014405245459 build=2026111718 mediaId=null offer=slide-a playerId=191405171 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ezdyk transition=2 attempt=1795014405245459 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=191405171 attempt=1795014405245459 at=2026-11-18T15:06:45.246517Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=191405171 firstFrameMs=0 audible=1 attempt=1795014405245459
+MIRA_DISCOVER_ATTEMPT attempt=1795014405245459 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+00:03 +33: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +33: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: repeated init failure stays failed                                          
+MIRA_DISCOVER_ATTEMPT attempt=1795014405270316 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405270316 phase=end outcome=error mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014405271273 phase=start mediaId=null offer=slide-a app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405271273 phase=end outcome=error mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+00:03 +34: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +34: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: runtime error after ready marks failed                                      
+MIRA_DISCOVER_ATTEMPT attempt=1795014405273293 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405273293 phase=play mediaId=null kind=cold_new app=unknown playerId=192145106
+MIRA_DISCOVER_FF session=shoa28f01j7 transition=1 attempt=1795014405273293 build=2026111718 mediaId=null offer=slide-a playerId=192145106 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f01j7 transition=1 attempt=1795014405273293 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=192145106 attempt=1795014405273293 at=2026-11-18T15:06:45.274251Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=192145106 firstFrameMs=0 audible=0 attempt=1795014405273293
+MIRA_DISCOVER_ATTEMPT attempt=1795014405273293 phase=end outcome=error mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+00:03 +35: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +35: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: only one active player and dispose on release                               
+MIRA_DISCOVER_ATTEMPT attempt=1795014405328586 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405328586 phase=play mediaId=null kind=cold_new app=unknown playerId=1060481456
+MIRA_DISCOVER_FF session=shoa28f186w transition=1 attempt=1795014405328586 build=2026111718 mediaId=null offer=slide-a playerId=1060481456 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f186w transition=1 attempt=1795014405328586 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1060481456 attempt=1795014405328586 at=2026-11-18T15:06:45.329592Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1060481456 firstFrameMs=0 audible=1 attempt=1795014405328586
+MIRA_DISCOVER_ATTEMPT attempt=1795014405328586 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014405352429 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=1060481456 role=active at=2026-11-18T15:06:45.352628Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1060481456 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1060481456 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=1060481456
+MIRA_DISCOVER_AUDIO mute_req playerId=1060481456 role=unknown at=2026-11-18T15:06:45.353396Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1060481456 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1060481456 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405352429 phase=play mediaId=null kind=cold_new app=unknown playerId=387889954
+MIRA_DISCOVER_FF session=shoa28f186w transition=2 attempt=1795014405352429 build=2026111718 mediaId=null offer=slide-b playerId=387889954 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f186w transition=2 attempt=1795014405352429 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=387889954 attempt=1795014405352429 at=2026-11-18T15:06:45.354514Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=387889954 firstFrameMs=1 audible=1 attempt=1795014405352429
+MIRA_DISCOVER_ATTEMPT attempt=1795014405352429 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+00:03 +36: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +36: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: setVolume that finishes after pause does not play                           
+MIRA_DISCOVER_ATTEMPT attempt=1795014405379365 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405379365 phase=end outcome=cancelled mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+00:03 +37: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +37: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: mute survives the next attach and stays muted after first frame             
+MIRA_DISCOVER_ATTEMPT attempt=1795014405382979 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405382979 phase=play mediaId=null kind=cold_new app=unknown playerId=319712813
+MIRA_DISCOVER_FF session=shoa28f2dyz transition=1 attempt=1795014405382979 build=2026111718 mediaId=null offer=slide-a playerId=319712813 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f2dyz transition=1 attempt=1795014405382979 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405382979 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014405384369 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=319712813 role=active at=2026-11-18T15:06:45.384516Z
+MIRA_DISCOVER_AUDIO mute_done playerId=319712813 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=319712813 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=319712813
+MIRA_DISCOVER_AUDIO mute_req playerId=319712813 role=unknown at=2026-11-18T15:06:45.385330Z
+MIRA_DISCOVER_AUDIO mute_done playerId=319712813 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=319712813 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405384369 phase=play mediaId=null kind=cold_new app=unknown playerId=62901216
+MIRA_DISCOVER_FF session=shoa28f2dyz transition=2 attempt=1795014405384369 build=2026111718 mediaId=null offer=slide-b playerId=62901216 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f2dyz transition=2 attempt=1795014405384369 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405384369 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+00:03 +38: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +38: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: outgoing audio is cut before warm wait; speakers arm only after first frame 
+MIRA_DISCOVER_ATTEMPT attempt=1795014405388385 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405388385 phase=play mediaId=null kind=cold_new app=unknown playerId=927186984
+MIRA_DISCOVER_FF session=shoa28f2ic5 transition=1 attempt=1795014405388385 build=2026111718 mediaId=null offer=slide-a playerId=927186984 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f2ic5 transition=1 attempt=1795014405388385 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=927186984 attempt=1795014405388385 at=2026-11-18T15:06:45.389288Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=927186984 firstFrameMs=0 audible=1 attempt=1795014405388385
+MIRA_DISCOVER_ATTEMPT attempt=1795014405388385 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014405402989 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=927186984 role=active at=2026-11-18T15:06:45.403151Z
+MIRA_DISCOVER_AUDIO mute_done playerId=927186984 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=927186984 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=927186984
+MIRA_DISCOVER_AUDIO mute_req playerId=927186984 role=unknown at=2026-11-18T15:06:45.472384Z
+MIRA_DISCOVER_AUDIO mute_done playerId=927186984 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=927186984 role=unknown ms=1
+MIRA_DISCOVER_ATTEMPT attempt=1795014405402989 phase=play mediaId=null kind=warm app=unknown playerId=547058974
+MIRA_DISCOVER_FF session=shoa28f2ic5 transition=2 attempt=1795014405402989 build=2026111718 mediaId=null offer=slide-b playerId=547058974 firstFrameMs=71 positionProgressMs=71 metric=position_not_pixels source=1 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=69 initDone=69 playStart=70 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=warm app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f2ic5 transition=2 attempt=1795014405402989 build=2026111718 mediaId=null offer=slide-b claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=71 positionProgressMs=71 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=547058974 attempt=1795014405402989 at=2026-11-18T15:06:45.474508Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=547058974 firstFrameMs=71 audible=1 attempt=1795014405402989
+MIRA_DISCOVER_ATTEMPT attempt=1795014405402989 phase=end outcome=position_progress mediaId=null kind=warm app=unknown posProgressMs=71 metric=position_not_pixels
+00:03 +39: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +39: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: ready exposes the view as soon as initialize finishes                       
+MIRA_DISCOVER_ATTEMPT attempt=1795014405478010 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405478010 phase=play mediaId=null kind=cold_new app=unknown playerId=248349538
+MIRA_DISCOVER_FF session=shoa28f4fhl transition=1 attempt=1795014405478010 build=2026111718 mediaId=null offer=slide-a playerId=248349538 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f4fhl transition=1 attempt=1795014405478010 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=248349538 attempt=1795014405478010 at=2026-11-18T15:06:45.479208Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=248349538 firstFrameMs=0 audible=1 attempt=1795014405478010
+MIRA_DISCOVER_ATTEMPT attempt=1795014405478010 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+00:03 +40: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +40: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: first_frame waits for progressing position after play, not initialize alone 
+MIRA_DISCOVER_ATTEMPT attempt=1795014405482468 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405482468 phase=play mediaId=null kind=cold_new app=unknown playerId=124374795
+MIRA_DISCOVER_FF session=shoa28f4ixi transition=1 attempt=1795014405482468 build=2026111718 mediaId=null offer=slide-a playerId=124374795 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f4ixi transition=1 attempt=1795014405482468 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=124374795 attempt=1795014405482468 at=2026-11-18T15:06:45.483611Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=124374795 firstFrameMs=0 audible=1 attempt=1795014405482468
+MIRA_DISCOVER_ATTEMPT attempt=1795014405482468 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+00:03 +41: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +41: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: settle timer includes warm wait (starts before pending warm completes)      
+MIRA_DISCOVER_ATTEMPT attempt=1795014405508142 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405508142 phase=play mediaId=null kind=warm app=unknown playerId=1054884173
+MIRA_DISCOVER_FF session=shoa28f4ll4 transition=1 attempt=1795014405508142 build=2026111718 mediaId=null offer=slide-a playerId=1054884173 firstFrameMs=103 positionProgressMs=103 metric=position_not_pixels source=1 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=101 initDone=101 playStart=101 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=warm app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28f4ll4 transition=1 attempt=1795014405508142 build=2026111718 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=103 positionProgressMs=103 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1054884173 attempt=1795014405508142 at=2026-11-18T15:06:45.612627Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1054884173 firstFrameMs=103 audible=1 attempt=1795014405508142
+MIRA_DISCOVER_ATTEMPT attempt=1795014405508142 phase=end outcome=position_progress mediaId=null kind=warm app=unknown posProgressMs=103 metric=position_not_pixels
+00:03 +42: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:03 +42: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      
+MIRA_DISCOVER_ATTEMPT attempt=1795014405619266 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405619266 phase=play mediaId=null kind=cold_new app=unknown playerId=474039600
+00:03 +42: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=1048576 elapsedMs=53 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28emxkt
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=finalize_part reused=2097152 dl=0 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=network_to_disk reused=0 dl=2097152 elapsedMs=42 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=whoa28enj60
+MIRA_DISCOVER_PHASE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc phase=prefix_kick have=0 need=1048576 blocking=0
+MIRA_DISCOVER_LOCK hold_start mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28eoyq8
+MIRA_DISCOVER_LOCK hold_start mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=whoa28epixr
+MIRA_DISCOVER_PHASE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd phase=proxy_kick_prefix need=262145 have=0 chunk=1048576 prio=cccccccc-cccc-cccc-cccc-cccccccccccc
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28eoyq8
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd req=whoa28epixr
+MIRA_DISCOVER_LOCK hold_start mediaId=f8888888-8888-8888-8888-888888888888 req=whoa28eqa7d
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=network_to_disk reused=0 dl=98304 elapsedMs=4 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f8888888-8888-8888-8888-888888888888 req=whoa28eqa7d
+MIRA_DISCOVER_LOCK hold_start mediaId=f8888888-8888-8888-8888-888888888888 req=whoa28eqhnu
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=disk reused=98304 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f8888888-8888-8888-8888-888888888888 req=whoa28eqhnu
+MIRA_DISCOVER_LOCK hold_start mediaId=f9999999-9999-9999-9999-999999999999 req=whoa28eqlts
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=finalize_part reused=40960 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=network_to_disk reused=0 dl=40960 elapsedMs=4 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=f9999999-9999-9999-9999-999999999999 req=whoa28eqlts
+MIRA_DISCOVER_LOCK hold_start mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 req=whoa28eqt0z
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=network_to_disk reused=0 dl=65536 elapsedMs=4 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 req=whoa28eqt0z
+MIRA_DISCOVER_LOCK hold_start mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28eqzk0
+MIRA_DISCOVER_LOCK wait_start mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28eqzl0
+MIRA_DISCOVER_CACHE mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=partial reused=0 dl=16384 elapsedMs=64 err=incomplete_16384/262144 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28eqzk0
+MIRA_DISCOVER_LOCK wait_end mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28eqzl0 waitedMs=65
+MIRA_DISCOVER_LOCK hold_start mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28eqzl0
+MIRA_DISCOVER_LOCK hold_end mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28eqzl0
+00:08 +42: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      
+MIRA_DISCOVER_SWIPE settle_timeout mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 timeoutMs=5006 audible=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014405619266 phase=end outcome=timeout mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+00:08 +43: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:08 +43: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: park survives while next is warming (swipe-back reuses decoder)             
+MIRA_DISCOVER_ATTEMPT attempt=1795014410634247 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410634247 phase=play mediaId=null kind=cold_new app=unknown playerId=6788298
+MIRA_DISCOVER_FF session=shoa28i6y1g transition=1 attempt=1795014410634247 build=2026111718 mediaId=null offer=slide-a playerId=6788298 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=2 initDone=2 playStart=2 resolveMs=1 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28i6y1g transition=1 attempt=1795014410634247 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=6788298 attempt=1795014410634247 at=2026-11-18T15:06:50.637554Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=6788298 firstFrameMs=2 audible=1 attempt=1795014410634247
+MIRA_DISCOVER_ATTEMPT attempt=1795014410634247 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=2 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014410638558 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=6788298 role=active at=2026-11-18T15:06:50.638878Z
+MIRA_DISCOVER_AUDIO mute_done playerId=6788298 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=6788298 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=6788298
+MIRA_DISCOVER_AUDIO mute_req playerId=6788298 role=unknown at=2026-11-18T15:06:50.639849Z
+MIRA_DISCOVER_AUDIO mute_done playerId=6788298 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=6788298 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410638558 phase=play mediaId=null kind=cold_new app=unknown playerId=910696305
+MIRA_DISCOVER_FF session=shoa28i6y1g transition=2 attempt=1795014410638558 build=2026111718 mediaId=null offer=slide-b playerId=910696305 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=2 playStart=2 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28i6y1g transition=2 attempt=1795014410638558 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=910696305 attempt=1795014410638558 at=2026-11-18T15:06:50.641278Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=910696305 firstFrameMs=2 audible=1 attempt=1795014410638558
+MIRA_DISCOVER_ATTEMPT attempt=1795014410638558 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=2 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014410673741 phase=start mediaId=null offer=slide-a app=unknown gen=3 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=910696305 role=active at=2026-11-18T15:06:50.674082Z
+MIRA_DISCOVER_AUDIO mute_req playerId=487630268 role=warm at=2026-11-18T15:06:50.674427Z
+MIRA_DISCOVER_AUDIO mute_req playerId=6788298 role=parked at=2026-11-18T15:06:50.674725Z
+MIRA_DISCOVER_AUDIO mute_done playerId=910696305 role=active ms=1
+MIRA_DISCOVER_AUDIO mute_done playerId=487630268 role=warm ms=1
+MIRA_DISCOVER_AUDIO mute_done playerId=6788298 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=910696305 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=487630268 role=warm ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=6788298 role=parked ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=910696305
+MIRA_DISCOVER_AUDIO mute_req playerId=910696305 role=unknown at=2026-11-18T15:06:50.677147Z
+MIRA_DISCOVER_AUDIO mute_done playerId=910696305 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=910696305 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410673741 phase=play mediaId=null kind=parked app=unknown playerId=6788298
+MIRA_DISCOVER_FF session=shoa28i6y1g transition=3 attempt=1795014410673741 build=2026111718 mediaId=null offer=slide-a playerId=6788298 firstFrameMs=4 positionProgressMs=4 metric=position_not_pixels source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=3 audible=0 initStart=3 initDone=3 playStart=4 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=parked app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28i6y1g transition=3 attempt=1795014410673741 build=2026111718 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=3 firstFrameMs=4 positionProgressMs=4 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=6788298 attempt=1795014410673741 at=2026-11-18T15:06:50.679314Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=6788298 firstFrameMs=4 audible=1 attempt=1795014410673741
+MIRA_DISCOVER_ATTEMPT attempt=1795014410673741 phase=end outcome=position_progress mediaId=null kind=parked app=unknown posProgressMs=4 metric=position_not_pixels
+00:08 +44: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:08 +44: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: reactivating a parked clip requires new progress past prior position        
+MIRA_DISCOVER_ATTEMPT attempt=1795014410683192 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410683192 phase=play mediaId=null kind=cold_new app=unknown playerId=1043164442
+MIRA_DISCOVER_FF session=shoa28i7ztx transition=1 attempt=1795014410683192 build=2026111718 mediaId=null offer=slide-a playerId=1043164442 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28i7ztx transition=1 attempt=1795014410683192 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1043164442 attempt=1795014410683192 at=2026-11-18T15:06:50.684947Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1043164442 firstFrameMs=1 audible=1 attempt=1795014410683192
+MIRA_DISCOVER_ATTEMPT attempt=1795014410683192 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO mute_req playerId=1043164442 role=unknown at=2026-11-18T15:06:50.685667Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1043164442 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1043164442 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410686252 phase=start mediaId=null offer=slide-a app=unknown gen=3 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=1043164442 role=parked at=2026-11-18T15:06:50.686414Z
+MIRA_DISCOVER_AUDIO mute_done playerId=1043164442 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=1043164442 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410686252 phase=play mediaId=null kind=parked app=unknown playerId=1043164442
+MIRA_DISCOVER_FF session=shoa28i7ztx transition=3 attempt=1795014410686252 build=2026111718 mediaId=null offer=slide-a playerId=1043164442 firstFrameMs=42 positionProgressMs=42 metric=position_not_pixels source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=parked app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28i7ztx transition=3 attempt=1795014410686252 build=2026111718 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=42 positionProgressMs=42 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=1043164442 attempt=1795014410686252 at=2026-11-18T15:06:50.729129Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=1043164442 firstFrameMs=42 audible=1 attempt=1795014410686252
+MIRA_DISCOVER_ATTEMPT attempt=1795014410686252 phase=end outcome=position_progress mediaId=null kind=parked app=unknown posProgressMs=42 metric=position_not_pixels
+00:08 +45: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:08 +45: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach reuses in-flight warm controller instead of disposing it             
+MIRA_DISCOVER_ATTEMPT attempt=1795014410768602 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410768602 phase=play mediaId=null kind=warm app=unknown playerId=926137926
+MIRA_DISCOVER_FF session=shoa28i9br8 transition=1 attempt=1795014410768602 build=2026111718 mediaId=null offer=slide-a playerId=926137926 firstFrameMs=23 positionProgressMs=23 metric=position_not_pixels source=1 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=23 initDone=23 playStart=23 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=warm app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28i9br8 transition=1 attempt=1795014410768602 build=2026111718 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=1 firstFrameMs=23 positionProgressMs=23 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=926137926 attempt=1795014410768602 at=2026-11-18T15:06:50.792958Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=926137926 firstFrameMs=23 audible=1 attempt=1795014410768602
+MIRA_DISCOVER_ATTEMPT attempt=1795014410768602 phase=end outcome=position_progress mediaId=null kind=warm app=unknown posProgressMs=23 metric=position_not_pixels
+00:08 +46: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:08 +46: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: buildView stays opaque under cover; progress clears cover gate              
+MIRA_DISCOVER_ATTEMPT attempt=1795014410797723 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410797723 phase=play mediaId=null kind=cold_new app=unknown playerId=478731
+MIRA_DISCOVER_FF session=shoa28iag7d transition=1 attempt=1795014410797723 build=2026111718 mediaId=null offer=slide-a playerId=478731 firstFrameMs=33 positionProgressMs=33 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28iag7d transition=1 attempt=1795014410797723 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=33 positionProgressMs=33 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=478731 attempt=1795014410797723 at=2026-11-18T15:06:50.832076Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=478731 firstFrameMs=33 audible=1 attempt=1795014410797723
+MIRA_DISCOVER_ATTEMPT attempt=1795014410797723 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=33 metric=position_not_pixels
+00:08 +47: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:08 +47: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: leaveSection parks sticky clip so return claims prepared                    
+MIRA_DISCOVER_ATTEMPT attempt=1795014410838559 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410838559 phase=play mediaId=null kind=cold_new app=unknown playerId=299728669
+MIRA_DISCOVER_FF session=shoa28ibbpi transition=1 attempt=1795014410838559 build=2026111718 mediaId=null offer=slide-a playerId=299728669 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ibbpi transition=1 attempt=1795014410838559 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=299728669 attempt=1795014410838559 at=2026-11-18T15:06:50.840437Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=299728669 firstFrameMs=1 audible=1 attempt=1795014410838559
+MIRA_DISCOVER_ATTEMPT attempt=1795014410838559 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO mute_req playerId=299728669 role=active at=2026-11-18T15:06:50.842237Z
+MIRA_DISCOVER_AUDIO mute_done playerId=299728669 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=299728669 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=299728669
+MIRA_DISCOVER_AUDIO mute_req playerId=299728669 role=unknown at=2026-11-18T15:06:50.843340Z
+MIRA_DISCOVER_AUDIO mute_done playerId=299728669 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=299728669 role=unknown ms=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410844525 phase=start mediaId=null offer=slide-a app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=299728669 role=parked at=2026-11-18T15:06:50.844700Z
+MIRA_DISCOVER_AUDIO mute_done playerId=299728669 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=299728669 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410844525 phase=play mediaId=null kind=parked app=unknown playerId=299728669
+MIRA_DISCOVER_FF session=shoa28ibbpi transition=2 attempt=1795014410844525 build=2026111718 mediaId=null offer=slide-a playerId=299728669 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=parked app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ibbpi transition=2 attempt=1795014410844525 build=2026111718 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=299728669 attempt=1795014410844525 at=2026-11-18T15:06:50.846727Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=299728669 firstFrameMs=1 audible=1 attempt=1795014410844525
+MIRA_DISCOVER_ATTEMPT attempt=1795014410844525 phase=end outcome=position_progress mediaId=null kind=parked app=unknown posProgressMs=1 metric=position_not_pixels
+00:08 +48: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:08 +48: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach without first frame emits left_dark                                  
+MIRA_DISCOVER_ATTEMPT attempt=1795014410850875 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410850875 phase=play mediaId=null kind=cold_new app=unknown playerId=567132800
+MIRA_DISCOVER_ATTEMPT attempt=1795014410850875 phase=end outcome=left_dark mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_SWIPE left_dark mediaId=null offer=slide-a attempt=1795014410850875 dwellMs=42 claim=0 cache=0 bytes=null audible=0 app=unknown kind=cold_new
+MIRA_DISCOVER_AUDIO mute_req playerId=567132800 role=unknown at=2026-11-18T15:06:50.894458Z
+MIRA_DISCOVER_AUDIO mute_done playerId=567132800 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=567132800 role=unknown ms=0
+00:08 +49: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:08 +49: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach claims unprimed warm (pos0) without cold reopen                      
+MIRA_DISCOVER_ATTEMPT attempt=1795014410969677 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014410969677 phase=play mediaId=null kind=warm app=unknown playerId=218740568
+MIRA_DISCOVER_FF session=shoa28icstn transition=1 attempt=1795014410969677 build=2026111718 mediaId=null offer=slide-a playerId=218740568 firstFrameMs=43 positionProgressMs=43 metric=position_not_pixels source=1 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=2 audible=0 initStart=2 initDone=2 playStart=2 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=warm app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28icstn transition=1 attempt=1795014410969677 build=2026111718 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=2 firstFrameMs=43 positionProgressMs=43 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=218740568 attempt=1795014410969677 at=2026-11-18T15:06:51.014564Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=218740568 firstFrameMs=43 audible=1 attempt=1795014410969677
+MIRA_DISCOVER_ATTEMPT attempt=1795014410969677 phase=end outcome=position_progress mediaId=null kind=warm app=unknown posProgressMs=43 metric=position_not_pixels
+00:09 +50: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +50: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with foreign ownerSlot does not mute active clip           
+MIRA_DISCOVER_ATTEMPT attempt=1795014411032583 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411032583 phase=play mediaId=null kind=cold_new app=unknown playerId=909627304
+MIRA_DISCOVER_FF session=shoa28ifhet transition=1 attempt=1795014411032583 build=2026111718 mediaId=null offer=slide-a playerId=909627304 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ifhet transition=1 attempt=1795014411032583 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=909627304 attempt=1795014411032583 at=2026-11-18T15:06:51.034984Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=909627304 firstFrameMs=1 audible=1 attempt=1795014411032583
+MIRA_DISCOVER_ATTEMPT attempt=1795014411032583 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO cut_skipped reason=not_owner owner=slide-b/0 active=slide-a/0
+MIRA_DISCOVER_AUDIO mute_req playerId=909627304 role=active at=2026-11-18T15:06:51.036142Z
+MIRA_DISCOVER_AUDIO mute_done playerId=909627304 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=909627304 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=909627304
+00:09 +51: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +51: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with stale generation is skipped                           
+MIRA_DISCOVER_ATTEMPT attempt=1795014411039534 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411039534 phase=play mediaId=null kind=cold_new app=unknown playerId=363124857
+MIRA_DISCOVER_FF session=shoa28ifmsh transition=1 attempt=1795014411039534 build=2026111718 mediaId=null offer=slide-a playerId=363124857 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ifmsh transition=1 attempt=1795014411039534 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=363124857 attempt=1795014411039534 at=2026-11-18T15:06:51.040818Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=363124857 firstFrameMs=0 audible=1 attempt=1795014411039534
+MIRA_DISCOVER_ATTEMPT attempt=1795014411039534 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO cut_skipped reason=stale_generation cutGen=0 live=1
+00:09 +52: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +52: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: A→image→A: delayed mute of old gen does not mute reattached A               
+MIRA_DISCOVER_ATTEMPT attempt=1795014411044053 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411044053 phase=play mediaId=null kind=cold_new app=unknown playerId=411528384
+MIRA_DISCOVER_FF session=shoa28ifqa1 transition=1 attempt=1795014411044053 build=2026111718 mediaId=null offer=slide-a playerId=411528384 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ifqa1 transition=1 attempt=1795014411044053 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=411528384 attempt=1795014411044053 at=2026-11-18T15:06:51.045858Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=411528384 firstFrameMs=0 audible=1 attempt=1795014411044053
+MIRA_DISCOVER_ATTEMPT attempt=1795014411044053 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO mute_req playerId=411528384 role=active at=2026-11-18T15:06:51.046526Z
+MIRA_DISCOVER_ATTEMPT attempt=1795014411068029 phase=start mediaId=null offer=slide-a app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=411528384 role=active at=2026-11-18T15:06:51.068275Z
+MIRA_DISCOVER_AUDIO mute_done playerId=411528384 role=active ms=44
+MIRA_DISCOVER_AUDIO mute_done playerId=411528384 role=active ms=22
+MIRA_DISCOVER_AUDIO pause_done playerId=411528384 role=active ms=44
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=411528384 role=active ms=23
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=411528384
+MIRA_DISCOVER_AUDIO mute_req playerId=411528384 role=unknown at=2026-11-18T15:06:51.092146Z
+MIRA_DISCOVER_AUDIO mute_done playerId=411528384 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=411528384 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411068029 phase=play mediaId=null kind=cold_new app=unknown playerId=403359971
+MIRA_DISCOVER_FF session=shoa28ifqa1 transition=2 attempt=1795014411068029 build=2026111718 mediaId=null offer=slide-a playerId=403359971 firstFrameMs=25 positionProgressMs=25 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=24 audible=0 initStart=24 initDone=24 playStart=24 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ifqa1 transition=2 attempt=1795014411068029 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=24 firstFrameMs=25 positionProgressMs=25 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=403359971 attempt=1795014411068029 at=2026-11-18T15:06:51.093657Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=403359971 firstFrameMs=25 audible=1 attempt=1795014411068029
+MIRA_DISCOVER_ATTEMPT attempt=1795014411068029 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=25 metric=position_not_pixels
+00:09 +53: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +53: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: listener during in-flight seek does not count seek landing as progress      
+MIRA_DISCOVER_ATTEMPT attempt=1795014411160189 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411160189 phase=play mediaId=null kind=warm app=unknown playerId=358762763
+MIRA_DISCOVER_PHASE mediaId=null phase=seek_nudge_req attempt=1795014411160189 targetMs=32 kind=1 floorMs=32
+MIRA_DISCOVER_PHASE mediaId=null phase=seek_nudge_done attempt=1795014411160189 posMs=32 floorMs=32
+MIRA_DISCOVER_FF session=shoa28igv26 transition=1 attempt=1795014411160189 build=2026111718 mediaId=null offer=slide-a playerId=358762763 firstFrameMs=254 positionProgressMs=254 metric=position_not_pixels source=1 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=2 audible=0 initStart=2 initDone=2 playStart=2 resolveMs=0 seekNudge=129 seekDone=132 posAfterSeek=32 reopened=null kind=warm app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28igv26 transition=1 attempt=1795014411160189 build=2026111718 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=2 firstFrameMs=254 positionProgressMs=254 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=358762763 attempt=1795014411160189 at=2026-11-18T15:06:51.416269Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=358762763 firstFrameMs=254 audible=1 attempt=1795014411160189
+MIRA_DISCOVER_ATTEMPT attempt=1795014411160189 phase=end outcome=position_progress mediaId=null kind=warm app=unknown posProgressMs=254 metric=position_not_pixels
+00:09 +54: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +54: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: unmute is a single shared op per attempt                                    
+MIRA_DISCOVER_ATTEMPT attempt=1795014411431893 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411431893 phase=play mediaId=null kind=cold_new app=unknown playerId=757912271
+MIRA_DISCOVER_FF session=shoa28io1j9 transition=1 attempt=1795014411431893 build=2026111718 mediaId=null offer=slide-a playerId=757912271 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28io1j9 transition=1 attempt=1795014411431893 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=757912271 attempt=1795014411431893 at=2026-11-18T15:06:51.433554Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=757912271 firstFrameMs=1 audible=1 attempt=1795014411431893
+MIRA_DISCOVER_ATTEMPT attempt=1795014411431893 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+00:09 +55: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +55: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late unmute of left attempt does not re-arm after A→B                       
+MIRA_DISCOVER_ATTEMPT attempt=1795014411436537 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411436537 phase=play mediaId=null kind=cold_new app=unknown playerId=436807847
+MIRA_DISCOVER_FF session=shoa28io54e transition=1 attempt=1795014411436537 build=2026111718 mediaId=null offer=slide-a playerId=436807847 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28io54e transition=1 attempt=1795014411436537 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 positionProgressMs=0 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=436807847 attempt=1795014411436537 at=2026-11-18T15:06:51.437850Z
+MIRA_DISCOVER_ATTEMPT attempt=1795014411436537 phase=end outcome=superseded mediaId=null kind=cold_new app=unknown posProgressMs=0 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014411444306 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=436807847 role=active at=2026-11-18T15:06:51.444488Z
+MIRA_DISCOVER_AUDIO mute_done playerId=436807847 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=436807847 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=436807847
+MIRA_DISCOVER_AUDIO mute_req playerId=436807847 role=unknown at=2026-11-18T15:06:51.445554Z
+MIRA_DISCOVER_AUDIO mute_done playerId=436807847 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=436807847 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411444306 phase=play mediaId=null kind=cold_new app=unknown playerId=156900477
+MIRA_DISCOVER_FF session=shoa28io54e transition=2 attempt=1795014411444306 build=2026111718 mediaId=null offer=slide-b playerId=156900477 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=2 playStart=2 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28io54e transition=2 attempt=1795014411444306 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=156900477 attempt=1795014411444306 at=2026-11-18T15:06:51.446903Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=156900477 firstFrameMs=2 audible=1 attempt=1795014411444306
+MIRA_DISCOVER_ATTEMPT attempt=1795014411444306 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=2 metric=position_not_pixels
+00:09 +56: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +56: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale unmute does not mute same controller reused by A→image→A              
+MIRA_DISCOVER_ATTEMPT attempt=1795014411492874 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411492874 phase=play mediaId=null kind=cold_new app=unknown playerId=332329254
+MIRA_DISCOVER_FF session=shoa28ipcl4 transition=1 attempt=1795014411492874 build=2026111718 mediaId=null offer=slide-a playerId=332329254 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ipcl4 transition=1 attempt=1795014411492874 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=332329254 attempt=1795014411492874 at=2026-11-18T15:06:51.494569Z
+MIRA_DISCOVER_ATTEMPT attempt=1795014411492874 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO mute_req playerId=332329254 role=unknown at=2026-11-18T15:06:51.499830Z
+MIRA_DISCOVER_AUDIO mute_done playerId=332329254 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=332329254 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411500986 phase=start mediaId=null offer=slide-a app=unknown gen=3 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=332329254 role=parked at=2026-11-18T15:06:51.501254Z
+MIRA_DISCOVER_AUDIO mute_done playerId=332329254 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=332329254 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411500986 phase=play mediaId=null kind=parked app=unknown playerId=332329254
+MIRA_DISCOVER_FF session=shoa28ipcl4 transition=3 attempt=1795014411500986 build=2026111718 mediaId=null offer=slide-a playerId=332329254 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=2 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=parked app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28ipcl4 transition=3 attempt=1795014411500986 build=2026111718 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=1 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=332329254 attempt=1795014411500986 at=2026-11-18T15:06:51.503021Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=332329254 firstFrameMs=1 audible=1 attempt=1795014411500986
+MIRA_DISCOVER_ATTEMPT attempt=1795014411500986 phase=end outcome=position_progress mediaId=null kind=parked app=unknown posProgressMs=1 metric=position_not_pixels
+00:09 +57: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +57: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: mute toggle during pending unmute leaves final mute state                   
+MIRA_DISCOVER_ATTEMPT attempt=1795014411584340 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411584340 phase=play mediaId=null kind=cold_new app=unknown playerId=16172826
+MIRA_DISCOVER_FF session=shoa28irb53 transition=1 attempt=1795014411584340 build=2026111718 mediaId=null offer=slide-a playerId=16172826 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28irb53 transition=1 attempt=1795014411584340 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=16172826 attempt=1795014411584340 at=2026-11-18T15:06:51.586905Z
+MIRA_DISCOVER_ATTEMPT attempt=1795014411584340 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=2 metric=position_not_pixels
+00:09 +58: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:09 +58: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale seek finally does not clear newer seek guard                          
+MIRA_DISCOVER_ATTEMPT attempt=1795014411682946 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411682946 phase=play mediaId=null kind=warm app=unknown playerId=416728310
+MIRA_DISCOVER_PHASE mediaId=null phase=seek_nudge_req attempt=1795014411682946 targetMs=32 kind=1 floorMs=32
+MIRA_DISCOVER_ATTEMPT attempt=1795014411682946 phase=end outcome=superseded mediaId=null kind=warm app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014411858795 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=416728310 role=active at=2026-11-18T15:06:51.859421Z
+MIRA_DISCOVER_AUDIO mute_done playerId=416728310 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=416728310 role=active ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=416728310
+MIRA_DISCOVER_AUDIO mute_req playerId=416728310 role=unknown at=2026-11-18T15:06:51.861754Z
+MIRA_DISCOVER_AUDIO mute_done playerId=416728310 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=416728310 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014411858795 phase=play mediaId=null kind=warm app=unknown playerId=122979826
+MIRA_DISCOVER_PHASE mediaId=null phase=seek_nudge_req attempt=1795014411858795 targetMs=32 kind=1 floorMs=32
+MIRA_DISCOVER_PHASE mediaId=null phase=seek_nudge_done attempt=1795014411858795 posMs=32 floorMs=32
+MIRA_DISCOVER_FF session=shoa28isig2 transition=2 attempt=1795014411858795 build=2026111718 mediaId=null offer=slide-b playerId=122979826 firstFrameMs=279 positionProgressMs=279 metric=position_not_pixels source=1 cacheSource=null cacheBytes=null cacheBytesAtOpen=null audioCutMs=4 audible=0 initStart=4 initDone=5 playStart=5 resolveMs=0 seekNudge=133 seekDone=177 posAfterSeek=32 reopened=null kind=warm app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28isig2 transition=2 attempt=1795014411858795 build=2026111718 mediaId=null offer=slide-b claim=1 cache=null bytes=null audioCutMs=4 firstFrameMs=279 positionProgressMs=279 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=122979826 attempt=1795014411858795 at=2026-11-18T15:06:52.139069Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=122979826 firstFrameMs=279 audible=1 attempt=1795014411858795
+MIRA_DISCOVER_ATTEMPT attempt=1795014411858795 phase=end outcome=position_progress mediaId=null kind=warm app=unknown posProgressMs=279 metric=position_not_pixels
+00:10 +59: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:10 +59: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: init timeout ends the attempt via real TimeoutException branch              
+MIRA_DISCOVER_ATTEMPT attempt=1795014412146972 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412146972 phase=end outcome=timeout mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+00:10 +60: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:10 +60: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale A resolve after B attach does not replace B controller                
+MIRA_DISCOVER_ATTEMPT attempt=1795014412196968 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412196968 phase=end outcome=superseded mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014412220094 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412220094 phase=play mediaId=null kind=cold_new app=unknown playerId=420671279
+MIRA_DISCOVER_FF session=shoa28j4fv9 transition=2 attempt=1795014412220094 build=2026111718 mediaId=null offer=slide-b playerId=420671279 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28j4fv9 transition=2 attempt=1795014412220094 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=420671279 attempt=1795014412220094 at=2026-11-18T15:06:52.221937Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=420671279 firstFrameMs=1 audible=1 attempt=1795014412220094
+MIRA_DISCOVER_ATTEMPT attempt=1795014412220094 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+00:10 +61: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:10 +61: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale delayed audio cut does not rewrite B state                            
+MIRA_DISCOVER_ATTEMPT attempt=1795014412271771 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412271771 phase=play mediaId=null kind=cold_new app=unknown playerId=629087928
+MIRA_DISCOVER_FF session=shoa28j61l7 transition=1 attempt=1795014412271771 build=2026111718 mediaId=null offer=slide-a playerId=629087928 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28j61l7 transition=1 attempt=1795014412271771 build=2026111718 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 positionProgressMs=1 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=629087928 attempt=1795014412271771 at=2026-11-18T15:06:52.273809Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=629087928 firstFrameMs=1 audible=1 attempt=1795014412271771
+MIRA_DISCOVER_ATTEMPT attempt=1795014412271771 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=1 metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014412274721 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=629087928 role=active at=2026-11-18T15:06:52.274956Z
+MIRA_DISCOVER_AUDIO mute_done playerId=629087928 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=629087928 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=629087928
+MIRA_DISCOVER_AUDIO mute_req playerId=629087928 role=unknown at=2026-11-18T15:06:52.275996Z
+MIRA_DISCOVER_AUDIO mute_done playerId=629087928 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=629087928 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412274721 phase=play mediaId=null kind=cold_new app=unknown playerId=889993565
+MIRA_DISCOVER_FF session=shoa28j61l7 transition=2 attempt=1795014412274721 build=2026111718 mediaId=null offer=slide-b playerId=889993565 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28j61l7 transition=2 attempt=1795014412274721 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=889993565 attempt=1795014412274721 at=2026-11-18T15:06:52.277258Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=889993565 firstFrameMs=2 audible=1 attempt=1795014412274721
+MIRA_DISCOVER_ATTEMPT attempt=1795014412274721 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=2 metric=position_not_pixels
+MIRA_DISCOVER_AUDIO cut_skipped reason=not_owner owner=slide-a/0 active=slide-b/0
+00:10 +62: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:10 +62: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: A initialize timeout after B started does not fail B                        
+MIRA_DISCOVER_ATTEMPT attempt=1795014412303254 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412303254 phase=end outcome=superseded mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014412324433 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=28553844 role=active at=2026-11-18T15:06:52.324606Z
+MIRA_DISCOVER_AUDIO mute_done playerId=28553844 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=28553844 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=28553844
+MIRA_DISCOVER_AUDIO mute_req playerId=28553844 role=unknown at=2026-11-18T15:06:52.325464Z
+MIRA_DISCOVER_AUDIO mute_done playerId=28553844 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=28553844 role=unknown ms=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412324433 phase=play mediaId=null kind=cold_new app=unknown playerId=134892651
+MIRA_DISCOVER_FF session=shoa28j6pvs transition=2 attempt=1795014412324433 build=2026111718 mediaId=null offer=slide-b playerId=134892651 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=1 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28j6pvs transition=2 attempt=1795014412324433 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 positionProgressMs=2 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=134892651 attempt=1795014412324433 at=2026-11-18T15:06:52.326600Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=134892651 firstFrameMs=2 audible=1 attempt=1795014412324433
+MIRA_DISCOVER_ATTEMPT attempt=1795014412324433 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=2 metric=position_not_pixels
+00:10 +63: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:10 +63: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale warm wait does not claim warm prepared for newer attach               
+MIRA_DISCOVER_ATTEMPT attempt=1795014412468108 phase=start mediaId=null offer=slide-a app=unknown gen=1 build=2026111718
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412468108 phase=end outcome=superseded mediaId=null kind=cold_new app=unknown posProgressMs=null metric=position_not_pixels
+MIRA_DISCOVER_ATTEMPT attempt=1795014412492876 phase=start mediaId=null offer=slide-b app=unknown gen=2 build=2026111718
+MIRA_DISCOVER_AUDIO mute_req playerId=933858618 role=warm at=2026-11-18T15:06:52.493211Z
+MIRA_DISCOVER_AUDIO mute_done playerId=933858618 role=warm ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=933858618 role=warm ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_ATTEMPT attempt=1795014412492876 phase=play mediaId=null kind=cold_new app=unknown playerId=781168226
+MIRA_DISCOVER_FF session=shoa28j9sb0 transition=2 attempt=1795014412492876 build=2026111718 mediaId=null offer=slide-b playerId=781168226 firstFrameMs=4 positionProgressMs=4 metric=position_not_pixels source=0 cacheSource=0 cacheBytes=null cacheBytesAtOpen=null audioCutMs=3 audible=0 initStart=3 initDone=3 playStart=3 resolveMs=0 seekNudge=null seekDone=null posAfterSeek=null reopened=null kind=cold_new app=unknown
+MIRA_DISCOVER_SWIPE settle session=shoa28j9sb0 transition=2 attempt=1795014412492876 build=2026111718 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=3 firstFrameMs=4 positionProgressMs=4 metric=position_not_pixels audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=781168226 attempt=1795014412492876 at=2026-11-18T15:06:52.497509Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=781168226 firstFrameMs=4 audible=1 attempt=1795014412492876
+MIRA_DISCOVER_ATTEMPT attempt=1795014412492876 phase=end outcome=position_progress mediaId=null kind=cold_new app=unknown posProgressMs=4 metric=position_not_pixels
+00:10 +64: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:11 +64: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:12 +64: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:13 +64: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:14 +64: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:14 +65: /Users/fayez/Desktop/مراجع ... documented deadlock: holder waiting on waiter-behind-lock stalls ~12s (test-only sim)                                                                        00:14 +65: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                                  00:14 +65: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: prefix holding lock + ensureLocal inflight: Range fill without join (fixed)
+MIRA_DISCOVER_LOCK hold_start mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28lyqnr
+MIRA_DISCOVER_LOCK wait_start mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28lysc9
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=8192 elapsedMs=6 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28lyqnr
+MIRA_DISCOVER_LOCK wait_end mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28lysc9 waitedMs=5
+MIRA_DISCOVER_LOCK hold_start mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28lysc9
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=disk_resume reused=8192 dl=122880 elapsedMs=9 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28lysc9
+00:14 +66: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                                  00:14 +66: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                               00:14 +66: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)
+MIRA_DISCOVER_LOCK hold_start mediaId=freverse1-cccc-cccc-cccc-cccccccccccc req=whoa28lz84c
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=98304 elapsedMs=49 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=freverse1-cccc-cccc-cccc-cccccccccccc req=whoa28lz84c
+00:15 +67: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                               00:15 +67: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download00:15 +67: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download
+MIRA_DISCOVER_LOCK hold_start mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28m0d7o
+MIRA_DISCOVER_LOCK hold_start mediaId=deadbeef-dead-dead-dead-deaddeadbeef req=whoa28m12ji
+MIRA_DISCOVER_CACHE mediaId=deadbeef-dead-dead-dead-deaddeadbeef source=network_error reused=0 dl=0 elapsedMs=3 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=deadbeef-dead-dead-dead-deaddeadbeef req=whoa28m12ji
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=65536 elapsedMs=41 err=null prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc req=whoa28m0d7o
+00:15 +68: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download00:15 +68: /Users/fayez/Desktop/مراجع ... end-to-end: resolve+proxy serves local prefix before gated tail (full clock)                                                                                 00:15 +68: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: end-to-end: resolve+proxy serves local prefix before gated tail (full clock)
+MIRA_DISCOVER_LOCK hold_start mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=whoa28m1dix
+MIRA_DISCOVER_CACHE mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=partial reused=0 dl=16384 elapsedMs=5 err=incomplete_16384/65536 prio=null lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=whoa28m1dix
+MIRA_DISCOVER_PHASE mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa phase=prefix_kick have=16384 need=1048576 blocking=0
+MIRA_DISCOVER_PHASE mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa phase=proxy_kick_prefix need=262144 have=16384 chunk=1048576 prio=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+MIRA_DISCOVER_LOCK hold_start mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=whoa28m1npy
+E2E_START_TO_FIRST_BYTE_MS=7 tailGateOpen=false
+00:15 +69: /Users/fayez/Desktop/مراجع ... end-to-end: resolve+proxy serves local prefix before gated tail (full clock)                                                                                 00:15 +69: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolve returns immediately when origin is stalled   00:15 +69: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: end-to-end: resolve+proxy serves local prefix before gated tail (full clock)
+MIRA_DISCOVER_CACHE mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=disk_resume reused=16384 dl=49152 elapsedMs=13 err=null prio=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa req=whoa28m1npy
+00:15 +69: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolve returns immediately when origin is stalled   
+MIRA_DISCOVER_PHASE mediaId=fstall01-bbbb-bbbb-bbbb-bbbbbbbbbbbb phase=prefix_kick have=8192 need=1048576 blocking=0
+00:15 +70: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolve returns immediately when origin is stalled   00:15 +70: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy Range kick grows prefix without full ensureLocal inflight    00:15 +70: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: claimPriority resolve returns immediately when origin is stalled   
+MIRA_DISCOVER_LOCK hold_start mediaId=fstall01-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28m32h5
+MIRA_DISCOVER_LOCK hold_end mediaId=fstall01-bbbb-bbbb-bbbb-bbbbbbbbbbbb req=whoa28m32h5
+00:15 +70: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy Range kick grows prefix without full ensureLocal inflight    
+MIRA_DISCOVER_PHASE mediaId=fproxy01-cccc-cccc-cccc-cccccccccccc phase=prefix_kick have=65536 need=1048576 blocking=0
+MIRA_DISCOVER_LOCK hold_start mediaId=fproxy01-cccc-cccc-cccc-cccccccccccc req=whoa28m37oc
+MIRA_DISCOVER_PHASE mediaId=fproxy01-cccc-cccc-cccc-cccccccccccc phase=proxy_kick_prefix need=262144 have=65536 chunk=1048576 prio=fproxy01-cccc-cccc-cccc-cccccccccccc
+MIRA_DISCOVER_CACHE mediaId=fproxy01-cccc-cccc-cccc-cccccccccccc source=disk_resume reused=65536 dl=983040 elapsedMs=15 err=null prio=fproxy01-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fproxy01-cccc-cccc-cccc-cccccccccccc req=whoa28m37oc
+00:15 +71: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy Range kick grows prefix without full ensureLocal inflight    00:15 +71: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves Range past 2MiB without full-object inflight          00:15 +71: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves Range past 2MiB without full-object inflight          
+MIRA_DISCOVER_PHASE mediaId=fpast2m0-dddd-dddd-dddd-dddddddddddd phase=proxy_kick_prefix need=3407873 have=2093056 chunk=1048576 prio=fpast2m0-dddd-dddd-dddd-dddddddddddd
+MIRA_DISCOVER_LOCK hold_start mediaId=fpast2m0-dddd-dddd-dddd-dddddddddddd req=whoa28m4xcr
+MIRA_DISCOVER_CACHE mediaId=fpast2m0-dddd-dddd-dddd-dddddddddddd source=disk_resume reused=2093056 dl=1314817 elapsedMs=21 err=null prio=fpast2m0-dddd-dddd-dddd-dddddddddddd lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fpast2m0-dddd-dddd-dddd-dddddddddddd req=whoa28m4xcr
+00:15 +72: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves Range past 2MiB without full-object inflight          00:15 +72: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy streams across 2MiB then completes requested window          00:15 +72: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy streams across 2MiB then completes requested window          
+MIRA_DISCOVER_PHASE mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee phase=proxy_kick_prefix need=2097153 have=1048576 chunk=1048576 prio=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee
+MIRA_DISCOVER_LOCK hold_start mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee req=whoa28m6jik
+MIRA_DISCOVER_CACHE mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee source=disk_resume reused=1048576 dl=1048577 elapsedMs=42 err=null prio=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee req=whoa28m6jik
+MIRA_DISCOVER_PHASE mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee phase=proxy_kick_prefix need=2129921 have=2097153 chunk=1048576 prio=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee
+MIRA_DISCOVER_LOCK hold_start mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee req=whoa28m8528
+MIRA_DISCOVER_CACHE mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee source=disk_resume reused=2097153 dl=32768 elapsedMs=3 err=null prio=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=fcross2m-eeee-eeee-eeee-eeeeeeeeeeee req=whoa28m8528
+00:15 +73: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy streams across 2MiB then completes requested window          00:15 +73: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy keeps serving local prefix while tail origin is held         00:15 +73: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy keeps serving local prefix while tail origin is held         
+MIRA_DISCOVER_PHASE mediaId=flocal01-ffff-ffff-ffff-ffffffffffff phase=prefix_kick have=262144 need=1048576 blocking=0
+MIRA_DISCOVER_LOCK hold_start mediaId=flocal01-ffff-ffff-ffff-ffffffffffff req=whoa28mbo8t
+MIRA_DISCOVER_PHASE mediaId=flocal01-ffff-ffff-ffff-ffffffffffff phase=proxy_kick_prefix need=1310721 have=262144 chunk=1048576 prio=flocal01-ffff-ffff-ffff-ffffffffffff
+MIRA_DISCOVER_CACHE mediaId=flocal01-ffff-ffff-ffff-ffffffffffff source=disk_resume reused=262144 dl=786432 elapsedMs=36 err=null prio=flocal01-ffff-ffff-ffff-ffffffffffff lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=flocal01-ffff-ffff-ffff-ffffffffffff req=whoa28mbo8t
+MIRA_DISCOVER_PHASE mediaId=flocal01-ffff-ffff-ffff-ffffffffffff phase=proxy_kick_prefix need=2097153 have=1048576 chunk=1048576 prio=flocal01-ffff-ffff-ffff-ffffffffffff
+MIRA_DISCOVER_LOCK hold_start mediaId=flocal01-ffff-ffff-ffff-ffffffffffff req=whoa28md06y
+MIRA_DISCOVER_CACHE mediaId=flocal01-ffff-ffff-ffff-ffffffffffff source=disk_resume reused=1048576 dl=1048577 elapsedMs=15 err=null prio=flocal01-ffff-ffff-ffff-ffffffffffff lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=flocal01-ffff-ffff-ffff-ffffffffffff req=whoa28md06y
+MIRA_DISCOVER_PHASE mediaId=flocal01-ffff-ffff-ffff-ffffffffffff phase=proxy_kick_prefix need=3145728 have=2097153 chunk=1048576 prio=flocal01-ffff-ffff-ffff-ffffffffffff
+MIRA_DISCOVER_LOCK hold_start mediaId=flocal01-ffff-ffff-ffff-ffffffffffff req=whoa28me4vr
+MIRA_DISCOVER_CACHE mediaId=flocal01-ffff-ffff-ffff-ffffffffffff source=finalize_part reused=3145728 dl=0 elapsedMs=0 err=null prio=flocal01-ffff-ffff-ffff-ffffffffffff lock=true
+MIRA_DISCOVER_LOCK hold_end mediaId=flocal01-ffff-ffff-ffff-ffffffffffff req=whoa28me4vr
+00:15 +74: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy keeps serving local prefix while tail origin is held         00:15 +74: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy cancels wait loop when client aborts mid-Range               00:15 +74: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy cancels wait loop when client aborts mid-Range               
+MIRA_DISCOVER_PHASE mediaId=fabort01-aaaa-bbbb-cccc-ddddeeeeffff phase=prefix_kick have=0 need=1048576 blocking=0
+MIRA_DISCOVER_LOCK hold_start mediaId=fabort01-aaaa-bbbb-cccc-ddddeeeeffff req=whoa28miz3u
+MIRA_DISCOVER_PHASE mediaId=fabort01-aaaa-bbbb-cccc-ddddeeeeffff phase=proxy_kick_prefix need=3407873 have=0 chunk=1048576 prio=fabort01-aaaa-bbbb-cccc-ddddeeeeffff
+00:15 +75: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy cancels wait loop when client aborts mid-Range               00:15 +75: All tests passed!                                                                                                                                                                           

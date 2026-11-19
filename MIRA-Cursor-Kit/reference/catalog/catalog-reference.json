@@ -1,0 +1,1195 @@
+{
+  "purpose": "Reference transcribed from the approved non-medical workbook; notes require typed modeling before use.",
+  "providers": [
+    {
+      "id": "SA",
+      "domain": "الجمال والعناية",
+      "name_ar": "صالون أو مشغل نسائي متعدد الخدمات",
+      "account_type_note_ar": "منشأة",
+      "group_labels_ar": "الشعر • المكياج • الأظافر • الرموش والحواجب • العناية بالبشرة • إزالة الشعر غير الطبية • الحناء والنقش",
+      "welcome_copy_ar": "اجمعي خدمات الصالون في قائمة واحدة تختار منها العميلة."
+    },
+    {
+      "id": "HR",
+      "domain": "الجمال والعناية",
+      "name_ar": "مصففة شعر أو استوديو شعر",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الشعر",
+      "welcome_copy_ar": "عرّفي عميلاتك بقصّاتك وألوانك وتسريحاتك."
+    },
+    {
+      "id": "MU",
+      "domain": "الجمال والعناية",
+      "name_ar": "خبيرة مكياج أو استوديو مكياج",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "المكياج",
+      "welcome_copy_ar": "اعرضي أساليب المكياج التي تحمل لمستك."
+    },
+    {
+      "id": "NA",
+      "domain": "الجمال والعناية",
+      "name_ar": "متخصصة أظافر أو استوديو أظافر",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الأظافر",
+      "welcome_copy_ar": "اختاري خدمات العناية والتصاميم التي تنفّذينها."
+    },
+    {
+      "id": "LB",
+      "domain": "الجمال والعناية",
+      "name_ar": "متخصصة رموش وحواجب أو استوديو",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الرموش والحواجب",
+      "welcome_copy_ar": "أبرزي خيارات الرموش والحواجب المتاحة لديك."
+    },
+    {
+      "id": "BC",
+      "domain": "الجمال والعناية",
+      "name_ar": "مركز عناية بالبشرة والجمال",
+      "account_type_note_ar": "منشأة؛ الفرد بحسب الأهلية لكل نشاط",
+      "group_labels_ar": "العناية بالبشرة • إزالة الشعر غير الطبية",
+      "welcome_copy_ar": "عرّفي العميلة بجلسات العناية التي يمكنها حجزها."
+    },
+    {
+      "id": "SP",
+      "domain": "الجمال والعناية",
+      "name_ar": "سبا أو مركز استرخاء وعناية بالجسم",
+      "account_type_note_ar": "منشأة بحسب النشاط",
+      "group_labels_ar": "السبا والعناية بالجسم",
+      "welcome_copy_ar": "اعرضي طقوس العناية ومدّة كل تجربة."
+    },
+    {
+      "id": "HN",
+      "domain": "الجمال والعناية",
+      "name_ar": "نقّاشة حناء أو استوديو حناء",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الحناء والنقش",
+      "welcome_copy_ar": "اختاري النقوش والباقات التي تزيّنين بها مناسبات عميلاتك."
+    },
+    {
+      "id": "ST",
+      "domain": "الأناقة • توسع اختياري",
+      "name_ar": "منسّقة أزياء أو استوديو تنسيق إطلالات",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "تنسيق الإطلالة",
+      "welcome_copy_ar": "ساعدي العميلة في جمع قطعها في إطلالة واحدة."
+    },
+    {
+      "id": "AT",
+      "domain": "الأناقة • توسع اختياري",
+      "name_ar": "أتيليه خياطة وتعديل فساتين وعباءات",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "التفصيل والتعديلات",
+      "welcome_copy_ar": "عرّفي العميلة بمواعيد القياس والتعديلات التي تقبلينها."
+    },
+    {
+      "id": "VN",
+      "domain": "المناسبات",
+      "name_ar": "مشغّل قاعة أو قصر أفراح أو قاعة فندق أو استراحة مناسبة",
+      "account_type_note_ar": "منشأة أو مشغّل مؤهل للموقع",
+      "group_labels_ar": "القاعات وأماكن الاحتفال • الكوش والمداخل • تنسيق الطاولات والورد والديكور • بوفيه وأركان الطعام والحلويات",
+      "welcome_copy_ar": "عرّفينا بمساحتك وما يشمله حجز المناسبة."
+    },
+    {
+      "id": "PL",
+      "domain": "المناسبات",
+      "name_ar": "منظّمة مناسبات أو مكتب تنسيق حفلات",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "تنظيم وباقات حفلات • الكوش والمداخل • تنسيق الطاولات والورد والديكور • الضيافة والاستقبال • صبّابات ومضيفات • الدعوات وتنظيم الحضور • تجهيز العروس • تجارب الحفل",
+      "welcome_copy_ar": "حددي أي تفاصيل من يوم المناسبة سيتولاها فريقك."
+    },
+    {
+      "id": "DE",
+      "domain": "المناسبات",
+      "name_ar": "مصمّمة كوش ومداخل أو استوديو ديكور وورد",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الكوش والمداخل • تنسيق الطاولات والورد والديكور",
+      "welcome_copy_ar": "حوّلي نماذج أعمالك إلى كوش وتنسيقات قابلة للطلب."
+    },
+    {
+      "id": "HO",
+      "domain": "المناسبات",
+      "name_ar": "فريق استقبال وضيافة أو منشأة تشغيل مضيفات",
+      "account_type_note_ar": "فرد للخدمة الشخصية أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "welcome_copy_ar": "عرّفي صاحبة المناسبة بمن يستقبل ضيفاتها وما يشمله العرض."
+    },
+    {
+      "id": "CA",
+      "domain": "المناسبات",
+      "name_ar": "مطبخ ضيافة أو متعهد إعاشة أو مقدم ركن طعام وحلويات",
+      "account_type_note_ar": "منشأة أو منتج مؤهل بحسب النشاط",
+      "group_labels_ar": "بوفيه وأركان الطعام والحلويات",
+      "welcome_copy_ar": "اعرضي قائمتك وطريقة التقديم والعدد الذي تخدمينه."
+    },
+    {
+      "id": "PH",
+      "domain": "المناسبات",
+      "name_ar": "مصوّرة أو استوديو تصوير وتغطية",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "التصوير وتغطية الحفل • تجارب الحفل",
+      "welcome_copy_ar": "عرّفي العميلة بساعات التغطية وما تستلمه بعد الحفل."
+    },
+    {
+      "id": "AV",
+      "domain": "المناسبات",
+      "name_ar": "فريق صوت وإضاءة أو استوديو تجهيز تقني",
+      "account_type_note_ar": "فرد متخصص أو منشأة بحسب الأهلية",
+      "group_labels_ar": "تجهيزات الصوت والإضاءة",
+      "welcome_copy_ar": "حددي التجهيزات التي سيوفرها فريقك للحفل."
+    },
+    {
+      "id": "RE",
+      "domain": "المناسبات",
+      "name_ar": "مؤجّر أثاث ومستلزمات حفلات",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "تأجير الأثاث والتجهيزات",
+      "welcome_copy_ar": "أضيفي القطع المتاحة للإيجار مع التوصيل والاسترجاع."
+    },
+    {
+      "id": "IN",
+      "domain": "المناسبات",
+      "name_ar": "مصمّمة دعوات أو استوديو قرطاسية مناسبات",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الدعوات وتنظيم الحضور",
+      "welcome_copy_ar": "اعرضي تصاميم الدعوات وخيارات الطباعة والتسليم."
+    },
+    {
+      "id": "GF",
+      "domain": "المناسبات",
+      "name_ar": "منسّقة هدايا وتوزيعات أو استوديو تغليف",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "الهدايا والتوزيعات المخصّصة",
+      "welcome_copy_ar": "قدّمي توزيعات مخصّصة باسم صاحبة المناسبة."
+    },
+    {
+      "id": "PF",
+      "domain": "المناسبات",
+      "name_ar": "مقدّم ركن عطور وبخور للمناسبات",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "أركان العطور والبخور",
+      "welcome_copy_ar": "اختاري الأركان التي يمكن تجهيزها في موقع الحفل."
+    },
+    {
+      "id": "BR",
+      "domain": "المناسبات",
+      "name_ar": "منسّقة تجهيز العروس أو فريق مرافقة العروس",
+      "account_type_note_ar": "فرد أو منشأة بحسب الأهلية",
+      "group_labels_ar": "تجهيز العروس",
+      "welcome_copy_ar": "عرّفي العروس بخدمات المرافقة والتجهيز في يومها."
+    }
+  ],
+  "services": [
+    {
+      "id": "S025",
+      "domain": "beauty_and_style",
+      "group_ar": "الشعر",
+      "name_ar": "قص شعر",
+      "provider_type_ids": [
+        "SA",
+        "HR"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "service_field_notes_ar": "نوع القص • هل يشمل التصفيف؟",
+      "suggested_copy_ar": "اختاري القَصّة وراجعي ما يشمله الموعد."
+    },
+    {
+      "id": "S026",
+      "domain": "beauty_and_style",
+      "group_ar": "الشعر",
+      "name_ar": "تصفيف واستشوار",
+      "provider_type_ids": [
+        "SA",
+        "HR"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "service_field_notes_ar": "أسلوب التصفيف • شمول الغسيل",
+      "suggested_copy_ar": "اختاري التصفيف الذي يناسب يومك."
+    },
+    {
+      "id": "S027",
+      "domain": "beauty_and_style",
+      "group_ar": "الشعر",
+      "name_ar": "تسريحة مناسبة",
+      "provider_type_ids": [
+        "SA",
+        "HR"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "service_field_notes_ar": "مرفوعة/منسدلة • إكسسوار أو طرحة",
+      "suggested_copy_ar": "احفظي إلهامك واختاري تسريحتك للمناسبة."
+    },
+    {
+      "id": "S028",
+      "domain": "beauty_and_style",
+      "group_ar": "الشعر",
+      "name_ar": "صبغة جذور",
+      "provider_type_ids": [
+        "SA",
+        "HR"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "service_field_notes_ar": "نطاق اللون • ما يشمله السعر",
+      "suggested_copy_ar": "جدّدي لون الجذور بموعد واضح التفاصيل."
+    },
+    {
+      "id": "S029",
+      "domain": "beauty_and_style",
+      "group_ar": "الشعر",
+      "name_ar": "صبغ شعر أو خصل",
+      "provider_type_ids": [
+        "SA",
+        "HR"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "service_field_notes_ar": "التقنية • أساس تحديد السعر",
+      "suggested_copy_ar": "تصفّحي تقنيات اللون التي تقدّمها المصففة."
+    },
+    {
+      "id": "S030",
+      "domain": "beauty_and_style",
+      "group_ar": "الشعر",
+      "name_ar": "جلسة عناية بالشعر",
+      "provider_type_ids": [
+        "SA",
+        "HR"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة أو الفريق • طول الشعر إذا أثّر في الوقت أو السعر",
+      "service_field_notes_ar": "نوع العناية • الشمول",
+      "suggested_copy_ar": "اختاري جلسة العناية وما تحبين إضافته إليها."
+    },
+    {
+      "id": "S031",
+      "domain": "beauty_and_style",
+      "group_ar": "المكياج",
+      "name_ar": "مكياج ناعم",
+      "provider_type_ids": [
+        "SA",
+        "MU"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "service_field_notes_ar": "درجة كثافة الإطلالة • الرموش مشمولة؟",
+      "suggested_copy_ar": "إطلالة هادئة تختارين تفاصيلها مع خبيرة المكياج."
+    },
+    {
+      "id": "S032",
+      "domain": "beauty_and_style",
+      "group_ar": "المكياج",
+      "name_ar": "مكياج سهرة",
+      "provider_type_ids": [
+        "SA",
+        "MU"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "service_field_notes_ar": "نوع المناسبة • الإضافات",
+      "suggested_copy_ar": "نسّقي مكياج السهرة مع فستانك وألوانك المفضلة."
+    },
+    {
+      "id": "S033",
+      "domain": "beauty_and_style",
+      "group_ar": "المكياج",
+      "name_ar": "مكياج عروس",
+      "provider_type_ids": [
+        "SA",
+        "MU"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "service_field_notes_ar": "بروفة مشمولة؟ • وقت الجاهزية • المرافقة",
+      "suggested_copy_ar": "من البروفة إلى وقت الزفّة، اختاري ما تحتاجينه ليومك."
+    },
+    {
+      "id": "S034",
+      "domain": "beauty_and_style",
+      "group_ar": "المكياج",
+      "name_ar": "بروفة مكياج",
+      "provider_type_ids": [
+        "SA",
+        "MU"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • أسلوب الإطلالة • المقر أو موقع العميلة إن كان متاحًا",
+      "service_field_notes_ar": "عدد الإطلالات • تاريخ المناسبة",
+      "suggested_copy_ar": "جرّبي أسلوب المكياج قبل موعد المناسبة."
+    },
+    {
+      "id": "S035",
+      "domain": "beauty_and_style",
+      "group_ar": "الأظافر",
+      "name_ar": "مانيكير",
+      "provider_type_ids": [
+        "SA",
+        "NA"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "يدين/قدمين • التقنية • المختصة",
+      "service_field_notes_ar": "لون مشمول؟ • نوع الطلاء",
+      "suggested_copy_ar": "اختاري العناية واللون لليدين."
+    },
+    {
+      "id": "S036",
+      "domain": "beauty_and_style",
+      "group_ar": "الأظافر",
+      "name_ar": "بديكير",
+      "provider_type_ids": [
+        "SA",
+        "NA"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "يدين/قدمين • التقنية • المختصة",
+      "service_field_notes_ar": "ما تشمله الجلسة • نوع الطلاء",
+      "suggested_copy_ar": "حددي تفاصيل عناية القدمين قبل الحجز."
+    },
+    {
+      "id": "S037",
+      "domain": "beauty_and_style",
+      "group_ar": "الأظافر",
+      "name_ar": "تركيب أظافر",
+      "provider_type_ids": [
+        "SA",
+        "NA"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "يدين/قدمين • التقنية • المختصة",
+      "service_field_notes_ar": "نوع التركيب • الطول • إزالة سابقة؟",
+      "suggested_copy_ar": "اختاري الطول والشكل من أعمال المتخصصة."
+    },
+    {
+      "id": "S038",
+      "domain": "beauty_and_style",
+      "group_ar": "الأظافر",
+      "name_ar": "تصميم أظافر",
+      "provider_type_ids": [
+        "SA",
+        "NA"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "يدين/قدمين • التقنية • المختصة",
+      "service_field_notes_ar": "عدد الأظافر • مستوى التصميم",
+      "suggested_copy_ar": "اختاري رسمة تحبينها وحددي تفاصيل تنفيذها."
+    },
+    {
+      "id": "S039",
+      "domain": "beauty_and_style",
+      "group_ar": "الرموش والحواجب",
+      "name_ar": "تركيب رموش",
+      "provider_type_ids": [
+        "SA",
+        "LB"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • الأسلوب • مدة الجلسة",
+      "service_field_notes_ar": "الكثافة • مجموعة كاملة أو تعبئة",
+      "suggested_copy_ar": "اختاري كثافة الرموش والأسلوب الذي تفضلينه."
+    },
+    {
+      "id": "S040",
+      "domain": "beauty_and_style",
+      "group_ar": "الرموش والحواجب",
+      "name_ar": "رفع رموش",
+      "provider_type_ids": [
+        "SA",
+        "LB"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • الأسلوب • مدة الجلسة",
+      "service_field_notes_ar": "ما تشمله الجلسة",
+      "suggested_copy_ar": "تعرّفي على خطوات الخدمة كما تصفها المتخصصة."
+    },
+    {
+      "id": "S041",
+      "domain": "beauty_and_style",
+      "group_ar": "الرموش والحواجب",
+      "name_ar": "تنسيق حواجب",
+      "provider_type_ids": [
+        "SA",
+        "LB"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • الأسلوب • مدة الجلسة",
+      "service_field_notes_ar": "طريقة التنسيق • إضافة تلوين إن توفر",
+      "suggested_copy_ar": "حددي أسلوب ترتيب الحواجب مع المتخصصة."
+    },
+    {
+      "id": "S098",
+      "domain": "beauty_and_style",
+      "group_ar": "العناية بالبشرة",
+      "name_ar": "تقشير تجميلي سطحي للوجه",
+      "provider_type_ids": [
+        "SA",
+        "BC"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "service_field_notes_ar": "نوع المستحضر التجميلي المستخدم • الخطوات المشمولة",
+      "suggested_copy_ar": "اطّلعي على مستحضر التقشير وخطوات الجلسة قبل اختيار موعدك."
+    },
+    {
+      "id": "S042",
+      "domain": "beauty_and_style",
+      "group_ar": "العناية بالبشرة",
+      "name_ar": "تنظيف تجميلي سطحي",
+      "provider_type_ids": [
+        "SA",
+        "BC"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "service_field_notes_ar": "خطوات الجلسة التجميلية",
+      "suggested_copy_ar": "تعرّفي على خطوات التنظيف قبل اختيار موعدك."
+    },
+    {
+      "id": "S043",
+      "domain": "beauty_and_style",
+      "group_ar": "العناية بالبشرة",
+      "name_ar": "ترطيب وماسك",
+      "provider_type_ids": [
+        "SA",
+        "BC"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "service_field_notes_ar": "نوع الماسك • المدة",
+      "suggested_copy_ar": "اختاري جلسة ترطيب تتناسب مع وقتك وتفضيلاتك."
+    },
+    {
+      "id": "S044",
+      "domain": "beauty_and_style",
+      "group_ar": "العناية بالبشرة",
+      "name_ar": "عناية قبل المكياج",
+      "provider_type_ids": [
+        "SA",
+        "BC"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "المختصة • نوع العناية • المدة • ما تتضمنه الجلسة • المستحضرات المستخدمة إن توفرت",
+      "service_field_notes_ar": "وقت المكياج • الخطوات المشمولة",
+      "suggested_copy_ar": "جهّزي إطلالتك بجلسة عناية تسبق المكياج."
+    },
+    {
+      "id": "S045",
+      "domain": "beauty_and_style",
+      "group_ar": "إزالة الشعر غير الطبية",
+      "name_ar": "إزالة بالشمع أو الحلاوة",
+      "provider_type_ids": [
+        "SA",
+        "BC"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "الطريقة (شمع/حلاوة/خيط) • المنطقة • المختصة",
+      "service_field_notes_ar": "المناطق المشمولة • طريقة التسعير",
+      "suggested_copy_ar": "اختاري المنطقة والطريقة التي تفضلينها."
+    },
+    {
+      "id": "S046",
+      "domain": "beauty_and_style",
+      "group_ar": "إزالة الشعر غير الطبية",
+      "name_ar": "إزالة بالخيط",
+      "provider_type_ids": [
+        "SA",
+        "BC"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "الطريقة (شمع/حلاوة/خيط) • المنطقة • المختصة",
+      "service_field_notes_ar": "منطقة الوجه • ما يشمله السعر",
+      "suggested_copy_ar": "راجعي المناطق المتاحة وحددي موعدك."
+    },
+    {
+      "id": "S047",
+      "domain": "beauty_and_style",
+      "group_ar": "السبا والعناية بالجسم",
+      "name_ar": "حمام مغربي",
+      "provider_type_ids": [
+        "SP"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "نوع التجربة • المدة • المرافق المشمولة",
+      "service_field_notes_ar": "الباقة • الخطوات المشمولة",
+      "suggested_copy_ar": "اختاري طقوس الحمام المغربي ووقتها."
+    },
+    {
+      "id": "S048",
+      "domain": "beauty_and_style",
+      "group_ar": "السبا والعناية بالجسم",
+      "name_ar": "جلسة استرخاء غير علاجية",
+      "provider_type_ids": [
+        "SP"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "نوع التجربة • المدة • المرافق المشمولة",
+      "service_field_notes_ar": "نوع الجلسة • غرفة منفردة أو مشتركة",
+      "suggested_copy_ar": "خصّصي وقتًا للاسترخاء واختاري تفاصيل تجربتك."
+    },
+    {
+      "id": "S049",
+      "domain": "beauty_and_style",
+      "group_ar": "السبا والعناية بالجسم",
+      "name_ar": "عناية وتقشير للجسم",
+      "provider_type_ids": [
+        "SP"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "نوع التجربة • المدة • المرافق المشمولة",
+      "service_field_notes_ar": "تجميلي سطحي فقط • المستحضرات المعلنة",
+      "suggested_copy_ar": "اطّلعي على خطوات العناية بالجسم قبل الحجز."
+    },
+    {
+      "id": "S050",
+      "domain": "beauty_and_style",
+      "group_ar": "الحناء والنقش",
+      "name_ar": "نقش حناء فردي",
+      "provider_type_ids": [
+        "HN",
+        "SA"
+      ],
+      "booking_mode_note_ar": "موعد أو مناسبة",
+      "group_field_notes_ar": "نوع النقش • المنطقة • عدد العميلات",
+      "service_field_notes_ar": "يد واحدة/يدان • مدى امتداد النقش",
+      "suggested_copy_ar": "اختاري نقشتك من نماذج أعمال النقّاشة."
+    },
+    {
+      "id": "S051",
+      "domain": "beauty_and_style",
+      "group_ar": "الحناء والنقش",
+      "name_ar": "ركن حناء للمناسبة",
+      "provider_type_ids": [
+        "HN",
+        "SA"
+      ],
+      "booking_mode_note_ar": "موعد أو مناسبة",
+      "group_field_notes_ar": "نوع النقش • المنطقة • عدد العميلات",
+      "service_field_notes_ar": "عدد النقّاشات • الساعات • موقع الركن",
+      "suggested_copy_ar": "أضيفي ركن حناء لضيوفك واختاري ساعات حضوره."
+    },
+    {
+      "id": "S052",
+      "domain": "beauty_and_style",
+      "group_ar": "تنسيق الإطلالة",
+      "name_ar": "تنسيق إطلالة مناسبة",
+      "provider_type_ids": [
+        "ST"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "حضوري/عن بعد • مدة اللقاء • ما يُسلّم للعميلة",
+      "service_field_notes_ar": "نوع المناسبة • عدد الإطلالات",
+      "suggested_copy_ar": "اجمعي الفستان والإكسسوارات في إطلالة واحدة."
+    },
+    {
+      "id": "S053",
+      "domain": "beauty_and_style",
+      "group_ar": "تنسيق الإطلالة",
+      "name_ar": "تنسيق خزانة",
+      "provider_type_ids": [
+        "ST"
+      ],
+      "booking_mode_note_ar": "موعد",
+      "group_field_notes_ar": "حضوري/عن بعد • مدة اللقاء • ما يُسلّم للعميلة",
+      "service_field_notes_ar": "عدد القطع أو الساعات • نطاق الجلسة",
+      "suggested_copy_ar": "اكتشفي تنسيقات جديدة من قطع خزانتك."
+    },
+    {
+      "id": "S054",
+      "domain": "beauty_and_style",
+      "group_ar": "التفصيل والتعديلات",
+      "name_ar": "تعديل فستان",
+      "provider_type_ids": [
+        "AT"
+      ],
+      "booking_mode_note_ar": "طلب وتحديد موعد",
+      "group_field_notes_ar": "نوع القطعة • موعد القياس • تاريخ التسليم",
+      "service_field_notes_ar": "نوع التعديل • عدد البروفات",
+      "suggested_copy_ar": "حددي التعديلات واحجزي بروفة الفستان."
+    },
+    {
+      "id": "S055",
+      "domain": "beauty_and_style",
+      "group_ar": "التفصيل والتعديلات",
+      "name_ar": "تفصيل عباءة",
+      "provider_type_ids": [
+        "AT"
+      ],
+      "booking_mode_note_ar": "طلب وتحديد موعد",
+      "group_field_notes_ar": "نوع القطعة • موعد القياس • تاريخ التسليم",
+      "service_field_notes_ar": "من يوفّر القماش؟ • عدد البروفات",
+      "suggested_copy_ar": "اختاري قصة العباءة واتّفقي على تفاصيل القياس والتسليم."
+    },
+    {
+      "id": "S056",
+      "domain": "occasions",
+      "group_ar": "القاعات وأماكن الاحتفال",
+      "name_ar": "حجز قاعة مناسبة",
+      "provider_type_ids": [
+        "VN"
+      ],
+      "booking_mode_note_ar": "طلب حجز أو عرض سعر",
+      "group_field_notes_ar": "المدينة والموقع • السعة الدنيا والعليا • الفترات • مدة الاستخدام",
+      "service_field_notes_ar": "الحضور • التجهيزات المشمولة • دخول التجهيز والخروج",
+      "suggested_copy_ar": "اختاري قاعة تناسب عدد ضيفاتك ووقت احتفالك."
+    },
+    {
+      "id": "S057",
+      "domain": "occasions",
+      "group_ar": "القاعات وأماكن الاحتفال",
+      "name_ar": "باقة قاعة مع ضيافة",
+      "provider_type_ids": [
+        "VN"
+      ],
+      "booking_mode_note_ar": "طلب حجز أو عرض سعر",
+      "group_field_notes_ar": "المدينة والموقع • السعة الدنيا والعليا • الفترات • مدة الاستخدام",
+      "service_field_notes_ar": "سعر الضيفة الإضافية • عدد الضيفات المشمول • القائمة",
+      "suggested_copy_ar": "شوفي ما تجمعه باقة القاعة والضيافة في طلب واحد."
+    },
+    {
+      "id": "S058",
+      "domain": "occasions",
+      "group_ar": "القاعات وأماكن الاحتفال",
+      "name_ar": "حجز مساحة خارجية",
+      "provider_type_ids": [
+        "VN"
+      ],
+      "booking_mode_note_ar": "طلب حجز أو عرض سعر",
+      "group_field_notes_ar": "المدينة والموقع • السعة الدنيا والعليا • الفترات • مدة الاستخدام",
+      "service_field_notes_ar": "بديل الطقس • المساحة • التجهيزات",
+      "suggested_copy_ar": "تصفّحي المساحة الخارجية وخطة التجهيز ليومك."
+    },
+    {
+      "id": "S059",
+      "domain": "occasions",
+      "group_ar": "تنظيم وباقات حفلات",
+      "name_ar": "تخطيط وتنظيم كامل",
+      "provider_type_ids": [
+        "PL"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "نوع المناسبة • المدينة • عدد الضيفات • نطاق المسؤولية",
+      "service_field_notes_ar": "المهام المشمولة • الموردون المشمولون • مراحل التسليم",
+      "suggested_copy_ar": "من أول اختيار إلى يوم الحفل، حددي التفاصيل التي يتولّاها فريق التنظيم."
+    },
+    {
+      "id": "S060",
+      "domain": "occasions",
+      "group_ar": "تنظيم وباقات حفلات",
+      "name_ar": "تنسيق يوم المناسبة",
+      "provider_type_ids": [
+        "PL"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "نوع المناسبة • المدينة • عدد الضيفات • نطاق المسؤولية",
+      "service_field_notes_ar": "ساعات التغطية • عدد المنسقات • جدول اليوم",
+      "suggested_copy_ar": "خلّي فريق التنسيق يتابع تفاصيل يومك في الوقت المتفق عليه."
+    },
+    {
+      "id": "S061",
+      "domain": "occasions",
+      "group_ar": "تنظيم وباقات حفلات",
+      "name_ar": "تنسيق خطوبة منزلية",
+      "provider_type_ids": [
+        "PL"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "نوع المناسبة • المدينة • عدد الضيفات • نطاق المسؤولية",
+      "service_field_notes_ar": "مساحة الموقع • دخول الفريق • الخدمات المشمولة",
+      "suggested_copy_ar": "رتّبي خطوبتك في البيت بباقة تناسب المساحة وعدد الضيفات."
+    },
+    {
+      "id": "S062",
+      "domain": "occasions",
+      "group_ar": "الكوش والمداخل",
+      "name_ar": "تنسيق كوشة",
+      "provider_type_ids": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "booking_mode_note_ar": "باقة أو عرض سعر",
+      "group_field_notes_ar": "الموقع • الأبعاد • التركيب والفك • نافذة الدخول",
+      "service_field_notes_ar": "عرض المنصة وارتفاعها • الألوان • الإضاءة المشمولة",
+      "suggested_copy_ar": "اختاري كوشة تعكس ذوقك وتناسب مساحة القاعة."
+    },
+    {
+      "id": "S063",
+      "domain": "occasions",
+      "group_ar": "الكوش والمداخل",
+      "name_ar": "تنسيق مدخل",
+      "provider_type_ids": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "booking_mode_note_ar": "باقة أو عرض سعر",
+      "group_field_notes_ar": "الموقع • الأبعاد • التركيب والفك • نافذة الدخول",
+      "service_field_notes_ar": "أبعاد المدخل • لوحة أسماء أو ورد",
+      "suggested_copy_ar": "استقبلي ضيفاتك بمدخل مصمّم للمناسبة."
+    },
+    {
+      "id": "S064",
+      "domain": "occasions",
+      "group_ar": "تنسيق الطاولات والورد والديكور",
+      "name_ar": "تنسيق طاولات",
+      "provider_type_ids": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "الموقع • لوحة الألوان • تاريخ التجهيز والفك",
+      "service_field_notes_ar": "عدد الطاولات وأشكالها • المحتويات لكل طاولة",
+      "suggested_copy_ar": "اختاري تنسيقًا يجمع طاولات الحفل على طابع واحد."
+    },
+    {
+      "id": "S065",
+      "domain": "occasions",
+      "group_ar": "تنسيق الطاولات والورد والديكور",
+      "name_ar": "تنسيق ورد للموقع",
+      "provider_type_ids": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "الموقع • لوحة الألوان • تاريخ التجهيز والفك",
+      "service_field_notes_ar": "طبيعي أو صناعي • عدد الترتيبات • بدائل موسمية",
+      "suggested_copy_ar": "حددي ألوان الورد والأركان التي تريدين تزيينها."
+    },
+    {
+      "id": "S066",
+      "domain": "occasions",
+      "group_ar": "تنسيق الطاولات والورد والديكور",
+      "name_ar": "باقة عروس حسب الطلب",
+      "provider_type_ids": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "الموقع • لوحة الألوان • تاريخ التجهيز والفك",
+      "service_field_notes_ar": "شكل الباقة • نوع الورد • وقت التسليم",
+      "suggested_copy_ar": "خصّصي باقة ورد ترافق إطلالتك في يوم المناسبة."
+    },
+    {
+      "id": "S067",
+      "domain": "occasions",
+      "group_ar": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "name_ar": "استقبال الضيفات",
+      "provider_type_ids": [
+        "HO",
+        "PL"
+      ],
+      "booking_mode_note_ar": "بالساعة أو بالفريق",
+      "group_field_notes_ar": "عدد الفريق • عدد الضيفات • وقت البداية والنهاية • الموقع",
+      "service_field_notes_ar": "مدخل أو أكثر • المهام • آلية قائمة الدخول",
+      "suggested_copy_ar": "اختاري فريق استقبال يرحّب بضيفاتك وينظّم دخولهن."
+    },
+    {
+      "id": "S068",
+      "domain": "occasions",
+      "group_ar": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "name_ar": "صبّ قهوة وخدمة ضيافة",
+      "provider_type_ids": [
+        "HO",
+        "PL"
+      ],
+      "booking_mode_note_ar": "بالساعة أو بالفريق",
+      "group_field_notes_ar": "عدد الفريق • عدد الضيفات • وقت البداية والنهاية • الموقع",
+      "service_field_notes_ar": "من يوفّر القهوة والأواني؟ • عدد الصبّابات",
+      "suggested_copy_ar": "رتّبي خدمة القهوة بوضوح: الفريق، الساعات وما يشمله العرض."
+    },
+    {
+      "id": "S069",
+      "domain": "occasions",
+      "group_ar": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "name_ar": "إشراف صالة وضيافة",
+      "provider_type_ids": [
+        "HO",
+        "PL"
+      ],
+      "booking_mode_note_ar": "بالساعة أو بالفريق",
+      "group_field_notes_ar": "عدد الفريق • عدد الضيفات • وقت البداية والنهاية • الموقع",
+      "service_field_notes_ar": "توزيع الفريق • المهام ضمن القاعة",
+      "suggested_copy_ar": "حددي من يتابع الطاولات وفريق التقديم أثناء الحفل."
+    },
+    {
+      "id": "S070",
+      "domain": "occasions",
+      "group_ar": "بوفيه وأركان الطعام والحلويات",
+      "name_ar": "بوفيه مناسبات",
+      "provider_type_ids": [
+        "CA",
+        "VN"
+      ],
+      "booking_mode_note_ar": "للضيفة أو للباقة",
+      "group_field_notes_ar": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "service_field_notes_ar": "الأصناف • عدد الأطباق • الطاقم والأدوات",
+      "suggested_copy_ar": "اختاري قائمة ضيافة تناسب عدد ضيفاتك وطابع الحفل."
+    },
+    {
+      "id": "S071",
+      "domain": "occasions",
+      "group_ar": "بوفيه وأركان الطعام والحلويات",
+      "name_ar": "ركن قهوة أو مشروبات",
+      "provider_type_ids": [
+        "CA",
+        "VN"
+      ],
+      "booking_mode_note_ar": "للضيفة أو للباقة",
+      "group_field_notes_ar": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "service_field_notes_ar": "عدد الأكواب • طاقم الباريستا • الأجهزة",
+      "suggested_copy_ar": "أضيفي ركنًا للمشروبات وحددي ما يُحضّر في الموقع."
+    },
+    {
+      "id": "S072",
+      "domain": "occasions",
+      "group_ar": "بوفيه وأركان الطعام والحلويات",
+      "name_ar": "ركن حلويات",
+      "provider_type_ids": [
+        "CA",
+        "VN"
+      ],
+      "booking_mode_note_ar": "للضيفة أو للباقة",
+      "group_field_notes_ar": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "service_field_notes_ar": "عدد القطع أو الضيفات • العرض والأدوات",
+      "suggested_copy_ar": "نسّقي طاولة حلويات بأصناف تناسب ضيافتك."
+    },
+    {
+      "id": "S073",
+      "domain": "occasions",
+      "group_ar": "بوفيه وأركان الطعام والحلويات",
+      "name_ar": "كيكة مناسبة مخصّصة",
+      "provider_type_ids": [
+        "CA",
+        "VN"
+      ],
+      "booking_mode_note_ar": "للضيفة أو للباقة",
+      "group_field_notes_ar": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "service_field_notes_ar": "عدد الحصص • النكهة • الطبقات • التوصيل",
+      "suggested_copy_ar": "اختاري نكهة الكيكة وتصميمها وعدد الحصص."
+    },
+    {
+      "id": "S074",
+      "domain": "occasions",
+      "group_ar": "بوفيه وأركان الطعام والحلويات",
+      "name_ar": "ضيافة سعودية",
+      "provider_type_ids": [
+        "CA",
+        "VN"
+      ],
+      "booking_mode_note_ar": "للضيفة أو للباقة",
+      "group_field_notes_ar": "المدينة • عدد الضيفات • الحد الأدنى • وقت التجهيز • المكونات ومسببات الحساسية بحسب الصنف",
+      "service_field_notes_ar": "القائمة: قهوة وتمور أو غيرها • الكمية • شمول التقديم",
+      "suggested_copy_ar": "اختاري أصناف الضيافة السعوديّة وطريقة تقديمها."
+    },
+    {
+      "id": "S075",
+      "domain": "occasions",
+      "group_ar": "التصوير وتغطية الحفل",
+      "name_ar": "تصوير فوتوغرافي",
+      "provider_type_ids": [
+        "PH"
+      ],
+      "booking_mode_note_ar": "باقة أو بالساعات",
+      "group_field_notes_ar": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "service_field_notes_ar": "عدد الصور المعدّلة • عدد المصوّرات • طريقة التسليم",
+      "suggested_copy_ar": "اختاري ساعات التصوير وعدد الصور التي تستلمينها."
+    },
+    {
+      "id": "S076",
+      "domain": "occasions",
+      "group_ar": "التصوير وتغطية الحفل",
+      "name_ar": "فيديو مناسبة",
+      "provider_type_ids": [
+        "PH"
+      ],
+      "booking_mode_note_ar": "باقة أو بالساعات",
+      "group_field_notes_ar": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "service_field_notes_ar": "مدة الفيلم النهائي • شكل المونتاج • عدد المصوّرات",
+      "suggested_copy_ar": "حددي اللحظات التي تريدين جمعها في فيلم المناسبة."
+    },
+    {
+      "id": "S077",
+      "domain": "occasions",
+      "group_ar": "التصوير وتغطية الحفل",
+      "name_ar": "تصوير فوري أو كشك صور",
+      "provider_type_ids": [
+        "PH"
+      ],
+      "booking_mode_note_ar": "باقة أو بالساعات",
+      "group_field_notes_ar": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "service_field_notes_ar": "عدد الطبعات • ساعات التشغيل • تصميم الإطار",
+      "suggested_copy_ar": "أضيفي ركن صور فورية يحمل طابع مناسبتك."
+    },
+    {
+      "id": "S078",
+      "domain": "occasions",
+      "group_ar": "التصوير وتغطية الحفل",
+      "name_ar": "تغطية قصيرة للجوال",
+      "provider_type_ids": [
+        "PH"
+      ],
+      "booking_mode_note_ar": "باقة أو بالساعات",
+      "group_field_notes_ar": "الموقع والتاريخ • زمن التغطية • خصوصية التصوير والمشاركة • مهلة التسليم",
+      "service_field_notes_ar": "عدد المقاطع • اتجاه الفيديو • التسليم والمشاركة بإذن",
+      "suggested_copy_ar": "اختاري مقاطع قصيرة توثّق تفاصيل يومك بطريقتك."
+    },
+    {
+      "id": "S079",
+      "domain": "occasions",
+      "group_ar": "تجهيزات الصوت والإضاءة",
+      "name_ar": "نظام صوت للحفل",
+      "provider_type_ids": [
+        "AV"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "service_field_notes_ar": "عدد السماعات والميكروفونات • متطلبات الكهرباء",
+      "suggested_copy_ar": "اختاري تجهيز الصوت المناسب لمساحة الحفل."
+    },
+    {
+      "id": "S080",
+      "domain": "occasions",
+      "group_ar": "تجهيزات الصوت والإضاءة",
+      "name_ar": "إضاءة القاعة والمنصة",
+      "provider_type_ids": [
+        "AV"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "service_field_notes_ar": "مناطق الإضاءة • الألوان • نقاط الكهرباء",
+      "suggested_copy_ar": "حددي أجواء القاعة ومناطق الإضاءة مع الفريق."
+    },
+    {
+      "id": "S081",
+      "domain": "occasions",
+      "group_ar": "تجهيزات الصوت والإضاءة",
+      "name_ar": "تشغيل صوت وزفّة",
+      "provider_type_ids": [
+        "AV"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "service_field_notes_ar": "قائمة المقاطع المصرح بها • توقيت الزفّة • البروفة",
+      "suggested_copy_ar": "نسّقي إشارة دخولك وتوقيت الزفّة مع مشغّل الصوت."
+    },
+    {
+      "id": "S082",
+      "domain": "occasions",
+      "group_ar": "تجهيزات الصوت والإضاءة",
+      "name_ar": "شاشات عرض",
+      "provider_type_ids": [
+        "AV"
+      ],
+      "booking_mode_note_ar": "عرض سعر أو باقة",
+      "group_field_notes_ar": "نوع القاعة • ساعات التشغيل • التركيب والفك • الفني المشمول",
+      "service_field_notes_ar": "العدد والأبعاد • مصدر العرض • مكان التركيب",
+      "suggested_copy_ar": "اعرضي صور المناسبة على شاشة تناسب مساحة القاعة."
+    },
+    {
+      "id": "S083",
+      "domain": "occasions",
+      "group_ar": "تأجير الأثاث والتجهيزات",
+      "name_ar": "تأجير طاولات وكراسي",
+      "provider_type_ids": [
+        "RE"
+      ],
+      "booking_mode_note_ar": "إيجار لمدة محددة",
+      "group_field_notes_ar": "بداية ونهاية الإيجار • الكمية المتاحة • التوصيل والاستلام • التأمين إن طُلب",
+      "service_field_notes_ar": "العدد لكل نوع • المقاسات • السعر للوحدة",
+      "suggested_copy_ar": "اختاري الطاولات والكراسي المناسبة لتوزيع ضيفاتك."
+    },
+    {
+      "id": "S084",
+      "domain": "occasions",
+      "group_ar": "تأجير الأثاث والتجهيزات",
+      "name_ar": "تأجير جلسات وكنب",
+      "provider_type_ids": [
+        "RE"
+      ],
+      "booking_mode_note_ar": "إيجار لمدة محددة",
+      "group_field_notes_ar": "بداية ونهاية الإيجار • الكمية المتاحة • التوصيل والاستلام • التأمين إن طُلب",
+      "service_field_notes_ar": "عدد القطع ومقاساتها • الأقمشة • حالة التسليم",
+      "suggested_copy_ar": "صمّمي ركن جلوس يتناسب مع ألوان المكان."
+    },
+    {
+      "id": "S085",
+      "domain": "occasions",
+      "group_ar": "تأجير الأثاث والتجهيزات",
+      "name_ar": "تأجير أدوات ضيافة",
+      "provider_type_ids": [
+        "RE"
+      ],
+      "booking_mode_note_ar": "إيجار لمدة محددة",
+      "group_field_notes_ar": "بداية ونهاية الإيجار • الكمية المتاحة • التوصيل والاستلام • التأمين إن طُلب",
+      "service_field_notes_ar": "الوحدات في الطقم • العدد • سياسة الكسر",
+      "suggested_copy_ar": "رتّبي أدوات التقديم بحسب عدد الطاولات والضيفات."
+    },
+    {
+      "id": "S086",
+      "domain": "occasions",
+      "group_ar": "الدعوات وتنظيم الحضور",
+      "name_ar": "دعوة رقمية",
+      "provider_type_ids": [
+        "IN",
+        "PL"
+      ],
+      "booking_mode_note_ar": "طلب تصميم أو عرض سعر",
+      "group_field_notes_ar": "نوع المناسبة • تاريخ التسليم • عدد التعديلات",
+      "service_field_notes_ar": "صورة أو فيديو أو رابط • اللغة • بيانات المناسبة",
+      "suggested_copy_ar": "صمّمي دعوة تحمل اسم المناسبة وتفاصيلها."
+    },
+    {
+      "id": "S087",
+      "domain": "occasions",
+      "group_ar": "الدعوات وتنظيم الحضور",
+      "name_ar": "دعوات مطبوعة",
+      "provider_type_ids": [
+        "IN",
+        "PL"
+      ],
+      "booking_mode_note_ar": "طلب تصميم أو عرض سعر",
+      "group_field_notes_ar": "نوع المناسبة • تاريخ التسليم • عدد التعديلات",
+      "service_field_notes_ar": "العدد • الورق والتشطيب • التوصيل",
+      "suggested_copy_ar": "اختاري ملمس الورق وتصميم الدعوات المطبوعة."
+    },
+    {
+      "id": "S088",
+      "domain": "occasions",
+      "group_ar": "الدعوات وتنظيم الحضور",
+      "name_ar": "إدارة تأكيد الحضور",
+      "provider_type_ids": [
+        "IN",
+        "PL"
+      ],
+      "booking_mode_note_ar": "طلب تصميم أو عرض سعر",
+      "group_field_notes_ar": "نوع المناسبة • تاريخ التسليم • عدد التعديلات",
+      "service_field_notes_ar": "عدد المدعوات • قناة الرد • صلاحيات الاطلاع • مدة الاحتفاظ",
+      "suggested_copy_ar": "تابعي ردود المدعوات وحددي من يطّلع على القائمة."
+    },
+    {
+      "id": "S089",
+      "domain": "occasions",
+      "group_ar": "الهدايا والتوزيعات المخصّصة",
+      "name_ar": "توزيعات بأسماء الضيفات",
+      "provider_type_ids": [
+        "GF"
+      ],
+      "booking_mode_note_ar": "طلب تنفيذ بالكمية",
+      "group_field_notes_ar": "العدد • الحد الأدنى • مهلة التنفيذ • موعد التسليم",
+      "service_field_notes_ar": "طريقة التخصيص • عينة أو اعتماد تصميم • التغليف",
+      "suggested_copy_ar": "اجعلي لكل ضيفة تذكارًا يحمل اسمها."
+    },
+    {
+      "id": "S090",
+      "domain": "occasions",
+      "group_ar": "الهدايا والتوزيعات المخصّصة",
+      "name_ar": "تغليف هدايا المناسبة",
+      "provider_type_ids": [
+        "GF"
+      ],
+      "booking_mode_note_ar": "طلب تنفيذ بالكمية",
+      "group_field_notes_ar": "العدد • الحد الأدنى • مهلة التنفيذ • موعد التسليم",
+      "service_field_notes_ar": "مصدر الهدية • خامة التغليف • بطاقة الإهداء",
+      "suggested_copy_ar": "اختاري التغليف والبطاقة ليصل الإهداء بلمستك."
+    },
+    {
+      "id": "S091",
+      "domain": "occasions",
+      "group_ar": "الهدايا والتوزيعات المخصّصة",
+      "name_ar": "تجهيز ركن توزيعات",
+      "provider_type_ids": [
+        "GF"
+      ],
+      "booking_mode_note_ar": "طلب تنفيذ بالكمية",
+      "group_field_notes_ar": "العدد • الحد الأدنى • مهلة التنفيذ • موعد التسليم",
+      "service_field_notes_ar": "مساحة الركن • عدد القطع • شمول التركيب",
+      "suggested_copy_ar": "اجمعي توزيعات الحفل في ركن يناسب تصميم المكان."
+    },
+    {
+      "id": "S092",
+      "domain": "occasions",
+      "group_ar": "أركان العطور والبخور",
+      "name_ar": "ركن بخور",
+      "provider_type_ids": [
+        "PF"
+      ],
+      "booking_mode_note_ar": "بالركن أو بالساعات",
+      "group_field_notes_ar": "المدة • عدد الضيفات • مساحة الركن • الطاقم",
+      "service_field_notes_ar": "أنواع البخور • السماح باستخدامه في الموقع • التهوية",
+      "suggested_copy_ar": "أضيفي ركن بخور بالتنسيق مع القاعة."
+    },
+    {
+      "id": "S093",
+      "domain": "occasions",
+      "group_ar": "أركان العطور والبخور",
+      "name_ar": "ركن عطور للضيفات",
+      "provider_type_ids": [
+        "PF"
+      ],
+      "booking_mode_note_ar": "بالركن أو بالساعات",
+      "group_field_notes_ar": "المدة • عدد الضيفات • مساحة الركن • الطاقم",
+      "service_field_notes_ar": "الروائح المتاحة • عدد العينات أو العبوات",
+      "suggested_copy_ar": "اختاري الروائح وطريقة تقديمها للضيفات."
+    },
+    {
+      "id": "S094",
+      "domain": "occasions",
+      "group_ar": "تجهيز العروس",
+      "name_ar": "مرافقة وتجهيز العروس",
+      "provider_type_ids": [
+        "BR",
+        "PL"
+      ],
+      "booking_mode_note_ar": "بالساعات أو بالباقة",
+      "group_field_notes_ar": "الموقع • وقت الجاهزية • نطاق المرافقة • ساعات الحضور",
+      "service_field_notes_ar": "المهام • من يقدّم الشعر والمكياج إن شملا؟",
+      "suggested_copy_ar": "اختاري من ترافقك وتنسّق تفاصيل جاهزيتك يوم المناسبة."
+    },
+    {
+      "id": "S095",
+      "domain": "occasions",
+      "group_ar": "تجهيز العروس",
+      "name_ar": "تنسيق جدول العروس",
+      "provider_type_ids": [
+        "BR",
+        "PL"
+      ],
+      "booking_mode_note_ar": "بالساعات أو بالباقة",
+      "group_field_notes_ar": "الموقع • وقت الجاهزية • نطاق المرافقة • ساعات الحضور",
+      "service_field_notes_ar": "المواعيد المسلّمة من العروس • آلية التنسيق",
+      "suggested_copy_ar": "اجمعي مواعيد الشعر والمكياج والتصوير في جدول واحد."
+    },
+    {
+      "id": "S096",
+      "domain": "occasions",
+      "group_ar": "تجارب الحفل",
+      "name_ar": "دفتر ضيوف تفاعلي",
+      "provider_type_ids": [
+        "PH",
+        "PL"
+      ],
+      "booking_mode_note_ar": "بالساعات أو بالركن",
+      "group_field_notes_ar": "مساحة الركن • الساعات • عدد المشرفين • التوصيل والتركيب",
+      "service_field_notes_ar": "كتابي أو صوتي • طريقة التسليم • خصوصية التسجيل",
+      "suggested_copy_ar": "اجمعي كلمات ضيفاتك في تذكار يبقى بعد الحفل."
+    },
+    {
+      "id": "S097",
+      "domain": "occasions",
+      "group_ar": "تجارب الحفل",
+      "name_ar": "محطة تصوير تفاعلية",
+      "provider_type_ids": [
+        "PH",
+        "PL"
+      ],
+      "booking_mode_note_ar": "بالساعات أو بالركن",
+      "group_field_notes_ar": "مساحة الركن • الساعات • عدد المشرفين • التوصيل والتركيب",
+      "service_field_notes_ar": "نوع التجربة • عدد المشاركات • تسليم الملفات",
+      "suggested_copy_ar": "أضيفي تجربة تصوير قصيرة ودعي ضيفاتك يحتفظن بذكراها."
+    }
+  ]
+}

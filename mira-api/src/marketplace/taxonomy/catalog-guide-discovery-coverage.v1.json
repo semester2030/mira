@@ -1,0 +1,877 @@
+{
+  "schemaVersion": 1,
+  "generatedFor": "RC2",
+  "summary": {
+    "direct_icon": 4,
+    "group_under_leaf": 0,
+    "leaf_missing_in_taxonomy": 0,
+    "unbound": 70,
+    "total": 74
+  },
+  "services": [
+    {
+      "serviceId": "S025",
+      "nameAr": "قص شعر",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري القَصّة وراجعي ما يشمله الموعد."
+    },
+    {
+      "serviceId": "S026",
+      "nameAr": "تصفيف واستشوار",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري التصفيف الذي يناسب يومك."
+    },
+    {
+      "serviceId": "S027",
+      "nameAr": "تسريحة مناسبة",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "احفظي إلهامك واختاري تسريحتك للمناسبة."
+    },
+    {
+      "serviceId": "S028",
+      "nameAr": "صبغة جذور",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "جدّدي لون الجذور بموعد واضح التفاصيل."
+    },
+    {
+      "serviceId": "S029",
+      "nameAr": "صبغ شعر أو خصل",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "تصفّحي تقنيات اللون التي تقدّمها المصففة."
+    },
+    {
+      "serviceId": "S030",
+      "nameAr": "جلسة عناية بالشعر",
+      "groupAr": "الشعر",
+      "providerTypeIds": [
+        "SA",
+        "HR"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري جلسة العناية وما تحبين إضافته إليها."
+    },
+    {
+      "serviceId": "S031",
+      "nameAr": "مكياج ناعم",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "إطلالة هادئة تختارين تفاصيلها مع خبيرة المكياج."
+    },
+    {
+      "serviceId": "S032",
+      "nameAr": "مكياج سهرة",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "نسّقي مكياج السهرة مع فستانك وألوانك المفضلة."
+    },
+    {
+      "serviceId": "S033",
+      "nameAr": "مكياج عروس",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "من البروفة إلى وقت الزفّة، اختاري ما تحتاجينه ليومك."
+    },
+    {
+      "serviceId": "S034",
+      "nameAr": "بروفة مكياج",
+      "groupAr": "المكياج",
+      "providerTypeIds": [
+        "SA",
+        "MU"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "جرّبي أسلوب المكياج قبل موعد المناسبة."
+    },
+    {
+      "serviceId": "S035",
+      "nameAr": "مانيكير",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري العناية واللون لليدين."
+    },
+    {
+      "serviceId": "S036",
+      "nameAr": "بديكير",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "حددي تفاصيل عناية القدمين قبل الحجز."
+    },
+    {
+      "serviceId": "S037",
+      "nameAr": "تركيب أظافر",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري الطول والشكل من أعمال المتخصصة."
+    },
+    {
+      "serviceId": "S038",
+      "nameAr": "تصميم أظافر",
+      "groupAr": "الأظافر",
+      "providerTypeIds": [
+        "SA",
+        "NA"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري رسمة تحبينها وحددي تفاصيل تنفيذها."
+    },
+    {
+      "serviceId": "S039",
+      "nameAr": "تركيب رموش",
+      "groupAr": "الرموش والحواجب",
+      "providerTypeIds": [
+        "SA",
+        "LB"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري كثافة الرموش والأسلوب الذي تفضلينه."
+    },
+    {
+      "serviceId": "S040",
+      "nameAr": "رفع رموش",
+      "groupAr": "الرموش والحواجب",
+      "providerTypeIds": [
+        "SA",
+        "LB"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "تعرّفي على خطوات الخدمة كما تصفها المتخصصة."
+    },
+    {
+      "serviceId": "S041",
+      "nameAr": "تنسيق حواجب",
+      "groupAr": "الرموش والحواجب",
+      "providerTypeIds": [
+        "SA",
+        "LB"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "حددي أسلوب ترتيب الحواجب مع المتخصصة."
+    },
+    {
+      "serviceId": "S098",
+      "nameAr": "تقشير تجميلي سطحي للوجه",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "taxonomyLeafId": "beauty.face_care.peel",
+      "bind": "direct_icon",
+      "phraseSampleAr": "اطّلعي على مستحضر التقشير وخطوات الجلسة قبل اختيار موعدك."
+    },
+    {
+      "serviceId": "S042",
+      "nameAr": "تنظيف تجميلي سطحي",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "taxonomyLeafId": "beauty.face_care.cleanse",
+      "bind": "direct_icon",
+      "phraseSampleAr": "تعرّفي على خطوات التنظيف قبل اختيار موعدك."
+    },
+    {
+      "serviceId": "S043",
+      "nameAr": "ترطيب وماسك",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "taxonomyLeafId": "beauty.face_care.hydrate",
+      "bind": "direct_icon",
+      "phraseSampleAr": "اختاري جلسة ترطيب تتناسب مع وقتك وتفضيلاتك."
+    },
+    {
+      "serviceId": "S044",
+      "nameAr": "عناية قبل المكياج",
+      "groupAr": "العناية بالبشرة",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "taxonomyLeafId": "beauty.face_care.pre_makeup",
+      "bind": "direct_icon",
+      "phraseSampleAr": "جهّزي إطلالتك بجلسة عناية تسبق المكياج."
+    },
+    {
+      "serviceId": "S045",
+      "nameAr": "إزالة بالشمع أو الحلاوة",
+      "groupAr": "إزالة الشعر غير الطبية",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري المنطقة والطريقة التي تفضلينها."
+    },
+    {
+      "serviceId": "S046",
+      "nameAr": "إزالة بالخيط",
+      "groupAr": "إزالة الشعر غير الطبية",
+      "providerTypeIds": [
+        "SA",
+        "BC"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "راجعي المناطق المتاحة وحددي موعدك."
+    },
+    {
+      "serviceId": "S047",
+      "nameAr": "حمام مغربي",
+      "groupAr": "السبا والعناية بالجسم",
+      "providerTypeIds": [
+        "SP"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري طقوس الحمام المغربي ووقتها."
+    },
+    {
+      "serviceId": "S048",
+      "nameAr": "جلسة استرخاء غير علاجية",
+      "groupAr": "السبا والعناية بالجسم",
+      "providerTypeIds": [
+        "SP"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "خصّصي وقتًا للاسترخاء واختاري تفاصيل تجربتك."
+    },
+    {
+      "serviceId": "S049",
+      "nameAr": "عناية وتقشير للجسم",
+      "groupAr": "السبا والعناية بالجسم",
+      "providerTypeIds": [
+        "SP"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اطّلعي على خطوات العناية بالجسم قبل الحجز."
+    },
+    {
+      "serviceId": "S050",
+      "nameAr": "نقش حناء فردي",
+      "groupAr": "الحناء والنقش",
+      "providerTypeIds": [
+        "HN",
+        "SA"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري نقشتك من نماذج أعمال النقّاشة."
+    },
+    {
+      "serviceId": "S051",
+      "nameAr": "ركن حناء للمناسبة",
+      "groupAr": "الحناء والنقش",
+      "providerTypeIds": [
+        "HN",
+        "SA"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "أضيفي ركن حناء لضيوفك واختاري ساعات حضوره."
+    },
+    {
+      "serviceId": "S052",
+      "nameAr": "تنسيق إطلالة مناسبة",
+      "groupAr": "تنسيق الإطلالة",
+      "providerTypeIds": [
+        "ST"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اجمعي الفستان والإكسسوارات في إطلالة واحدة."
+    },
+    {
+      "serviceId": "S053",
+      "nameAr": "تنسيق خزانة",
+      "groupAr": "تنسيق الإطلالة",
+      "providerTypeIds": [
+        "ST"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اكتشفي تنسيقات جديدة من قطع خزانتك."
+    },
+    {
+      "serviceId": "S054",
+      "nameAr": "تعديل فستان",
+      "groupAr": "التفصيل والتعديلات",
+      "providerTypeIds": [
+        "AT"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "حددي التعديلات واحجزي بروفة الفستان."
+    },
+    {
+      "serviceId": "S055",
+      "nameAr": "تفصيل عباءة",
+      "groupAr": "التفصيل والتعديلات",
+      "providerTypeIds": [
+        "AT"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري قصة العباءة واتّفقي على تفاصيل القياس والتسليم."
+    },
+    {
+      "serviceId": "S056",
+      "nameAr": "حجز قاعة مناسبة",
+      "groupAr": "القاعات وأماكن الاحتفال",
+      "providerTypeIds": [
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري قاعة تناسب عدد ضيفاتك ووقت احتفالك."
+    },
+    {
+      "serviceId": "S057",
+      "nameAr": "باقة قاعة مع ضيافة",
+      "groupAr": "القاعات وأماكن الاحتفال",
+      "providerTypeIds": [
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "شوفي ما تجمعه باقة القاعة والضيافة في طلب واحد."
+    },
+    {
+      "serviceId": "S058",
+      "nameAr": "حجز مساحة خارجية",
+      "groupAr": "القاعات وأماكن الاحتفال",
+      "providerTypeIds": [
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "تصفّحي المساحة الخارجية وخطة التجهيز ليومك."
+    },
+    {
+      "serviceId": "S059",
+      "nameAr": "تخطيط وتنظيم كامل",
+      "groupAr": "تنظيم وباقات حفلات",
+      "providerTypeIds": [
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "من أول اختيار إلى يوم الحفل، حددي التفاصيل التي يتولّاها فريق التنظيم."
+    },
+    {
+      "serviceId": "S060",
+      "nameAr": "تنسيق يوم المناسبة",
+      "groupAr": "تنظيم وباقات حفلات",
+      "providerTypeIds": [
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "خلّي فريق التنسيق يتابع تفاصيل يومك في الوقت المتفق عليه."
+    },
+    {
+      "serviceId": "S061",
+      "nameAr": "تنسيق خطوبة منزلية",
+      "groupAr": "تنظيم وباقات حفلات",
+      "providerTypeIds": [
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "رتّبي خطوبتك في البيت بباقة تناسب المساحة وعدد الضيفات."
+    },
+    {
+      "serviceId": "S062",
+      "nameAr": "تنسيق كوشة",
+      "groupAr": "الكوش والمداخل",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري كوشة تعكس ذوقك وتناسب مساحة القاعة."
+    },
+    {
+      "serviceId": "S063",
+      "nameAr": "تنسيق مدخل",
+      "groupAr": "الكوش والمداخل",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "استقبلي ضيفاتك بمدخل مصمّم للمناسبة."
+    },
+    {
+      "serviceId": "S064",
+      "nameAr": "تنسيق طاولات",
+      "groupAr": "تنسيق الطاولات والورد والديكور",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري تنسيقًا يجمع طاولات الحفل على طابع واحد."
+    },
+    {
+      "serviceId": "S065",
+      "nameAr": "تنسيق ورد للموقع",
+      "groupAr": "تنسيق الطاولات والورد والديكور",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "حددي ألوان الورد والأركان التي تريدين تزيينها."
+    },
+    {
+      "serviceId": "S066",
+      "nameAr": "باقة عروس حسب الطلب",
+      "groupAr": "تنسيق الطاولات والورد والديكور",
+      "providerTypeIds": [
+        "DE",
+        "PL",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "خصّصي باقة ورد ترافق إطلالتك في يوم المناسبة."
+    },
+    {
+      "serviceId": "S067",
+      "nameAr": "استقبال الضيفات",
+      "groupAr": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "providerTypeIds": [
+        "HO",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري فريق استقبال يرحّب بضيفاتك وينظّم دخولهن."
+    },
+    {
+      "serviceId": "S068",
+      "nameAr": "صبّ قهوة وخدمة ضيافة",
+      "groupAr": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "providerTypeIds": [
+        "HO",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "رتّبي خدمة القهوة بوضوح: الفريق، الساعات وما يشمله العرض."
+    },
+    {
+      "serviceId": "S069",
+      "nameAr": "إشراف صالة وضيافة",
+      "groupAr": "الضيافة والاستقبال • صبّابات ومضيفات",
+      "providerTypeIds": [
+        "HO",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "حددي من يتابع الطاولات وفريق التقديم أثناء الحفل."
+    },
+    {
+      "serviceId": "S070",
+      "nameAr": "بوفيه مناسبات",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري قائمة ضيافة تناسب عدد ضيفاتك وطابع الحفل."
+    },
+    {
+      "serviceId": "S071",
+      "nameAr": "ركن قهوة أو مشروبات",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "أضيفي ركنًا للمشروبات وحددي ما يُحضّر في الموقع."
+    },
+    {
+      "serviceId": "S072",
+      "nameAr": "ركن حلويات",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "نسّقي طاولة حلويات بأصناف تناسب ضيافتك."
+    },
+    {
+      "serviceId": "S073",
+      "nameAr": "كيكة مناسبة مخصّصة",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري نكهة الكيكة وتصميمها وعدد الحصص."
+    },
+    {
+      "serviceId": "S074",
+      "nameAr": "ضيافة سعودية",
+      "groupAr": "بوفيه وأركان الطعام والحلويات",
+      "providerTypeIds": [
+        "CA",
+        "VN"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري أصناف الضيافة السعوديّة وطريقة تقديمها."
+    },
+    {
+      "serviceId": "S075",
+      "nameAr": "تصوير فوتوغرافي",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري ساعات التصوير وعدد الصور التي تستلمينها."
+    },
+    {
+      "serviceId": "S076",
+      "nameAr": "فيديو مناسبة",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "حددي اللحظات التي تريدين جمعها في فيلم المناسبة."
+    },
+    {
+      "serviceId": "S077",
+      "nameAr": "تصوير فوري أو كشك صور",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "أضيفي ركن صور فورية يحمل طابع مناسبتك."
+    },
+    {
+      "serviceId": "S078",
+      "nameAr": "تغطية قصيرة للجوال",
+      "groupAr": "التصوير وتغطية الحفل",
+      "providerTypeIds": [
+        "PH"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري مقاطع قصيرة توثّق تفاصيل يومك بطريقتك."
+    },
+    {
+      "serviceId": "S079",
+      "nameAr": "نظام صوت للحفل",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري تجهيز الصوت المناسب لمساحة الحفل."
+    },
+    {
+      "serviceId": "S080",
+      "nameAr": "إضاءة القاعة والمنصة",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "حددي أجواء القاعة ومناطق الإضاءة مع الفريق."
+    },
+    {
+      "serviceId": "S081",
+      "nameAr": "تشغيل صوت وزفّة",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "نسّقي إشارة دخولك وتوقيت الزفّة مع مشغّل الصوت."
+    },
+    {
+      "serviceId": "S082",
+      "nameAr": "شاشات عرض",
+      "groupAr": "تجهيزات الصوت والإضاءة",
+      "providerTypeIds": [
+        "AV"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اعرضي صور المناسبة على شاشة تناسب مساحة القاعة."
+    },
+    {
+      "serviceId": "S083",
+      "nameAr": "تأجير طاولات وكراسي",
+      "groupAr": "تأجير الأثاث والتجهيزات",
+      "providerTypeIds": [
+        "RE"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري الطاولات والكراسي المناسبة لتوزيع ضيفاتك."
+    },
+    {
+      "serviceId": "S084",
+      "nameAr": "تأجير جلسات وكنب",
+      "groupAr": "تأجير الأثاث والتجهيزات",
+      "providerTypeIds": [
+        "RE"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "صمّمي ركن جلوس يتناسب مع ألوان المكان."
+    },
+    {
+      "serviceId": "S085",
+      "nameAr": "تأجير أدوات ضيافة",
+      "groupAr": "تأجير الأثاث والتجهيزات",
+      "providerTypeIds": [
+        "RE"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "رتّبي أدوات التقديم بحسب عدد الطاولات والضيفات."
+    },
+    {
+      "serviceId": "S086",
+      "nameAr": "دعوة رقمية",
+      "groupAr": "الدعوات وتنظيم الحضور",
+      "providerTypeIds": [
+        "IN",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "صمّمي دعوة تحمل اسم المناسبة وتفاصيلها."
+    },
+    {
+      "serviceId": "S087",
+      "nameAr": "دعوات مطبوعة",
+      "groupAr": "الدعوات وتنظيم الحضور",
+      "providerTypeIds": [
+        "IN",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري ملمس الورق وتصميم الدعوات المطبوعة."
+    },
+    {
+      "serviceId": "S088",
+      "nameAr": "إدارة تأكيد الحضور",
+      "groupAr": "الدعوات وتنظيم الحضور",
+      "providerTypeIds": [
+        "IN",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "تابعي ردود المدعوات وحددي من يطّلع على القائمة."
+    },
+    {
+      "serviceId": "S089",
+      "nameAr": "توزيعات بأسماء الضيفات",
+      "groupAr": "الهدايا والتوزيعات المخصّصة",
+      "providerTypeIds": [
+        "GF"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اجعلي لكل ضيفة تذكارًا يحمل اسمها."
+    },
+    {
+      "serviceId": "S090",
+      "nameAr": "تغليف هدايا المناسبة",
+      "groupAr": "الهدايا والتوزيعات المخصّصة",
+      "providerTypeIds": [
+        "GF"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري التغليف والبطاقة ليصل الإهداء بلمستك."
+    },
+    {
+      "serviceId": "S091",
+      "nameAr": "تجهيز ركن توزيعات",
+      "groupAr": "الهدايا والتوزيعات المخصّصة",
+      "providerTypeIds": [
+        "GF"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اجمعي توزيعات الحفل في ركن يناسب تصميم المكان."
+    },
+    {
+      "serviceId": "S092",
+      "nameAr": "ركن بخور",
+      "groupAr": "أركان العطور والبخور",
+      "providerTypeIds": [
+        "PF"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "أضيفي ركن بخور بالتنسيق مع القاعة."
+    },
+    {
+      "serviceId": "S093",
+      "nameAr": "ركن عطور للضيفات",
+      "groupAr": "أركان العطور والبخور",
+      "providerTypeIds": [
+        "PF"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري الروائح وطريقة تقديمها للضيفات."
+    },
+    {
+      "serviceId": "S094",
+      "nameAr": "مرافقة وتجهيز العروس",
+      "groupAr": "تجهيز العروس",
+      "providerTypeIds": [
+        "BR",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اختاري من ترافقك وتنسّق تفاصيل جاهزيتك يوم المناسبة."
+    },
+    {
+      "serviceId": "S095",
+      "nameAr": "تنسيق جدول العروس",
+      "groupAr": "تجهيز العروس",
+      "providerTypeIds": [
+        "BR",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اجمعي مواعيد الشعر والمكياج والتصوير في جدول واحد."
+    },
+    {
+      "serviceId": "S096",
+      "nameAr": "دفتر ضيوف تفاعلي",
+      "groupAr": "تجارب الحفل",
+      "providerTypeIds": [
+        "PH",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "اجمعي كلمات ضيفاتك في تذكار يبقى بعد الحفل."
+    },
+    {
+      "serviceId": "S097",
+      "nameAr": "محطة تصوير تفاعلية",
+      "groupAr": "تجارب الحفل",
+      "providerTypeIds": [
+        "PH",
+        "PL"
+      ],
+      "taxonomyLeafId": null,
+      "bind": "unbound",
+      "phraseSampleAr": "أضيفي تجربة تصوير قصيرة ودعي ضيفاتك يحتفظن بذكراها."
+    }
+  ]
+}

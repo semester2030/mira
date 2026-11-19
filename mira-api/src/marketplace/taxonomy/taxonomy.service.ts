@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Optional } from '@nestjs/common';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -23,6 +23,7 @@ import {
 import { resolveBeautyIcon } from './beauty-icon-assets';
 import { resolveCatalogIcon } from './catalog-icon-assets';
 import { legacyBeautyCategoryFor } from './beauty-id-compat';
+import { CatalogGuideService } from './catalog-guide.service';
 
 type RegistrySnap = {
   fields: Record<string, { id?: string; filter?: string | null }>;
@@ -38,6 +39,13 @@ export class TaxonomyService implements OnModuleInit {
     bySubcategory: Record<string, Array<{ id: string; textAr: string }>>;
   } = { definitionsVersion: 0, bySubcategory: {} };
   private registrySnap: RegistrySnap = { fields: {}, profiles: [] };
+  private readonly catalogGuide: CatalogGuideService;
+
+  constructor(
+    @Optional() @Inject(CatalogGuideService) catalogGuide?: CatalogGuideService,
+  ) {
+    this.catalogGuide = catalogGuide ?? new CatalogGuideService();
+  }
 
   onModuleInit() {
     this.reload();
@@ -244,6 +252,25 @@ export class TaxonomyService implements OnModuleInit {
     for (const n of nodes) {
       const bag = this.phrases.bySubcategory[n.id];
       if (bag?.length) phraseBag[n.id] = bag.map((p) => ({ id: p.id, textAr: p.textAr }));
+    }
+    // Catalog guide (22×74) is the source of suggested phrases for mapped leaves.
+    try {
+      for (const svc of this.catalogGuide.listServices({ inScopeOnly: true })) {
+        const leaf = svc.taxonomyLeafId?.trim();
+        if (!leaf || !svc.suggestedPhrasesAr?.length) continue;
+        const existing = phraseBag[leaf] ? [...phraseBag[leaf]] : [];
+        const seen = new Set(existing.map((p) => p.textAr.trim()));
+        let i = 0;
+        for (const textAr of svc.suggestedPhrasesAr) {
+          const t = String(textAr || '').trim();
+          if (!t || seen.has(t)) continue;
+          seen.add(t);
+          existing.push({ id: `${svc.id}_p${++i}`, textAr: t });
+        }
+        if (existing.length) phraseBag[leaf] = existing;
+      }
+    } catch {
+      /* guide optional in unit contexts without JSON */
     }
     return {
       schemaVersion: doc.schemaVersion,

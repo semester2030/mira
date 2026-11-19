@@ -314,21 +314,16 @@ class _PetalState extends State<_Petal> {
               const SizedBox(height: 5),
               SizedBox(
                 width: widget.diameter,
-                height: widget.labelH,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Text(
-                    widget.title,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.visible,
-                    style: AppTypography.bodySmall.copyWith(
-                      fontSize: widget.font,
-                      height: 1.22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                child: Text(
+                  widget.title,
+                  textAlign: TextAlign.center,
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                  style: AppTypography.bodySmall.copyWith(
+                    fontSize: widget.font,
+                    height: 1.22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),

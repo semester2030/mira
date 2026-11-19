@@ -1,0 +1,634 @@
+commit d3aed5ab45768155eb84ff5edb4006dc6735ad17
+Author: FAYEZ2030 <semester-2030@outlook.com>
+Date:   Wed Nov 18 14:47:50 2026 +0300
+
+    fix(discover): stop blocking prefix seed; defer full fill until after open
+    
+    1714 awaited a 1MiB ensurePlayablePrefix inside resolvePlaySource and hid ~20s behind FIRST_BYTE_MS. Return the proxy immediately with a non-blocking kick, prioritize before prefix prefetch, and keep full ensureLocal until after first visible progress. Seek nudge now raises the progress floor so seek landing alone cannot count as firstFrame.
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+diff --git a/lib/features/marketplace/presentation/presentation/discover_video_disk_cache.dart b/lib/features/marketplace/presentation/presentation/discover_video_disk_cache.dart
+index e34bcb7..40f3cd7 100644
+--- a/lib/features/marketplace/presentation/presentation/discover_video_disk_cache.dart
++++ b/lib/features/marketplace/presentation/presentation/discover_video_disk_cache.dart
+@@ -676,30 +676,20 @@ class DiscoverVideoDiskCache {
+       return DiscoverPlaySource.file(complete, mediaId: mediaId, bytesOnDisk: len);
+     }
+ 
+-    // On-screen clip: seed a playable prefix BEFORE AVPlayer initialize races the
+-    // loopback proxy against the write lock (device T41: init≈3.0s while 1MiB fill
+-    // held the lock; firstFrameMs=4009). Neighbors stay non-blocking.
+-    const seedTarget = 1024 * 1024;
+-    var have = await bytesOnDiskFor(url);
+-    final knownTotal = _trustedLength[mediaId] ?? _knownLength[mediaId];
+-    final seedBytes = (knownTotal != null && knownTotal > 0)
+-        ? math.min(seedTarget, knownTotal)
+-        : seedTarget;
+-    if (claimPriority && have < seedBytes) {
+-      final seedSw = Stopwatch()..start();
+-      miraDiscoverLog(
+-        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_seed_start '
+-        'have=$have need=$seedBytes',
+-      );
+-      await ensurePlayablePrefix(url, needBytes: seedBytes);
+-      have = await bytesOnDiskFor(url);
++    // Never await a fixed byte target here — that blocked resolve for ~20s when
++    // the origin tail was slow/gated (1714 regression) while local prefix bytes
++    // were already servable via the proxy. Kick a non-blocking prefix fill for
++    // the on-screen clip; the proxy serves whatever is already on disk.
++    final have = await bytesOnDiskFor(url);
++    if (claimPriority && have < 1024 * 1024) {
+       miraDiscoverLog(
+-        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_seed_end '
+-        'have=$have elapsedMs=${seedSw.elapsedMilliseconds}',
++        'MIRA_DISCOVER_PHASE mediaId=$mediaId phase=prefix_kick '
++        'have=$have need=${1024 * 1024} blocking=0',
+       );
++      // ignore: discarded_futures
++      ensurePlayablePrefix(url, needBytes: 1024 * 1024);
+     }
+ 
+-    // Proxy serves the local prefix; callers [prefetch] for background full fill.
+     final port = await _ensureProxy();
+     final playUrl = Uri.parse('http://127.0.0.1:$port/play/$mediaId');
+     return DiscoverPlaySource.proxy(
+diff --git a/lib/features/marketplace/presentation/presentation/presentation_video_port.dart b/lib/features/marketplace/presentation/presentation/presentation_video_port.dart
+index 689e3b5..373606c 100644
+--- a/lib/features/marketplace/presentation/presentation/presentation_video_port.dart
++++ b/lib/features/marketplace/presentation/presentation/presentation_video_port.dart
+@@ -113,7 +113,7 @@ class AssetVideoPort extends PresentationVideoPort {
+   /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
+   static const String buildStamp = String.fromEnvironment(
+     'MIRA_BUILD',
+-    defaultValue: '2026111714',
++    defaultValue: '2026111715',
+   );
+ 
+   /// When non-null (unit tests), paths are passed straight to this factory and
+@@ -292,10 +292,17 @@ class AssetVideoPort extends PresentationVideoPort {
+       return VideoPlayerController.file(source.file!);
+     }
+     if (source.isProxy && source.uri != null) {
+-      // Active clip: full shared fill. Warm/neighbor: prefix only.
+-      cache.prefetch(assetPath, lowPriority: !fullFill);
++      // Device T41 (1713): active ensureLocal under the write lock overlapped
++      // AVPlayer.initialize (~3s). Kick prefix-only while the player opens;
++      // full object fill runs after first visible progress (prefetchDisk).
++      cache.prefetch(assetPath, lowPriority: true);
++      if (fullFill) {
++        phases?['fullFillDeferred'] = 1;
++      }
+       phases?['cacheSource'] = 4; // loopback proxy over partial/complete fill
+-      phases?['cacheBytes'] = source.bytesOnDisk;
++      phases?['cacheBytesAtOpen'] = source.bytesOnDisk;
++      // Keep cacheBytes as the open-time snapshot — never rewrite after the fact.
++      phases?['cacheBytes'] ??= source.bytesOnDisk;
+       _recordDiag({
+         'mediaId': source.mediaId,
+         'source': 'proxy_partial',
+@@ -303,6 +310,7 @@ class AssetVideoPort extends PresentationVideoPort {
+         'bytesDownloaded': 0,
+         'playUrl': source.uri.toString(),
+         'fullFill': fullFill ? 1 : 0,
++        'fullFillDeferred': fullFill ? 1 : 0,
+       });
+       return VideoPlayerController.networkUrl(source.uri!);
+     }
+@@ -650,9 +658,13 @@ class AssetVideoPort extends PresentationVideoPort {
+     await cutOutgoingAudio(nextMediaUrl: assetPath);
+     lastAttachPhases['audioCut'] = _msSince(settleStarted);
+     lastAttachPhases['prevPlayerId'] = _playerId(previous);
+-    // Active clip owns the full GET; neighbors stay prefix-only.
+-    prefetchDisk(assetPath);
++    lastAttachPhases['attemptId'] =
++        DateTime.now().toUtc().microsecondsSinceEpoch;
++    // Prioritize BEFORE any kick so this media is not treated as a neighbor.
++    // Prefix-only during open — full ensureLocal under the write lock raced
++    // AVPlayer.initialize on device T41 (~3s init / firstFrameMs=4009).
+     _diskCache?.prioritize(assetPath);
++    prefetchDisk(assetPath, lowPriority: true);
+     // Promote a finished .part before resolve so return-to-clip opens a file.
+     // ignore: discarded_futures
+     _diskCache?.finalizePartIfComplete(assetPath);
+@@ -812,8 +824,9 @@ class AssetVideoPort extends PresentationVideoPort {
+           _notify();
+           return;
+         }
+-        lastAttachPhases['initDone'] = _msSince(settleStarted);
+-        lastAttachPhases['firstByteProxy'] = lastAttachPhases['initDone'];
++        // First successful init only — reopen must not rewrite these fields.
++        lastAttachPhases['initDone'] ??= _msSince(settleStarted);
++        lastAttachPhases['firstByteProxy'] ??= lastAttachPhases['initDone'];
+         // Still count as warm/parked/prepared source if we reused the controller.
+         if (claimSource != 'cold') {
+           lastAttachPhases['source'] = switch (claimSource) {
+@@ -824,10 +837,10 @@ class AssetVideoPort extends PresentationVideoPort {
+           };
+         }
+       } else {
+-        // Already warm/parked — init was paid earlier; still stamp for comparison.
+-        lastAttachPhases['initStart'] = lastAttachPhases['warmClaimed'] ?? 0;
+-        lastAttachPhases['initDone'] = _msSince(settleStarted);
+-        lastAttachPhases['firstByteProxy'] = lastAttachPhases['initDone'];
++        // Already warm/parked — init was paid earlier; stamp once for comparison.
++        lastAttachPhases['initStart'] ??= lastAttachPhases['warmClaimed'] ?? 0;
++        lastAttachPhases['initDone'] ??= _msSince(settleStarted);
++        lastAttachPhases['firstByteProxy'] ??= lastAttachPhases['initDone'];
+       }
+       if (token != _generation || _released || _controller != controller) {
+         await _dropIfStale(controller, token);
+@@ -857,7 +870,7 @@ class AssetVideoPort extends PresentationVideoPort {
+       }
+       // Capture floor before play so parked/rewind clips must advance again after activate.
+       _progressFloor = controller.value.position;
+-      lastAttachPhases['playStart'] = _msSince(settleStarted);
++      lastAttachPhases['playStart'] ??= _msSince(settleStarted);
+       lastAttachPhases['posAtPlayMs'] = controller.value.position.inMilliseconds;
+       await controller.play();
+       if (token != _generation || _released || _controller != controller) {
+@@ -885,35 +898,31 @@ class AssetVideoPort extends PresentationVideoPort {
+             'MIRA_DISCOVER_AUDIO unmute_skipped playerId=${_playerId(controller)} '
+             'reason=not_active gen=$token live=$_generation '
+             'ctrlMatch=${identical(_controller, controller)} '
+-            'firstFrameMs=${lastAttachPhases['firstFrame']}',
++            'firstFrameMs=${lastAttachPhases['firstFrame']} '
++            'attempt=${lastAttachPhases['attemptId']}',
+           );
+           await _dropIfStale(controller, token);
+           return;
+         }
+-        final nextId = _playerId(controller);
+-        miraDiscoverLog(
+-          'MIRA_DISCOVER_AUDIO unmute_req playerId=$nextId '
+-          'at=${DateTime.now().toUtc().toIso8601String()}',
+-        );
+-        await controller.setVolume(_muted ? 0 : 1);
+-        lastAttachPhases['audioArmed'] = _msSince(settleStarted);
+-        lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
+-        lastAttachPhases['nextPlayerId'] = nextId;
+-        _recordDiag({
+-          'event': 'audio_armed',
+-          'offerId': slot.slideId,
+-          'mediaId': wantId,
+-          'playerId': nextId,
+-          'prevPlayerId': lastAttachPhases['prevPlayerId'],
+-          'firstFrameMs': lastAttachPhases['firstFrame'],
+-          'audioArmedMs': lastAttachPhases['audioArmed'],
+-          'audiblePlaying': audiblePlayingCount,
+-        });
+-        miraDiscoverLog(
+-          'MIRA_DISCOVER_SWIPE audio_armed mediaId=$wantId '
+-          'playerId=$nextId firstFrameMs=${lastAttachPhases['firstFrame']} '
+-          'audible=$audiblePlayingCount',
+-        );
++        // Prefer arming done in _markProgressIfVisible; fill gaps here.
++        if (lastAttachPhases['audioArmed'] == null && !_muted) {
++          final nextId = _playerId(controller);
++          miraDiscoverLog(
++            'MIRA_DISCOVER_AUDIO unmute_req playerId=$nextId '
++            'attempt=${lastAttachPhases['attemptId']} '
++            'at=${DateTime.now().toUtc().toIso8601String()}',
++          );
++          await controller.setVolume(1);
++          lastAttachPhases['audioArmed'] = _msSince(settleStarted);
++          lastAttachPhases['audiblePlaying'] = audiblePlayingCount;
++          lastAttachPhases['nextPlayerId'] = nextId;
++          miraDiscoverLog(
++            'MIRA_DISCOVER_SWIPE audio_armed mediaId=$wantId '
++            'playerId=$nextId firstFrameMs=${lastAttachPhases['firstFrame']} '
++            'audible=$audiblePlayingCount '
++            'attempt=${lastAttachPhases['attemptId']}',
++          );
++        }
+       } else if (!_canStart(controller, token)) {
+         await _dropIfStale(controller, token);
+         return;
+@@ -979,7 +988,25 @@ class AssetVideoPort extends PresentationVideoPort {
+           final target = (dur > Duration.zero && nudge >= dur)
+               ? Duration.zero
+               : nudge;
++          miraDiscoverLog(
++            'MIRA_DISCOVER_PHASE mediaId=${_mediaIdOf(assetPath)} '
++            'phase=seek_nudge_req attempt=${lastAttachPhases['attemptId']} '
++            'targetMs=${target.inMilliseconds} kind=${lastAttachPhases['seekNudgeKind']}',
++          );
+           await controller.seekTo(target);
++          // Seek itself moves position — raise the floor so firstFrame requires
++          // further playback progress, not the seek landing alone.
++          final afterSeek = controller.value.position;
++          if (afterSeek > _progressFloor) {
++            _progressFloor = afterSeek;
++          }
++          lastAttachPhases['seekDoneMs'] = _msSince(settleStarted);
++          lastAttachPhases['posAfterSeekMs'] = afterSeek.inMilliseconds;
++          miraDiscoverLog(
++            'MIRA_DISCOVER_PHASE mediaId=${_mediaIdOf(assetPath)} '
++            'phase=seek_nudge_done attempt=${lastAttachPhases['attemptId']} '
++            'posMs=${afterSeek.inMilliseconds}',
++          );
+           if (token != _generation || _released || _controller != controller) return;
+           await controller.play();
+           if (token != _generation || _released || _controller != controller) return;
+@@ -1029,9 +1056,16 @@ class AssetVideoPort extends PresentationVideoPort {
+               }
+               await fresh.setLooping(true);
+               await fresh.setVolume(0);
+-              lastAttachPhases['initDone'] = _msSince(settleStarted);
+-              lastAttachPhases['playStart'] = _msSince(settleStarted);
++              // Separate reopen timestamps — do not overwrite the original attempt.
++              lastAttachPhases['reopenInitDone'] = _msSince(settleStarted);
++              lastAttachPhases['reopenPlayStart'] = _msSince(settleStarted);
+               lastAttachPhases['reopened'] = 1;
++              lastAttachPhases['reopenPlayerId'] = _playerId(fresh);
++              miraDiscoverLog(
++                'MIRA_DISCOVER_PHASE mediaId=${_mediaIdOf(path)} '
++                'phase=stall_reopen attempt=${lastAttachPhases['attemptId']} '
++                'playerId=${lastAttachPhases['reopenPlayerId']}',
++              );
+               await fresh.play();
+               _notify();
+               _emitPlayback('started', positionMs: 0, offerId: slot.slideId, mediaUrl: path);
+@@ -1040,10 +1074,6 @@ class AssetVideoPort extends PresentationVideoPort {
+               while (DateTime.now().toUtc().isBefore(reopenDeadline)) {
+                 if (token != _generation || _released || _controller != fresh) return;
+                 if (_markProgressIfVisible(fresh, token, settleStarted, slot, path)) {
+-                  if (_canStart(fresh, token) && _hasVisibleProgress) {
+-                    await fresh.setVolume(_muted ? 0 : 1);
+-                    lastAttachPhases['audioArmed'] = _msSince(settleStarted);
+-                  }
+                   return;
+                 }
+                 await Future<void>.delayed(const Duration(milliseconds: 16));
+@@ -1142,27 +1172,61 @@ class AssetVideoPort extends PresentationVideoPort {
+       });
+       miraDiscoverLog(
+         'MIRA_DISCOVER_FF session=$sessionId transition=$_generation '
+-        'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
++        'attempt=${lastAttachPhases['attemptId']} build=$buildStamp '
++        'mediaId=${_mediaIdOf(assetPath)} '
+         'offer=${slot.slideId} playerId=${_playerId(controller)} firstFrameMs=$ms '
+         'source=${lastAttachPhases['source']} '
+         'cacheSource=${lastAttachPhases['cacheSource']} '
+         'cacheBytes=${lastAttachPhases['cacheBytes']} '
++        'cacheBytesAtOpen=${lastAttachPhases['cacheBytesAtOpen']} '
+         'audioCutMs=${lastAttachPhases['audioCut']} '
+         'audible=$audiblePlayingCount '
+         'initStart=${lastAttachPhases['initStart']} '
+         'initDone=${lastAttachPhases['initDone']} '
+         'playStart=${lastAttachPhases['playStart']} '
+         'resolveMs=${(lastAttachPhases['resolveDone'] ?? 0) - (lastAttachPhases['resolveStart'] ?? 0)} '
+-        'seekNudge=${lastAttachPhases['seekNudgeMs']}',
++        'seekNudge=${lastAttachPhases['seekNudgeMs']} '
++        'seekDone=${lastAttachPhases['seekDoneMs']} '
++        'posAfterSeek=${lastAttachPhases['posAfterSeekMs']} '
++        'reopened=${lastAttachPhases['reopened']}',
+       );
+       miraDiscoverLog(
+         'MIRA_DISCOVER_SWIPE settle session=$sessionId transition=$_generation '
+-        'build=$buildStamp mediaId=${_mediaIdOf(assetPath)} '
++        'attempt=${lastAttachPhases['attemptId']} build=$buildStamp '
++        'mediaId=${_mediaIdOf(assetPath)} '
+         'offer=${slot.slideId} claim=${lastAttachPhases['source']} '
+         'cache=${lastAttachPhases['cacheSource']} bytes=${lastAttachPhases['cacheBytes']} '
+         'audioCutMs=${lastAttachPhases['audioCut']} firstFrameMs=$ms '
+         'audible=$audiblePlayingCount',
+       );
++      // Arm audible on every first-frame path (including stall reopen).
++      if (_canStart(controller, token) && lastAttachPhases['audioArmed'] == null) {
++        // ignore: discarded_futures
++        () async {
++          if (!_canStart(controller, token) || _muted) return;
++          final id = _playerId(controller);
++          miraDiscoverLog(
++            'MIRA_DISCOVER_AUDIO unmute_req playerId=$id '
++            'attempt=${lastAttachPhases['attemptId']} '
++            'at=${DateTime.now().toUtc().toIso8601String()}',
++          );
++          try {
++            await controller.setVolume(1);
++            if (!_canStart(controller, token)) return;
++            lastAttachPhases['audioArmed'] = _msSince(settleStarted);
++            miraDiscoverLog(
++              'MIRA_DISCOVER_SWIPE audio_armed mediaId=${_mediaIdOf(assetPath)} '
++              'playerId=$id firstFrameMs=$ms '
++              'audible=$audiblePlayingCount '
++              'attempt=${lastAttachPhases['attemptId']}',
++            );
++          } catch (e) {
++            miraDiscoverLog(
++              'MIRA_DISCOVER_AUDIO unmute_err playerId=$id err=$e',
++            );
++          }
++        }();
++      }
+     }
+     return true;
+   }
+diff --git a/test/features/marketplace/discover_video_disk_cache_test.dart b/test/features/marketplace/discover_video_disk_cache_test.dart
+index 9a6db5a..80b70f0 100644
+--- a/test/features/marketplace/discover_video_disk_cache_test.dart
++++ b/test/features/marketplace/discover_video_disk_cache_test.dart
+@@ -171,12 +171,13 @@ void main() {
+     final localAfterSeed = await cache.bytesOnDiskFor(url);
+     expect(localAfterSeed, greaterThanOrEqualTo(prefix));
+ 
+-    // claimPriority seeds to 1MiB then returns proxy over the partial.
+-    final source = await cache.resolvePlaySource(url);
++    // claimPriority:false so a background prefix_kick cannot fill the tail
++    // before this test measures proxy Range resume.
++    final source = await cache.resolvePlaySource(url, claimPriority: false);
+     expect(source.isProxy, isTrue);
+-    expect(source.bytesOnDisk, greaterThanOrEqualTo(1024 * 1024));
++    expect(source.bytesOnDisk, greaterThanOrEqualTo(prefix));
++    expect(source.bytesOnDisk, lessThan(1024 * 1024));
+ 
+-    final seededBytes = source.bytesOnDisk!;
+     final beforeRanges = List<int>.from(rangeStarts);
+     final beforeFull = fullGets;
+ 
+@@ -205,13 +206,11 @@ void main() {
+     final stats = await waitStats();
+     expect(stats.bytesFromDisk, greaterThanOrEqualTo(prefix));
+     expect(stats.bytesFromNetwork, 0);
+-    // After seed, proxy reads must not re-GET any byte already on disk.
+-    final afterSeedRanges = rangeStarts.skip(beforeRanges.length).toList();
+-    expect(afterSeedRanges.where((s) => s < seededBytes), isEmpty);
++    expect(rangeStarts.skip(beforeRanges.length).where((s) => s < prefix), isEmpty);
+     expect(fullGets, beforeFull);
+ 
+-    // Ask past the seeded 1MiB — only the missing tail may be fetched.
+-    final needEnd = seededBytes + 4095;
++    // Ask past the saved prefix — only the missing tail may be fetched.
++    final needEnd = prefix + 4095;
+     cache.lastServeStats = null;
+     final playReq2 = await client.getUrl(source.uri!);
+     playReq2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-$needEnd');
+@@ -224,13 +223,12 @@ void main() {
+     expect(played2, bytes.sublist(0, needEnd + 1));
+ 
+     final stats2 = await waitStats();
+-    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(seededBytes));
++    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(prefix));
+     expect(stats2.bytesFromNetwork, greaterThan(0));
+-    expect(stats2.bytesFromNetwork, lessThanOrEqualTo(needEnd + 1 - seededBytes + 1024));
+-    // Origin Range must start at/after the seeded prefix — never byte 0 again.
++    expect(stats2.bytesFromNetwork, lessThanOrEqualTo(needEnd + 1 - prefix + 1024));
+     final newRanges = rangeStarts.skip(beforeRanges.length).toList();
+     expect(newRanges, isNotEmpty);
+-    expect(newRanges.every((s) => s >= seededBytes), isTrue);
++    expect(newRanges.every((s) => s >= prefix), isTrue);
+     expect(fullGets, beforeFull);
+ 
+     client.close(force: true);
+@@ -323,10 +321,9 @@ void main() {
+     expect(localAfter20, localBefore);
+ 
+     final getsBefore = List<int>.from(originGets[firstId] ?? const []);
+-    final source = await cache.resolvePlaySource(firstUrl);
++    final source = await cache.resolvePlaySource(firstUrl, claimPriority: false);
+     expect(source.isProxy, isTrue);
+-    final seededBytes = source.bytesOnDisk!;
+-    expect(seededBytes, greaterThanOrEqualTo(1024 * 1024));
++    expect(source.bytesOnDisk, greaterThanOrEqualTo(prefix));
+ 
+     final client = HttpClient();
+     final req = await client.getUrl(source.uri!);
+@@ -354,23 +351,21 @@ void main() {
+     expect(stats.bytesFromNetwork, 0);
+ 
+     final getsAfterFirstPlay = List<int>.from(originGets[firstId] ?? const []);
+-    // Seed may Range from the prior stopAfterBytes offset; never re-GET below it.
+     final duringResolve = getsAfterFirstPlay.skip(getsBefore.length).toList();
+     expect(duringResolve.where((s) => s >= 0 && s < prefix), isEmpty);
+ 
+-    // Extend past seeded prefix — only tail from network.
+     final mid = getsAfterFirstPlay.length;
+     cache.lastServeStats = null;
+     final req2 = await client.getUrl(source.uri!);
+-    req2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-${seededBytes + 2047}');
++    req2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-${prefix + 2047}');
+     final resp2 = await req2.close();
+     await resp2.drain<void>();
+     final stats2 = await waitStats();
+-    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(seededBytes));
++    expect(stats2.bytesFromDisk, greaterThanOrEqualTo(prefix));
+     expect(stats2.bytesFromNetwork, greaterThan(0));
+     final tailStarts = (originGets[firstId] ?? []).skip(mid).toList();
+     expect(tailStarts.where((s) => s >= 0), isNotEmpty);
+-    expect(tailStarts.where((s) => s >= 0).every((s) => s >= seededBytes), isTrue);
++    expect(tailStarts.where((s) => s >= 0).every((s) => s >= prefix), isTrue);
+ 
+     client.close(force: true);
+ 
+@@ -439,11 +434,13 @@ void main() {
+     expect(seeded.bytesOnDisk, greaterThanOrEqualTo(prefix));
+     expect(seeded.complete, isFalse);
+ 
++    // Clock covers resolve → first proxy byte (must not hide a 20s seed wait).
++    final sw = Stopwatch()..start();
+     final source = await cache.resolvePlaySource(url);
+     expect(source.isProxy, isTrue);
++    expect(sw.elapsedMilliseconds, lessThan(2000));
+ 
+     final client = HttpClient();
+-    final sw = Stopwatch()..start();
+     final req = await client.getUrl(source.uri!);
+     req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
+     final resp = await req.close();
+@@ -461,13 +458,12 @@ void main() {
+         sawPrefix = true;
+         // Decisive: saved prefix arrived while origin tail is still gated.
+         expect(tailGate.isCompleted, isFalse);
+-        // ignore: avoid_print
+-        print('FIRST_BYTE_MS=${firstByte.isCompleted ? 'pending' : ''}');
+       }
+     });
+ 
+     final firstByteMs = await firstByte.future.timeout(const Duration(seconds: 5));
+-    expect(firstByteMs, greaterThanOrEqualTo(0));
++    expect(firstByteMs, lessThan(2000),
++        reason: 'must not wait out network timeout before local prefix');
+     expect(tailGate.isCompleted, isFalse);
+     // Wait until at least the local prefix has been delivered.
+     final prefixDeadline = DateTime.now().add(const Duration(seconds: 5));
+@@ -566,9 +562,10 @@ void main() {
+     }
+ 
+     gates.putIfAbsent(firstId, Completer<void>.new);
++    final sw = Stopwatch()..start();
+     final source = await cache.resolvePlaySource(firstUrl);
++    expect(sw.elapsedMilliseconds, lessThan(2000));
+     final client = HttpClient();
+-    final sw = Stopwatch()..start();
+     final req = await client.getUrl(source.uri!);
+     req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
+     final resp = await req.close();
+@@ -592,6 +589,8 @@ void main() {
+     expect(chunks.length, greaterThanOrEqualTo(prefix));
+     expect(gates[firstId]!.isCompleted, isFalse);
+     expect(firstByteMs, greaterThanOrEqualTo(0));
++    expect(firstByteMs, lessThan(2000),
++        reason: 'full start clock must not include a 20s seed wait');
+     // ignore: avoid_print
+     print('AFTER20_FIRST_BYTE_MS=$firstByteMs');
+ 
+@@ -1796,40 +1795,41 @@ void main() {
+     expect(goodRow.bytesOnDisk, okBytes.length);
+   });
+ 
+-  test('claimPriority resolvePlaySource seeds ≥1MiB before returning proxy', () async {
+-    final root = Directory.systemTemp.createTempSync('mira_vid_seed_before_proxy_');
++  test('end-to-end: resolve+proxy serves local prefix before gated tail (full clock)', () async {
++    final root = Directory.systemTemp.createTempSync('mira_vid_e2e_start_');
+     addTearDown(() {
+       try {
+         root.deleteSync(recursive: true);
+       } catch (_) {}
+     });
+-    HttpServer? server;
++    HttpServer? origin;
+     addTearDown(() async {
+-      await server?.close(force: true);
++      await origin?.close(force: true);
+     });
+-    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+-    final bytes = List<int>.generate(2 * 1024 * 1024, (i) => (i * 3) % 256);
+-    var rangeGets = 0;
+-    server.listen((req) async {
++    origin = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
++    final bytes = List<int>.generate(64 * 1024, (i) => (i * 11) % 256);
++    const prefix = 16 * 1024;
++    final tailGate = Completer<void>();
++    origin.listen((req) async {
+       if (req.method == 'HEAD') {
+-        req.response.headers.contentType = ContentType('video', 'mp4');
+         req.response.contentLength = bytes.length;
++        req.response.headers.set(HttpHeaders.acceptRangesHeader, 'bytes');
+         await req.response.close();
+         return;
+       }
+       final range = req.headers.value(HttpHeaders.rangeHeader);
+       req.response.headers.contentType = ContentType('video', 'mp4');
+       if (range != null && range.startsWith('bytes=')) {
+-        rangeGets += 1;
+         final start = int.parse(range.substring(6).split('-').first);
+-        final endSpec = range.substring(6).split('-').last;
+-        final end = endSpec.isEmpty ? bytes.length - 1 : int.parse(endSpec);
++        if (start >= prefix) {
++          await tailGate.future;
++        }
+         req.response.statusCode = HttpStatus.partialContent;
+         req.response.headers.set(
+           HttpHeaders.contentRangeHeader,
+-          'bytes $start-$end/${bytes.length}',
++          'bytes $start-${bytes.length - 1}/${bytes.length}',
+         );
+-        req.response.add(bytes.sublist(start, end + 1));
++        req.response.add(bytes.sublist(start));
+       } else {
+         req.response.contentLength = bytes.length;
+         req.response.add(bytes);
+@@ -1837,32 +1837,59 @@ void main() {
+       await req.response.close();
+     });
+ 
+-    const id = 'fseed001-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
++    const id = 'fe2e0001-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+     final url =
+-        'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
++        'http://${origin.address.host}:${origin.port}/api/v1/marketplace/media/$id';
+     final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+     addTearDown(() async {
+       await cache.disposeProxy();
+     });
+ 
+-    expect(await cache.bytesOnDiskFor(url), 0);
++    await cache.ensureLocal(url, stopAfterBytes: prefix);
++    expect(await cache.bytesOnDiskFor(url), greaterThanOrEqualTo(prefix));
++
++    // Full start clock — includes resolvePlaySource (must not wait on gated tail).
++    final sw = Stopwatch()..start();
+     final source = await cache.resolvePlaySource(url, claimPriority: true);
+     expect(source.isProxy, isTrue);
+-    expect(source.bytesOnDisk, greaterThanOrEqualTo(1024 * 1024));
+-    expect(rangeGets, greaterThan(0));
+-    final prefixDiags = cache.diagnostics
+-        .where((d) => d.source == 'network_to_disk' || d.source == 'disk_resume')
+-        .toList();
+-    expect(prefixDiags, isNotEmpty);
+-    expect(
+-      prefixDiags.any((d) => d.elapsedMs > 0),
+-      isTrue,
+-      reason: 'prefix fill must record real elapsedMs (not 0)',
+-    );
++    expect(sw.elapsedMilliseconds, lessThan(2000),
++        reason: 'resolve must not await gated network fill');
++
++    final req = await HttpClient().getUrl(source.uri!);
++    req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
++    final resp = await req.close();
++    final firstByte = Completer<int>();
++    final chunks = <int>[];
++    final sub = resp.listen((chunk) {
++      if (chunk.isEmpty) return;
++      chunks.addAll(chunk);
++      if (!firstByte.isCompleted) {
++        firstByte.complete(sw.elapsedMilliseconds);
++      }
++    });
++
++    final firstByteMs = await firstByte.future.timeout(const Duration(seconds: 3));
++    expect(tailGate.isCompleted, isFalse);
++    expect(firstByteMs, lessThan(2000),
++        reason: 'local prefix must arrive without waiting for gated tail');
++    // ignore: avoid_print
++    print('E2E_START_TO_FIRST_BYTE_MS=$firstByteMs tailGateOpen=${tailGate.isCompleted}');
++
++    final prefixDeadline = DateTime.now().add(const Duration(seconds: 3));
++    while (chunks.length < prefix && DateTime.now().isBefore(prefixDeadline)) {
++      await Future<void>.delayed(const Duration(milliseconds: 10));
++    }
++    expect(chunks.length, greaterThanOrEqualTo(prefix));
++    expect(chunks.sublist(0, prefix), bytes.sublist(0, prefix));
++    expect(tailGate.isCompleted, isFalse);
++
++    tailGate.complete();
++    await sub.asFuture<void>();
++    expect(chunks, bytes);
+   });
+ 
+-  test('neighbor resolvePlaySource does not block on 1MiB seed', () async {
+-    final root = Directory.systemTemp.createTempSync('mira_vid_neighbor_no_seed_');
++  test('claimPriority resolve returns immediately when origin is stalled', () async {
++    final root = Directory.systemTemp.createTempSync('mira_vid_stalled_origin_');
+     addTearDown(() {
+       try {
+         root.deleteSync(recursive: true);
+@@ -1886,19 +1913,22 @@ void main() {
+       req.response.add(bytes);
+       await req.response.close();
+     });
+-    const id = 'fneigh01-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
++    const id = 'fstall01-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+     final url =
+         'http://${server.address.host}:${server.port}/api/v1/marketplace/media/$id';
+     final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+     addTearDown(() async {
+       await cache.disposeProxy();
+     });
++    // Local partial already present.
++    await File('${root.path}/$id.part').writeAsBytes(bytes.sublist(0, 8 * 1024));
+     final sw = Stopwatch()..start();
+-    final source =
+-        await cache.resolvePlaySource(url, claimPriority: false).timeout(const Duration(seconds: 2));
++    final source = await cache
++        .resolvePlaySource(url, claimPriority: true)
++        .timeout(const Duration(seconds: 2));
+     expect(sw.elapsedMilliseconds, lessThan(500));
+     expect(source.isProxy, isTrue);
+-    expect(source.bytesOnDisk, 0);
++    expect(source.bytesOnDisk, greaterThanOrEqualTo(8 * 1024));
+     release.complete();
+   });
+ }

@@ -1,0 +1,8 @@
+pass api_turn بكم البديل؟ book 120
+pass api_turn طيب بكم غيرها؟ book 120
+pass api_turn قارني سعرها بخدمة الترطيب book 120
+pass api_turn unknown_alt
+pass api_turn closed_booking_view
+pass api_turn after_withdraw
+pass api_turn discovery_off
+OK rc52-alternatives-api-turn

@@ -1,0 +1,587 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.13.1 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.3.0 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.4 available)
+  video_player_avfoundation 2.12.0 (2.12.4 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+99 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart                                                              00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart                                                              00:01 +0: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: mediaIdFromUrl extracts marketplace media uuid                      00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: mediaIdFromUrl extracts marketplace media uuid                      00:01 +1: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length 00:01 +1: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=65536 elapsedMs=35 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=disk reused=65536 dl=0 elapsedMs=2 err=null prio=null lock=true
+00:01 +2: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal downloads once and reuses complete file by mediaId+length 00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            00:01 +2: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=finalize_part reused=32768 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=11111111-2222-3333-4444-555555555555 source=network_to_disk reused=0 dl=32768 elapsedMs=93 err=null prio=null lock=true
+00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: parallel ensureLocal shares one download                            00:01 +3: /Users/fayez/Desktop/مراجع ... reopen after partial prefix: serves local start, Range-fetches only the tail                                                                                  00:01 +3: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: reopen after partial prefix: serves local start, Range-fetches only the tail
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee source=partial reused=0 dl=10240 elapsedMs=3 err=incomplete_10240/49152 prio=null lock=true
+00:01 +4: /Users/fayez/Desktop/مراجع ... reopen after partial prefix: serves local start, Range-fetches only the tail                                                                                  00:01 +4: /Users/fayez/Desktop/مراجع ... after 20 other media ids, first partial still resumes without re-fetching prefix                                                                              00:01 +4: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 other media ids, first partial still resumes without re-fetching prefix
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000000 source=partial reused=0 dl=8192 elapsedMs=4 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000001 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000002 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000003 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000004 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000005 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000006 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000007 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000008 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000009 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000a source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000b source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000c source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000d source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000e source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-00000000000f source=network_error reused=0 dl=0 elapsedMs=3 err=non_video_body prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000010 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000011 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000012 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000013 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-000000000014 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+LOGICAL_20_IDS localFirst=8192 others=155648 prefix=8192 bodySize=24576
+00:01 +5: /Users/fayez/Desktop/مراجع ... after 20 other media ids, first partial still resumes without re-fetching prefix                                                                              00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:01 +5: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/32768 prio=null lock=true
+FIRST_BYTE_MS=pending
+FIRST_BYTE_MS=4 PREFIX_ARRIVED_BEFORE_TAIL_RELEASE=true
+COMPLETE_MS=10 STATS={mediaId: cccccccc-cccc-cccc-cccc-cccccccccccc, bytesFromDisk: 8192, bytesFromNetwork: 24576, contentLength: 32768, source: proxy_stream, requestStart: 0, requestEnd: 32767, firstByteMs: 1, completeMs: 7} FULL_GETS=1 RANGE_STARTS=[8192]
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: stream local prefix before origin releases the held tail (bytes=0-) 00:01 +6: /Users/fayez/Desktop/مراجع ... /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail 00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000001 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000002 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000003 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000004 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000005 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000006 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000007 source=partial reused=0 dl=8192 elapsedMs=3 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000008 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000009 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000a source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000b source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000c source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000d source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000e source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-00000000000f source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000010 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000011 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000012 source=partial reused=0 dl=8192 elapsedMs=2 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000013 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000014 source=partial reused=0 dl=8192 elapsedMs=1 err=incomplete_8192/24576 prio=null lock=true
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       
+MIRA_DISCOVER_AUDIO mute_req playerId=350277754 role=active at=2026-11-18T10:37:24.995713Z
+MIRA_DISCOVER_AUDIO mute_done playerId=350277754 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=350277754 role=active ms=2
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=350277754
+MIRA_DISCOVER_AUDIO mute_req playerId=350277754 role=unknown at=2026-11-18T10:37:24.998596Z
+MIRA_DISCOVER_AUDIO mute_done playerId=350277754 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=350277754 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut5jzug transition=2 build=2026111711 mediaId=null offer=slide-b playerId=388962228 firstFrameMs=5 source=0 cacheSource=0 cacheBytes=null audioCutMs=2 audible=0 initStart=3 initDone=5 playStart=5 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut5jzug transition=2 build=2026111711 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=2 firstFrameMs=5 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=388962228 at=2026-11-18T10:37:25.002981Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=388962228 firstFrameMs=5 audible=1
+00:01 +6: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: after 20 ids, open-ended Range still streams saved prefix before held tail
+AFTER20_FIRST_BYTE_MS=5
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=finalize_part reused=24576 dl=0 elapsedMs=0 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-000000000000 source=disk_resume reused=8192 dl=16384 elapsedMs=18 err=null prio=dddddddd-dddd-dddd-dddd-000000000000 lock=true
+AFTER20_COMPLETE_MS=31 RANGE_STARTS=[-1, 8192] localFirst=24576
+00:01 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +7: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: finalizePartIfComplete promotes full .part to complete file         
+MIRA_DISCOVER_CACHE mediaId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+00:01 +8: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                       00:01 +9: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 206 prefix fill records Content-Range total and stays incomplete    
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=null lock=true
+00:01 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:01 +10: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: 200 ignore-Range aborts body after prefix (networkBytesRead near need)
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=null lock=true
+00:01 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:01 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: lowPriority prefetch grows prefix only — never a full GET          
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+00:01 +11: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:01 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:01 +12: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: resolvePlaySource returns while full download holds write lock (no deadlock)
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=f1111111-1111-1111-1111-111111111111 lock=true
+MIRA_DISCOVER_CACHE mediaId=f1111111-1111-1111-1111-111111111111 source=network_to_disk reused=0 dl=262144 elapsedMs=90 err=null prio=f1111111-1111-1111-1111-111111111111 lock=true
+00:01 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:01 +13: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensurePlayablePrefix during inflight download does not deadlock    
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f2222222-2222-2222-2222-222222222222 source=disk_resume reused=24576 dl=106496 elapsedMs=7 err=null prio=null lock=true
+00:01 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:01 +14: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: complete files of 256KiB/512KiB/1MiB are trusted and reused without new GET
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=finalize_part reused=262144 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=network_to_disk reused=0 dl=262144 elapsedMs=9 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000040000 source=disk reused=262144 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=network_to_disk reused=0 dl=524288 elapsedMs=10 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000080000 source=disk reused=524288 dl=0 elapsedMs=1 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=finalize_part reused=1048576 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=network_to_disk reused=0 dl=1048576 elapsedMs=12 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f3333333-3333-3333-3333-000000100000 source=disk reused=1048576 dl=0 elapsedMs=1 err=null prio=null lock=true
+00:02 +15: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +16: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +17: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +17: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:02 +17: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: write lock serializes writers; peekComplete reads without waiting  
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f6666666-6666-6666-6666-666666666666 source=network_to_disk reused=0 dl=131072 elapsedMs=96 err=null prio=null lock=true
+00:02 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +18: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: one failed origin GET does not close shared client for other media 
+MIRA_DISCOVER_CACHE mediaId=deaddead-dead-dead-dead-deaddeaddead source=network_error reused=0 dl=0 elapsedMs=3 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=finalize_part reused=49152 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f7777777-7777-7777-7777-777777777777 source=network_to_disk reused=0 dl=49152 elapsedMs=5 err=null prio=null lock=true
+00:02 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +19: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: neighbor proxy open does not steal priority from visible clip      
+MIRA_DISCOVER_CACHE mediaId=bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=1048576 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=finalize_part reused=2097152 dl=0 elapsedMs=0 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+MIRA_DISCOVER_CACHE mediaId=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=network_to_disk reused=0 dl=2097152 elapsedMs=44 err=null prio=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa lock=true
+00:02 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_FF session=sho9ut5t6xl transition=1 build=2026111711 mediaId=null offer=mix-screen playerId=62203086 firstFrameMs=176 source=0 cacheSource=0 cacheBytes=null audioCutMs=168 audible=0 initStart=172 initDone=175 playStart=176 resolveMs=3 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut5t6xl transition=1 build=2026111711 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=168 firstFrameMs=176 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=62203086 at=2026-11-18T10:37:25.734715Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=62203086 firstFrameMs=176 audible=1
+00:02 +20: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: proxy serves claimed priority bytes; neighbor stays prefix-only under load
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_CACHE mediaId=cccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=524288 elapsedMs=7 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+MIRA_DISCOVER_CACHE mediaId=dddddddd-dddd-dddd-dddd-dddddddddddd source=finalize_part reused=524288 dl=0 elapsedMs=0 err=null prio=cccccccc-cccc-cccc-cccc-cccccccccccc lock=true
+00:02 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +21: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: trusted complete reopens from disk after new cache instance with origin down
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=network_to_disk reused=0 dl=98304 elapsedMs=6 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f8888888-8888-8888-8888-888888888888 source=disk reused=98304 dl=0 elapsedMs=1 err=null prio=null lock=true
+00:02 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_AUDIO mute_req playerId=62203086 role=active at=2026-11-18T10:37:25.826094Z
+00:02 +22: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: HEAD 404/HTML length is not recorded as video total                
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=finalize_part reused=40960 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=f9999999-9999-9999-9999-999999999999 source=network_to_disk reused=0 dl=40960 elapsedMs=5 err=null prio=null lock=true
+00:02 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +23: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: untrusted named complete is never used by peek/prefix/proxy paths  
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=faaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 source=network_to_disk reused=0 dl=65536 elapsedMs=5 err=null prio=null lock=true
+00:02 +24: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B                      00:02 +25: /Users/fayez/Desktop/مراجع ... DiscoverPresentationScreen video→image→video keeps new attach after delayed cut                                                                              00:02 +25: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: video then image detaches the player                                        
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut63kyr transition=1 build=2026111711 mediaId=null offer=slide-a playerId=756017259 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut63kyr transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=756017259 at=2026-11-18T10:37:25.853776Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=756017259 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=756017259 role=unknown at=2026-11-18T10:37:25.877553Z
+MIRA_DISCOVER_AUDIO mute_done playerId=756017259 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=756017259 role=unknown ms=0
+00:02 +26: /Users/fayez/Desktop/مراجع ... DiscoverPresentationScreen video→image→video keeps new attach after delayed cut                                                                              00:02 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut645iv transition=1 build=2026111711 mediaId=null offer=slide-a playerId=350406244 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut645iv transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=350406244 at=2026-11-18T10:37:25.880522Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=350406244 firstFrameMs=0 audible=1
+00:02 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_AUDIO mute_req playerId=62203086 role=active at=2026-11-18T10:37:25.882083Z
+00:02 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: same file on two slides keeps the latest slot                               
+MIRA_DISCOVER_AUDIO mute_req playerId=350406244 role=active at=2026-11-18T10:37:25.903242Z
+MIRA_DISCOVER_AUDIO mute_done playerId=350406244 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=350406244 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=350406244
+MIRA_DISCOVER_AUDIO mute_req playerId=350406244 role=unknown at=2026-11-18T10:37:25.904087Z
+MIRA_DISCOVER_AUDIO mute_done playerId=350406244 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=350406244 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut645iv transition=2 build=2026111711 mediaId=null offer=slide-b playerId=320379161 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut645iv transition=2 build=2026111711 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=320379161 at=2026-11-18T10:37:25.906056Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=320379161 firstFrameMs=1 audible=1
+00:02 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_AUDIO mute_done playerId=62203086 role=active ms=81
+MIRA_DISCOVER_AUDIO mute_done playerId=62203086 role=active ms=25
+MIRA_DISCOVER_AUDIO pause_done playerId=62203086 role=active ms=81
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=62203086 role=active ms=26
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=62203086
+MIRA_DISCOVER_AUDIO mute_req playerId=62203086 role=unknown at=2026-11-18T10:37:25.908520Z
+MIRA_DISCOVER_AUDIO mute_done playerId=62203086 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=62203086 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut5t6xl transition=2 build=2026111711 mediaId=null offer=mix-screen playerId=421827730 firstFrameMs=27 source=0 cacheSource=0 cacheBytes=null audioCutMs=26 audible=0 initStart=26 initDone=26 playStart=27 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut5t6xl transition=2 build=2026111711 mediaId=null offer=mix-screen claim=0 cache=0 bytes=null audioCutMs=26 firstFrameMs=27 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=421827730 at=2026-11-18T10:37:25.909354Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=421827730 firstFrameMs=27 audible=1
+00:02 +26: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: two stopAfterBytes ensureLocal calls serialize writers (not just inflight)
+MIRA_DISCOVER_CACHE mediaId=fbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=partial reused=0 dl=16384 elapsedMs=64 err=incomplete_16384/262144 prio=null lock=true
+00:02 +27: /Users/fayez/Desktop/مراجع ... DiscoverPresentationScreen video→image→video keeps new attach after delayed cut                                                                              00:02 +27: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_AUDIO mute_req playerId=421827730 role=active at=2026-11-18T10:37:25.924501Z
+MIRA_DISCOVER_AUDIO mute_req playerId=62203086 role=parked at=2026-11-18T10:37:25.924749Z
+MIRA_DISCOVER_AUDIO mute_done playerId=421827730 role=active ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=62203086 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=421827730 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=62203086 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=421827730
+MIRA_DISCOVER_AUDIO mute_req playerId=421827730 role=unknown at=2026-11-18T10:37:25.926255Z
+MIRA_DISCOVER_AUDIO mute_done playerId=421827730 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=421827730 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=62203086 role=unknown at=2026-11-18T10:37:25.926832Z
+MIRA_DISCOVER_AUDIO mute_done playerId=62203086 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=62203086 role=unknown ms=0
+00:02 +28: /Users/fayez/Desktop/مراجع ... DiscoverPresentationScreen video→image→video keeps new attach after delayed cut                                                                              00:02 +28: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach of A may finish pause after B attach without harming B               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut65892 transition=1 build=2026111711 mediaId=null offer=slide-a playerId=606800732 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut65892 transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=606800732 at=2026-11-18T10:37:25.930501Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=606800732 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=606800732 role=unknown at=2026-11-18T10:37:25.931010Z
+MIRA_DISCOVER_AUDIO mute_done playerId=606800732 role=unknown ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut65892 transition=3 build=2026111711 mediaId=null offer=slide-b playerId=962770749 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut65892 transition=3 build=2026111711 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=962770749 at=2026-11-18T10:37:25.938402Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=962770749 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO pause_done playerId=606800732 role=unknown ms=7
+00:02 +29: /Users/fayez/Desktop/مراجع ... DiscoverPresentationScreen video→image→video keeps new attach after delayed cut                                                                              00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_AUDIO mute_req playerId=421827730 role=parked at=2026-11-18T10:37:25.939670Z
+MIRA_DISCOVER_AUDIO mute_done playerId=421827730 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=421827730 role=parked ms=0
+00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:02 +29: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_sync_video_a_image_a_test.dart: DiscoverPresentationScreen video→image→video keeps new attach after delayed cut
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut5t6xl transition=4 build=2026111711 mediaId=null offer=mix-screen playerId=421827730 firstFrameMs=1 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut5t6xl transition=4 build=2026111711 mediaId=null offer=mix-screen claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=421827730 at=2026-11-18T10:37:25.940996Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=421827730 firstFrameMs=1 audible=1
+MIRA_TEST_SCREEN_SWIPE fallbackToController=false
+MIRA_DISCOVER_AUDIO mute_req playerId=421827730 role=unknown at=2026-11-18T10:37:25.961138Z
+MIRA_DISCOVER_AUDIO mute_done playerId=421827730 role=unknown ms=6
+MIRA_DISCOVER_AUDIO pause_done playerId=421827730 role=unknown ms=6
+00:02 +30: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:02 +30: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A                    
+MIRA_DISCOVER_AUDIO mute_req playerId=233639968 role=active at=2026-11-18T10:37:25.972986Z
+MIRA_DISCOVER_AUDIO mute_done playerId=233639968 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=233639968 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=233639968
+MIRA_DISCOVER_AUDIO mute_req playerId=233639968 role=unknown at=2026-11-18T10:37:25.973838Z
+MIRA_DISCOVER_AUDIO mute_done playerId=233639968 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=233639968 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut65gf0 transition=2 build=2026111711 mediaId=null offer=slide-b playerId=703736362 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut65gf0 transition=2 build=2026111711 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=703736362 at=2026-11-18T10:37:25.974577Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=703736362 firstFrameMs=1 audible=1
+00:03 +31: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +31: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: release during init prevents play                                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +32: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +32: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: pause during init leaves player stopped                                     
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +33: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +33: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: init failure then retry succeeds                                            
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6lm7a transition=2 build=2026111711 mediaId=null offer=slide-a playerId=285051030 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6lm7a transition=2 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=285051030 at=2026-11-18T10:37:26.699476Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=285051030 firstFrameMs=0 audible=1
+00:03 +34: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +34: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: repeated init failure stays failed                                          
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +35: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +35: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: runtime error after ready marks failed                                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6md4u transition=1 build=2026111711 mediaId=null offer=slide-a playerId=151068332 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6md4u transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+00:03 +36: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +36: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: only one active player and dispose on release                               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6nky0 transition=1 build=2026111711 mediaId=null offer=slide-a playerId=357893592 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6nky0 transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=357893592 at=2026-11-18T10:37:26.787108Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=357893592 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=357893592 role=active at=2026-11-18T10:37:26.809890Z
+MIRA_DISCOVER_AUDIO mute_done playerId=357893592 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=357893592 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=357893592
+MIRA_DISCOVER_AUDIO mute_req playerId=357893592 role=unknown at=2026-11-18T10:37:26.810853Z
+MIRA_DISCOVER_AUDIO mute_done playerId=357893592 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=357893592 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut6nky0 transition=2 build=2026111711 mediaId=null offer=slide-b playerId=607935859 firstFrameMs=2 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=2 playStart=2 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6nky0 transition=2 build=2026111711 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=2 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=607935859 at=2026-11-18T10:37:26.812633Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=607935859 firstFrameMs=2 audible=1
+00:03 +37: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +37: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: setVolume that finishes after pause does not play                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+00:03 +38: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +38: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: mute survives the next attach and stays muted after first frame             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6oro1 transition=1 build=2026111711 mediaId=null offer=slide-a playerId=835459720 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6oro1 transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=835459720 at=2026-11-18T10:37:26.842472Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=835459720 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO mute_req playerId=835459720 role=active at=2026-11-18T10:37:26.842971Z
+MIRA_DISCOVER_AUDIO mute_done playerId=835459720 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=835459720 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=835459720
+MIRA_DISCOVER_AUDIO mute_req playerId=835459720 role=unknown at=2026-11-18T10:37:26.843718Z
+MIRA_DISCOVER_AUDIO mute_done playerId=835459720 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=835459720 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut6oro1 transition=2 build=2026111711 mediaId=null offer=slide-b playerId=315531742 firstFrameMs=1 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=1 initDone=1 playStart=1 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6oro1 transition=2 build=2026111711 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=1 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=315531742 at=2026-11-18T10:37:26.845420Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=315531742 firstFrameMs=1 audible=0
+00:03 +39: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +39: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: outgoing audio is cut before warm wait; speakers arm only after first frame 
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6owmw transition=1 build=2026111711 mediaId=null offer=slide-a playerId=959139575 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6owmw transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=959139575 at=2026-11-18T10:37:26.848548Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=959139575 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=959139575 role=active at=2026-11-18T10:37:26.862534Z
+MIRA_DISCOVER_AUDIO mute_done playerId=959139575 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=959139575 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=959139575
+MIRA_DISCOVER_AUDIO mute_req playerId=959139575 role=unknown at=2026-11-18T10:37:26.931906Z
+MIRA_DISCOVER_AUDIO mute_done playerId=959139575 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=959139575 role=unknown ms=1
+MIRA_DISCOVER_FF session=sho9ut6owmw transition=2 build=2026111711 mediaId=null offer=slide-b playerId=228312070 firstFrameMs=70 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=69 initDone=69 playStart=70 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6owmw transition=2 build=2026111711 mediaId=null offer=slide-b claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=70 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=228312070 at=2026-11-18T10:37:26.933576Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=228312070 firstFrameMs=70 audible=1
+00:03 +40: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +40: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: ready exposes the view as soon as initialize finishes                       
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6qstd transition=1 build=2026111711 mediaId=null offer=slide-a playerId=991146261 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6qstd transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=991146261 at=2026-11-18T10:37:26.936934Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=991146261 firstFrameMs=0 audible=1
+00:03 +41: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +41: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: first_frame waits for progressing position after play, not initialize alone 
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6quxc transition=1 build=2026111711 mediaId=null offer=slide-a playerId=84662173 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6quxc transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=84662173 at=2026-11-18T10:37:26.939636Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=84662173 firstFrameMs=0 audible=1
+00:03 +42: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +42: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: settle timer includes warm wait (starts before pending warm completes)      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut6qx5k transition=1 build=2026111711 mediaId=null offer=slide-a playerId=125940060 firstFrameMs=100 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=100 initDone=100 playStart=100 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut6qx5k transition=1 build=2026111711 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=100 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=125940060 at=2026-11-18T10:37:27.065759Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=125940060 firstFrameMs=100 audible=1
+00:03 +43: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:03 +43: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: stalled play emits first_frame_timeout not first_frame                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE settle_timeout mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 timeoutMs=5016 audible=0
+00:08 +44: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:08 +44: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: park survives while next is warming (swipe-back reuses decoder)             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9temk transition=1 build=2026111711 mediaId=null offer=slide-a playerId=350574019 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9temk transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=350574019 at=2026-11-18T10:37:32.098094Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=350574019 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=350574019 role=active at=2026-11-18T10:37:32.099139Z
+MIRA_DISCOVER_AUDIO mute_done playerId=350574019 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=350574019 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=350574019
+MIRA_DISCOVER_AUDIO mute_req playerId=350574019 role=unknown at=2026-11-18T10:37:32.100745Z
+MIRA_DISCOVER_AUDIO mute_done playerId=350574019 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=350574019 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut9temk transition=2 build=2026111711 mediaId=null offer=slide-b playerId=259700402 firstFrameMs=2 source=0 cacheSource=0 cacheBytes=null audioCutMs=1 audible=0 initStart=2 initDone=2 playStart=2 resolveMs=1 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9temk transition=2 build=2026111711 mediaId=null offer=slide-b claim=0 cache=0 bytes=null audioCutMs=1 firstFrameMs=2 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=259700402 at=2026-11-18T10:37:32.102095Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=259700402 firstFrameMs=2 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=259700402 role=active at=2026-11-18T10:37:32.133728Z
+MIRA_DISCOVER_AUDIO mute_req playerId=994444268 role=warm at=2026-11-18T10:37:32.134231Z
+MIRA_DISCOVER_AUDIO mute_req playerId=350574019 role=parked at=2026-11-18T10:37:32.134488Z
+MIRA_DISCOVER_AUDIO mute_done playerId=259700402 role=active ms=1
+MIRA_DISCOVER_AUDIO mute_done playerId=994444268 role=warm ms=0
+MIRA_DISCOVER_AUDIO mute_done playerId=350574019 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=259700402 role=active ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=994444268 role=warm ms=1
+MIRA_DISCOVER_AUDIO pause_done playerId=350574019 role=parked ms=1
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=259700402
+MIRA_DISCOVER_AUDIO mute_req playerId=259700402 role=unknown at=2026-11-18T10:37:32.136151Z
+MIRA_DISCOVER_AUDIO mute_done playerId=259700402 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=259700402 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9ut9temk transition=3 build=2026111711 mediaId=null offer=slide-a playerId=350574019 firstFrameMs=3 source=2 cacheSource=null cacheBytes=null audioCutMs=2 audible=0 initStart=2 initDone=2 playStart=3 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9temk transition=3 build=2026111711 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=2 firstFrameMs=3 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=350574019 at=2026-11-18T10:37:32.137166Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=350574019 firstFrameMs=3 audible=1
+00:08 +45: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:08 +45: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: reactivating a parked clip requires new progress past prior position        
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9uc6b transition=1 build=2026111711 mediaId=null offer=slide-a playerId=781065355 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9uc6b transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=781065355 at=2026-11-18T10:37:32.140921Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=781065355 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=781065355 role=unknown at=2026-11-18T10:37:32.141403Z
+MIRA_DISCOVER_AUDIO mute_done playerId=781065355 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=781065355 role=unknown ms=0
+MIRA_DISCOVER_AUDIO mute_req playerId=781065355 role=parked at=2026-11-18T10:37:32.141881Z
+MIRA_DISCOVER_AUDIO mute_done playerId=781065355 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=781065355 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9uc6b transition=3 build=2026111711 mediaId=null offer=slide-a playerId=781065355 firstFrameMs=42 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9uc6b transition=3 build=2026111711 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=42 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=781065355 at=2026-11-18T10:37:32.196603Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=781065355 firstFrameMs=42 audible=1
+00:08 +46: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:08 +46: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach reuses in-flight warm controller instead of disposing it             
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9vmkc transition=1 build=2026111711 mediaId=null offer=slide-a playerId=743092233 firstFrameMs=22 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=22 initDone=22 playStart=22 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9vmkc transition=1 build=2026111711 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=22 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=743092233 at=2026-11-18T10:37:32.245902Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=743092233 firstFrameMs=22 audible=1
+00:08 +47: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:08 +47: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: buildView stays opaque under cover; progress clears cover gate              
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9wobb transition=1 build=2026111711 mediaId=null offer=slide-a playerId=228256286 firstFrameMs=32 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9wobb transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=32 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=228256286 at=2026-11-18T10:37:32.283449Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=228256286 firstFrameMs=32 audible=1
+00:08 +48: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:08 +48: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: leaveSection parks sticky clip so return claims prepared                    
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9xhha transition=1 build=2026111711 mediaId=null offer=slide-a playerId=975515803 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9xhha transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=975515803 at=2026-11-18T10:37:32.288478Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=975515803 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=975515803 role=active at=2026-11-18T10:37:32.289770Z
+MIRA_DISCOVER_AUDIO mute_done playerId=975515803 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=975515803 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=975515803
+MIRA_DISCOVER_AUDIO mute_req playerId=975515803 role=unknown at=2026-11-18T10:37:32.290957Z
+MIRA_DISCOVER_AUDIO mute_done playerId=975515803 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=975515803 role=unknown ms=0
+MIRA_DISCOVER_SWIPE leave_section parked=null prepared=0 sticky=0
+MIRA_DISCOVER_AUDIO mute_req playerId=975515803 role=parked at=2026-11-18T10:37:32.291877Z
+MIRA_DISCOVER_AUDIO mute_done playerId=975515803 role=parked ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=975515803 role=parked ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9xhha transition=2 build=2026111711 mediaId=null offer=slide-a playerId=975515803 firstFrameMs=0 source=2 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9xhha transition=2 build=2026111711 mediaId=null offer=slide-a claim=2 cache=null bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=975515803 at=2026-11-18T10:37:32.293344Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=975515803 firstFrameMs=0 audible=1
+00:08 +49: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:08 +49: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: detach without first frame emits left_dark                                  
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_SWIPE left_dark mediaId=null offer=slide-a dwellMs=42 claim=0 cache=0 bytes=null audible=0
+MIRA_DISCOVER_AUDIO mute_req playerId=902342867 role=unknown at=2026-11-18T10:37:32.339798Z
+MIRA_DISCOVER_AUDIO mute_done playerId=902342867 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=902342867 role=unknown ms=0
+00:08 +50: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:08 +50: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: attach claims unprimed warm (pos0) without cold reopen                      
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9ut9ywwm transition=1 build=2026111711 mediaId=null offer=slide-a playerId=58050424 firstFrameMs=42 source=1 cacheSource=null cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9ut9ywwm transition=1 build=2026111711 mediaId=null offer=slide-a claim=1 cache=null bytes=null audioCutMs=0 firstFrameMs=42 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=58050424 at=2026-11-18T10:37:32.471235Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=58050424 firstFrameMs=42 audible=1
+00:09 +51: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:09 +51: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with foreign ownerSlot does not mute active clip           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uta1jrz transition=1 build=2026111711 mediaId=null offer=slide-a playerId=411529642 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uta1jrz transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=411529642 at=2026-11-18T10:37:32.477580Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=411529642 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO cut_skipped reason=not_owner owner=slide-b/0 active=slide-a/0
+MIRA_DISCOVER_AUDIO mute_req playerId=411529642 role=active at=2026-11-18T10:37:32.478376Z
+MIRA_DISCOVER_AUDIO mute_done playerId=411529642 role=active ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=411529642 role=active ms=0
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=411529642
+00:09 +52: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:09 +52: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: cutOutgoingAudio with stale generation is skipped                           
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uta1nsa transition=1 build=2026111711 mediaId=null offer=slide-a playerId=714202206 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uta1nsa transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=714202206 at=2026-11-18T10:37:32.482562Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=714202206 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO cut_skipped reason=stale_generation cutGen=0 live=1
+00:09 +53: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:09 +53: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/asset_video_port_test.dart: A→image→A: delayed mute of old gen does not mute reattached A               
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=0
+MIRA_DISCOVER_FF session=sho9uta1qyl transition=1 build=2026111711 mediaId=null offer=slide-a playerId=378621599 firstFrameMs=0 source=0 cacheSource=0 cacheBytes=null audioCutMs=0 audible=0 initStart=0 initDone=0 playStart=0 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uta1qyl transition=1 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=0 firstFrameMs=0 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=378621599 at=2026-11-18T10:37:32.486820Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=378621599 firstFrameMs=0 audible=1
+MIRA_DISCOVER_AUDIO mute_req playerId=378621599 role=active at=2026-11-18T10:37:32.487208Z
+MIRA_DISCOVER_AUDIO mute_req playerId=378621599 role=active at=2026-11-18T10:37:32.509708Z
+MIRA_DISCOVER_AUDIO mute_done playerId=378621599 role=active ms=44
+MIRA_DISCOVER_AUDIO mute_done playerId=378621599 role=active ms=22
+MIRA_DISCOVER_AUDIO pause_done playerId=378621599 role=active ms=45
+MIRA_DISCOVER_AUDIO cut_stale_after_wait cutGen=1 live=2
+MIRA_DISCOVER_AUDIO pause_done playerId=378621599 role=active ms=22
+MIRA_DISCOVER_SWIPE audio_cut prev=null next=null audible=0 activePlayerId=378621599
+MIRA_DISCOVER_AUDIO mute_req playerId=378621599 role=unknown at=2026-11-18T10:37:32.533676Z
+MIRA_DISCOVER_AUDIO mute_done playerId=378621599 role=unknown ms=0
+MIRA_DISCOVER_AUDIO pause_done playerId=378621599 role=unknown ms=0
+MIRA_DISCOVER_FF session=sho9uta1qyl transition=2 build=2026111711 mediaId=null offer=slide-a playerId=467674210 firstFrameMs=24 source=0 cacheSource=0 cacheBytes=null audioCutMs=23 audible=0 initStart=24 initDone=24 playStart=24 resolveMs=0 seekNudge=null
+MIRA_DISCOVER_SWIPE settle session=sho9uta1qyl transition=2 build=2026111711 mediaId=null offer=slide-a claim=0 cache=0 bytes=null audioCutMs=23 firstFrameMs=24 audible=0
+MIRA_DISCOVER_AUDIO unmute_req playerId=467674210 at=2026-11-18T10:37:32.535004Z
+MIRA_DISCOVER_SWIPE audio_armed mediaId=null playerId=467674210 firstFrameMs=24 audible=1
+00:09 +54: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:10 +54: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:11 +54: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:12 +54: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:13 +54: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:14 +54: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:14 +54: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)
+MIRA_DISCOVER_CACHE mediaId=fdead10c-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=network_to_disk reused=0 dl=8192 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fdead10c-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fdead10c-aaaa-aaaa-aaaa-aaaaaaaaaaaa source=disk_resume reused=8192 dl=122880 elapsedMs=10 err=null prio=null lock=true
+00:14 +55: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: join-under-lock stalls ~12s (bug repro)                                                                          00:14 +55: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                                  00:14 +55: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: prefix holding lock + ensureLocal inflight: Range fill without join (fixed)
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=network_to_disk reused=0 dl=8192 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=finalize_part reused=131072 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=ffixed10c-bbbb-bbbb-bbbb-bbbbbbbbbbbb source=disk_resume reused=8192 dl=122880 elapsedMs=6 err=null prio=null lock=true
+00:14 +56: /Users/fayez/Desktop/مراجع ... prefix holding lock + ensureLocal inflight: Range fill without join (fixed)                                                                                  00:14 +56: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                               00:14 +56: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=98304 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=freverse1-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=98304 elapsedMs=47 err=null prio=null lock=true
+00:14 +57: /Users/fayez/Desktop/مراجع ... ensureLocal first then ensurePlayablePrefix waits outside lock (reverse order)                                                                               00:14 +57: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download00:14 +57: /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download
+MIRA_DISCOVER_CACHE mediaId=deadbeef-dead-dead-dead-deaddeadbeef source=network_error reused=0 dl=0 elapsedMs=3 err=bad_content_type_text/plain prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=finalize_part reused=65536 dl=0 elapsedMs=0 err=null prio=null lock=true
+MIRA_DISCOVER_CACHE mediaId=fccccccc-cccc-cccc-cccc-cccccccccccc source=network_to_disk reused=0 dl=65536 elapsedMs=41 err=null prio=null lock=true
+00:14 +58: /Users/fayez/Desktop/مراجع ... ميرا /mira-wt-merge-1706/test/features/marketplace/discover_video_disk_cache_test.dart: failed neighbor download does not abort a concurrent visible download00:14 +58: All tests passed!                                                                                                                                                                           

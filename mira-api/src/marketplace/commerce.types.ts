@@ -672,7 +672,7 @@ export function parseQuantity(value: unknown): number {
 const PUBLIC_NUMBER_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 /** Human readable, e.g. `MO-261001-K7Q2ZP`. Uniqueness is enforced by the database. */
-export function makePublicNumber(prefix: 'MO' | 'MB', now: Date = new Date()): string {
+export function makePublicNumber(prefix: 'MO' | 'MB' | 'MV', now: Date = new Date()): string {
   const yy = String(now.getUTCFullYear()).slice(2);
   const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(now.getUTCDate()).padStart(2, '0');

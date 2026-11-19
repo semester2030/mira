@@ -54,6 +54,7 @@ class _FakeBookings implements CommerceClient {
     String? visitCityId,
     String? visitAddress,
     int? travelFeeHalalas,
+    Map<String, dynamic>? visitPlan,
   }) async {
     placePayloads.add({
       'serviceId': serviceId,
@@ -62,6 +63,7 @@ class _FakeBookings implements CommerceClient {
       'visitCityId': visitCityId,
       'visitAddress': visitAddress,
       'travelFeeHalalas': travelFeeHalalas,
+      'visitPlan': visitPlan,
     });
     return CommerceBookingResult(
       idempotentReplay: false,

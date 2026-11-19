@@ -1,0 +1,4 @@
+BASE_TIP=87376ececffdbc7f226f0c745db41aeb73a714e0
+RC5_1_TIP=87376ececffdbc7f226f0c745db41aeb73a714e0
+BRANCH=mira/catalog-provider-rc5.2
+RESULT=652203d00f025da2a17d1362ce618f6584ac554b

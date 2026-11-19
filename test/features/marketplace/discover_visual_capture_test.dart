@@ -11,7 +11,7 @@ import 'package:mirra/features/marketplace/presentation/presentation/presentatio
 import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';
 import 'package:mirra/shared/theme/typography.dart';
 
-import 'discover_fonts.dart';
+import '../../helpers/load_discover_fonts.dart';
 import 'discover_presentation_test.dart';
 
 class _QuietVideoPort extends DelayedVideoPort {

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -245,6 +246,7 @@ class DiscoverVisualChrome extends StatelessWidget {
                       assetFamily: assetFamily,
                       selected: selected,
                       onSelected: onCategory,
+                      enlargeCircles: assetFamily == 'occasions',
                     ),
                 ],
               ),
@@ -801,8 +803,9 @@ class _ClusterSide extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.visible,
                 style: AppTypography.labelSmall.copyWith(
                   color: Colors.white,
                   fontSize: 11,
@@ -863,9 +866,9 @@ class _ClusterPrimary extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
+                softWrap: true,
+                overflow: TextOverflow.visible,
                 style: AppTypography.labelSmall.copyWith(
                   color: Colors.white,
                   fontSize: 12,
@@ -881,6 +884,10 @@ class _ClusterPrimary extends StatelessWidget {
   }
 }
 
+/// Horizontal taxonomy / category orbs under Discover.
+///
+/// [enlargeCircles] is for «مناسباتك» only (~+20% diameter). Labels always show
+/// the full Arabic name with natural wrap — never ellipsis.
 class DiscoverCategoryRail extends StatelessWidget {
   const DiscoverCategoryRail({
     super.key,
@@ -891,7 +898,15 @@ class DiscoverCategoryRail extends StatelessWidget {
     this.ids,
     this.imageKeys,
     this.iconUrls,
+    this.enlargeCircles = false,
   });
+
+  /// Base diameter band shared by non-occasions lanes (keep unchanged).
+  static const double baseMinDiameter = 77;
+  static const double baseMaxDiameter = 94;
+
+  /// Occasions-only scale on top of [baseMinDiameter]/[baseMaxDiameter].
+  static const double occasionsCircleScale = 1.20;
 
   final List<String> labels;
   /// Taxonomy / stored ids aligned with [labels] for asset lookup (preferred over label).
@@ -903,59 +918,119 @@ class DiscoverCategoryRail extends StatelessWidget {
   final String assetFamily;
   final int selected;
   final ValueChanged<int> onSelected;
+  /// When true (مناسباتك), circles use [occasionsCircleScale].
+  final bool enlargeCircles;
+
+  static TextStyle _labelStyle({required bool selected}) {
+    return AppTypography.labelSmall.copyWith(
+      color: Colors.white,
+      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+      height: 1.25,
+      shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
+    );
+  }
+
+  static double measureLabelHeight({
+    required String label,
+    required TextStyle style,
+    required double maxWidth,
+    required TextScaler textScaler,
+  }) {
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: style),
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.center,
+      textScaler: textScaler,
+    )..layout(maxWidth: maxWidth);
+    return painter.height;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 130,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const gap = 8.0;
-          // +20% over the previous 64–78 diameter range; fewer visible chips
-          // with horizontal scroll is preferred over shrinking them again.
-          const minSize = 77.0;
-          final needed = labels.length * minSize + (labels.length - 1) * gap;
-          final fits = constraints.maxWidth >= needed;
-          final size = fits
-              ? ((constraints.maxWidth - (labels.length - 1) * gap) / labels.length).clamp(minSize, 94.0)
-              : minSize;
-          Widget chip(int index) {
-            final id = ids != null && index < ids!.length ? ids![index] : null;
-            final imageKey =
-                imageKeys != null && index < imageKeys!.length ? imageKeys![index] : null;
-            final iconUrl =
-                iconUrls != null && index < iconUrls!.length ? iconUrls![index] : null;
-            return _CategoryChip(
-              assetFamily: assetFamily,
-              label: labels[index],
-              id: id,
-              imageKey: imageKey,
-              iconUrl: iconUrl,
-              selected: index == selected,
-              size: size,
-              onTap: () => onSelected(index),
-            );
-          }
+    final scale = enlargeCircles ? occasionsCircleScale : 1.0;
+    final minSize = baseMinDiameter * scale;
+    final maxSize = baseMaxDiameter * scale;
+    final textScaler = MediaQuery.textScalerOf(context);
+    // Measure with the heavier selected weight so rail height never clips.
+    final labelStyle = _labelStyle(selected: true);
 
-          if (fits) {
-            return Row(
-              textDirection: TextDirection.rtl,
-              children: [
-                for (var index = 0; index < labels.length; index++) ...[
-                  if (index > 0) const SizedBox(width: gap),
-                  chip(index),
-                ],
-              ],
-            );
-          }
-          return ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: labels.length,
-            separatorBuilder: (_, __) => const SizedBox(width: gap),
-            itemBuilder: (context, index) => chip(index),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 8.0;
+        final labelPad = enlargeCircles ? 22.0 : 16.0;
+        // Circle band first, then widen each chip for wrapped titles.
+        final circleFitNeeded =
+            labels.length * minSize + (labels.length - 1) * gap;
+        final circlesFit = constraints.maxWidth >= circleFitNeeded;
+        final size = circlesFit
+            ? ((constraints.maxWidth - (labels.length - 1) * gap) / labels.length)
+                .clamp(minSize, maxSize)
+            : minSize;
+        final itemWidth = size + labelPad;
+        final rowNeeded =
+            labels.length * itemWidth + (labels.length - 1) * gap;
+        // Prefer horizontal scroll whenever padded chips exceed the strip —
+        // otherwise a Row overflows even when circles alone would fit.
+        final fits = constraints.maxWidth >= rowNeeded;
+        var maxLabelH = 0.0;
+        for (final label in labels) {
+          maxLabelH = math.max(
+            maxLabelH,
+            measureLabelHeight(
+              label: label,
+              style: labelStyle,
+              maxWidth: itemWidth,
+              textScaler: textScaler,
+            ),
           );
-        },
-      ),
+        }
+        final railHeight = size + 4 + maxLabelH + 8;
+
+        Widget chip(int index) {
+          final id = ids != null && index < ids!.length ? ids![index] : null;
+          final imageKey =
+              imageKeys != null && index < imageKeys!.length ? imageKeys![index] : null;
+          final iconUrl =
+              iconUrls != null && index < iconUrls!.length ? iconUrls![index] : null;
+          return _CategoryChip(
+            assetFamily: assetFamily,
+            label: labels[index],
+            id: id,
+            imageKey: imageKey,
+            iconUrl: iconUrl,
+            selected: index == selected,
+            circleSize: size,
+            itemWidth: itemWidth,
+            onTap: () => onSelected(index),
+          );
+        }
+
+        final body = fits
+            ? Row(
+                textDirection: TextDirection.rtl,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var index = 0; index < labels.length; index++) ...[
+                    if (index > 0) const SizedBox(width: gap),
+                    chip(index),
+                  ],
+                ],
+              )
+            : ListView.separated(
+                scrollDirection: Axis.horizontal,
+                reverse: false,
+                clipBehavior: Clip.none,
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                itemCount: labels.length,
+                separatorBuilder: (_, __) => const SizedBox(width: gap),
+                itemBuilder: (context, index) => Align(
+                  alignment: Alignment.topCenter,
+                  child: chip(index),
+                ),
+              );
+
+        return SizedBox(height: railHeight, child: body);
+      },
     );
   }
 }
@@ -965,7 +1040,8 @@ class _CategoryChip extends StatelessWidget {
     required this.assetFamily,
     required this.label,
     required this.selected,
-    required this.size,
+    required this.circleSize,
+    required this.itemWidth,
     required this.onTap,
     this.id,
     this.imageKey,
@@ -978,7 +1054,8 @@ class _CategoryChip extends StatelessWidget {
   final String? imageKey;
   final String? iconUrl;
   final bool selected;
-  final double size;
+  final double circleSize;
+  final double itemWidth;
   final VoidCallback onTap;
 
   @override
@@ -995,15 +1072,20 @@ class _CategoryChip extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: SizedBox(
-        width: size,
+        width: itemWidth,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: size,
-              height: size,
+              width: circleSize,
+              height: circleSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 2.5 : 1),
+                border: Border.all(
+                  color: selected ? AppColors.primary : AppColors.border,
+                  width: selected ? 2.5 : 1,
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(3),
@@ -1014,12 +1096,14 @@ class _CategoryChip extends StatelessWidget {
                       ? Image.network(
                           path,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.primaryLight),
+                          errorBuilder: (_, __, ___) =>
+                              const ColoredBox(color: AppColors.primaryLight),
                         )
                       : Image.asset(
                           path,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.primaryLight),
+                          errorBuilder: (_, __, ___) =>
+                              const ColoredBox(color: AppColors.primaryLight),
                         ),
                 ),
               ),
@@ -1027,13 +1111,10 @@ class _CategoryChip extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.labelSmall.copyWith(
-                color: Colors.white,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
-              ),
+              textAlign: TextAlign.center,
+              softWrap: true,
+              overflow: TextOverflow.visible,
+              style: DiscoverCategoryRail._labelStyle(selected: selected),
             ),
           ],
         ),

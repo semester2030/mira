@@ -42,6 +42,7 @@ class _FakeBookings implements CommerceClient {
     String? visitCityId,
     String? visitAddress,
     int? travelFeeHalalas,
+    Map<String, dynamic>? visitPlan,
   }) async {
     created.add('$serviceId|$resourceId|${startsAt.toUtc().toIso8601String()}|$contactPhone');
     keys.add(idempotencyKey);
@@ -51,6 +52,7 @@ class _FakeBookings implements CommerceClient {
       'visitCityId': visitCityId,
       'visitAddress': visitAddress,
       'travelFeeHalalas': travelFeeHalalas,
+      'visitPlan': visitPlan,
     });
     return CommerceBookingResult(
       idempotentReplay: false,

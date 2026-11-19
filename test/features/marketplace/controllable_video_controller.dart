@@ -27,8 +27,14 @@ class ControllableVideoController extends ValueNotifier<VideoPlayerValue>
   Completer<void>? pauseGate;
   Completer<void>? disposeGate;
   Completer<void>? volumeGate;
+  /// When true, [volumeGate] only blocks audible arms (volume > 0), so mute/cut
+  /// can finish while an unmute is held — mirrors delayed setVolume(1) on device.
+  bool gateAudibleOnly = false;
+  Completer<void>? seekGate;
   int setVolumeCalls = 0;
+  int seekCalls = 0;
   double? lastVolume;
+  Duration? lastSeekTo;
 
   /// When false, [play] marks isPlaying without advancing position (stall simulation).
   bool advanceOnPlay = true;
@@ -126,15 +132,25 @@ class ControllableVideoController extends ValueNotifier<VideoPlayerValue>
 
   @override
   Future<void> seekTo(Duration moment) async {
+    seekCalls += 1;
+    lastSeekTo = moment;
     if (disposed) return;
+    // Apply position first so listeners can race before [seekGate] completes —
+    // mirrors AVPlayer notifying during an in-flight seek.
     value = value.copyWith(position: moment);
+    if (seekGate != null) await seekGate!.future;
   }
 
   @override
   Future<void> setVolume(double volume) async {
     setVolumeCalls += 1;
     lastVolume = volume;
-    if (volumeGate != null) await volumeGate!.future;
+    final gate = volumeGate;
+    if (gate != null && (!gateAudibleOnly || volume > 0)) {
+      await gate.future;
+    }
+    if (disposed) return;
+    value = value.copyWith(volume: volume);
   }
 
   @override
@@ -151,9 +167,11 @@ class ControllableVideoController extends ValueNotifier<VideoPlayerValue>
 
   @override
   Future<void> dispose() async {
+    if (disposed) return;
     if (disposeGate != null) {
       await disposeGate!.future;
     }
+    if (disposed) return;
     disposed = true;
     disposeCalls += 1;
     instances.remove(this);

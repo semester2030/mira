@@ -436,8 +436,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           'مناسبة التقرير: ${args.outfitAnalysis!.occasion.labelAr}',
       ].join(' · ');
 
+      // Marketplace offer sessions are offer-bound — do not resume a prior skin thread.
+      final marketplaceOnly =
+          (args.marketplaceOfferId?.trim().isNotEmpty ?? false) &&
+          args.skinReport == null &&
+          args.outfitAnalysis == null &&
+          args.outfitAnalysisId == null &&
+          recolorId == null;
+
       // Resume skin-report chat like outfit — avoid orphan sessions mid-conversation.
-      if (skinId != null && outfitAnalysisId == null && recolorId == null) {
+      if (!marketplaceOnly &&
+          skinId != null &&
+          outfitAnalysisId == null &&
+          recolorId == null) {
         final rememberedSkin = prefs.getString('mira_skin_chat_$skinId');
         if (rememberedSkin != null && rememberedSkin.isNotEmpty) {
           stage = 'resume';
@@ -477,6 +488,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       }
 
       final statedWithPrefs = await _preferenceGoalAr(base: statedGoal);
+      final offerId = args.marketplaceOfferId?.trim();
       final session = await _consultationApi.createSession(
         skinAnalysisId: skinId,
         outfitAnalysisId: outfitAnalysisId,
@@ -484,6 +496,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         occasionId: args.outfitAnalysis?.occasion.id,
         statedGoalAr: statedWithPrefs,
         face: _faceContext?.toJson(),
+        marketplaceOfferId: offerId,
+        marketplaceOfferKind: args.marketplaceOfferKind,
       );
       await MiraAdvisorMemoryStore.bindSession(session.id);
       final imageLimit = await _consultationApi.dialogueImageLimit();
