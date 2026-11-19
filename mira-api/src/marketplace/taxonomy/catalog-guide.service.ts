@@ -13,7 +13,8 @@ export type CatalogGuideProvider = {
   partnerTypes: string[];
 };
 
-export type CatalogGuideService = {
+/** One service row inside catalog-guide.v1.json (not the Nest injectable). */
+export type CatalogGuideServiceEntry = {
   id: string;
   nameAr: string;
   domain?: string | null;
@@ -28,6 +29,9 @@ export type CatalogGuideService = {
   profileIdHint?: string | null;
 };
 
+/** @deprecated Use CatalogGuideServiceEntry — kept for call-site clarity in docs only. */
+export type CatalogGuideServiceRow = CatalogGuideServiceEntry;
+
 export type CatalogGuideDoc = {
   schemaVersion: number;
   source: string;
@@ -36,7 +40,7 @@ export type CatalogGuideDoc = {
   serviceCount: number;
   inScopeServiceCount: number;
   providers: CatalogGuideProvider[];
-  services: CatalogGuideService[];
+  services: CatalogGuideServiceEntry[];
   journey1?: {
     providerTypeId: string;
     serviceIds: string[];
@@ -79,7 +83,7 @@ export class CatalogGuideService implements OnModuleInit {
     return this.getDoc().providers;
   }
 
-  listServices(opts?: { inScopeOnly?: boolean; providerTypeId?: string }): CatalogGuideService[] {
+  listServices(opts?: { inScopeOnly?: boolean; providerTypeId?: string }): CatalogGuideServiceEntry[] {
     let rows = this.getDoc().services;
     if (opts?.inScopeOnly !== false) {
       rows = rows.filter((s) => s.inScope);
@@ -91,7 +95,7 @@ export class CatalogGuideService implements OnModuleInit {
     return rows;
   }
 
-  getService(id: string): CatalogGuideService | null {
+  getService(id: string): CatalogGuideServiceEntry | null {
     return this.getDoc().services.find((s) => s.id === id) ?? null;
   }
 

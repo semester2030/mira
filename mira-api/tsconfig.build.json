@@ -8,6 +8,11 @@
     "**/*.integration-tests.ts",
     "**/*schema-tests.ts",
     "**/*.unit.ts",
-    "**/*.evidence.ts"
+    "**/*.evidence.ts",
+    "**/*.proof.ts",
+    "**/*.closure.ts",
+    "**/*.ui-browser.proof.ts",
+    "**/*browser.integration-tests.ts",
+    "**/*browser-e2e*"
   ]
 }

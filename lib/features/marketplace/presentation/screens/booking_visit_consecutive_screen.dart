@@ -114,6 +114,21 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
     await _loadFirstSlots();
   }
 
+  /// Explicit customer action: keep the rejected attempt as history, start a *new* key/attempt.
+  Future<void> _startNewRequestAfterReject() async {
+    if (!_rejectedFinal) return;
+    setState(() {
+      _rejectedFinal = false;
+      _outcomeUnknown = false;
+      _activeAttempt = null;
+      _idempotencyKey = newIdempotencyKey();
+      _error = null;
+      _blockReason = null;
+      _firstSlot = null;
+    });
+    await _loadFirstSlots();
+  }
+
   /// Returns true when an actionable / terminal pending attempt was found for this screen.
   Future<bool> _tryRecoverPending() async {
     final account = _client.accountKey;
@@ -125,15 +140,24 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
       pending = await _pending.get(account, resumeKey);
     } else {
       // Match this pair only — never steal another attempt's key.
+      // Prefer recoverable phases; rejectedFinal is shown only to stop auto-resend (not as a live form).
       final all = await _pending.list(account);
       final screenIds = {_a.id, _b.id};
+      PendingVisitAttempt? rejectedMatch;
       for (final a in all) {
         final pendingIds = a.serviceIds.toSet();
-        if (pendingIds.length == 2 && pendingIds.difference(screenIds).isEmpty) {
+        if (pendingIds.length != 2 || pendingIds.difference(screenIds).isNotEmpty) continue;
+        if (a.phase == VisitAttemptPhase.outcomeUnknown ||
+            a.phase == VisitAttemptPhase.submitting ||
+            (a.phase == VisitAttemptPhase.accepted && a.visitId != null)) {
           pending = a;
           break;
         }
+        if (a.phase == VisitAttemptPhase.rejectedFinal) {
+          rejectedMatch ??= a;
+        }
       }
+      pending ??= rejectedMatch;
     }
     if (pending == null) return false;
     if (pending.phase == VisitAttemptPhase.accepted && pending.visitId != null) {
@@ -146,13 +170,14 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
       return true;
     }
     if (pending.phase == VisitAttemptPhase.rejectedFinal) {
+      // View prior rejection only — never auto-resend. New request requires explicit CTA.
       setState(() {
         _activeAttempt = pending;
         _idempotencyKey = pending!.idempotencyKey;
         _rejectedFinal = true;
         _error = pending.rejectionCode == null
-            ? 'رُفض الطلب نهائيًا. لإرسال طلب جديد اختاري الخدمات وأرسلي من جديد.'
-            : 'رُفض الطلب (${pending.rejectionCode}). لإرسال طلب جديد اختاري الخدمات وأرسلي من جديد.';
+            ? 'رُفض الطلب نهائيًا. اضغطي «بدء طلب جديد» لاختيار موعد بمفتاح جديد.'
+            : 'رُفض الطلب (${pending.rejectionCode}). اضغطي «بدء طلب جديد» لاختيار موعد بمفتاح جديد.';
       });
       return true;
     }
@@ -187,6 +212,7 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
     });
     try {
       // Prefer lookup by key — never treat availability as a receipt.
+      // getVisitByKey returns null only for VISIT_NOT_FOUND; generic 404 throws (no auto POST).
       final byKey = await _client.getVisitByKey(pending.idempotencyKey);
       if (byKey != null) {
         await _applyVisitResult(byKey.visit, clearPending: true);
@@ -349,7 +375,7 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
       return;
     }
     if (_rejectedFinal) {
-      setState(() => _error = 'الطلب السابق رُفض نهائيًا. ابدئي طلبًا جديدًا باختيار الخدمات من السلة.');
+      setState(() => _error = 'الطلب السابق رُفض نهائيًا. اضغطي «بدء طلب جديد» ثم أرسلي طلبًا بمفتاح جديد.');
       return;
     }
     if (!_form.currentState!.validate()) return;
@@ -542,7 +568,7 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
                     textAlign: TextAlign.center,
                   ),
                 ),
-              if (_rejectedFinal)
+              if (_rejectedFinal) ...[
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
@@ -552,6 +578,13 @@ class _BookingVisitConsecutiveScreenState extends State<BookingVisitConsecutiveS
                     textAlign: TextAlign.center,
                   ),
                 ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('start_new_visit_after_reject'),
+                  onPressed: _recovering || _submitting ? null : _startNewRequestAfterReject,
+                  child: const Text('بدء طلب جديد'),
+                ),
+              ],
               if (_completedPublicNumber != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),

@@ -41,7 +41,7 @@ CatalogService _svc({
 }
 
 class _FakeVisitClient implements CommerceClient {
-  _FakeVisitClient({this.holdSuccess = false, this.rejectCode});
+  _FakeVisitClient({this.holdSuccess = false, this.rejectCode, this.byKeyMode = 'normal'});
 
   @override
   final bool signedIn = true;
@@ -51,8 +51,11 @@ class _FakeVisitClient implements CommerceClient {
   String account = 'test-user';
   bool holdSuccess;
   String? rejectCode;
+  /// `normal` | `generic404` — generic404 throws HTTP_404 (not VISIT_NOT_FOUND).
+  String byKeyMode;
   int visitCalls = 0;
   int availabilityCalls = 0;
+  int byKeyCalls = 0;
   final keys = <String>[];
   CommerceVisit? lastVisit;
   final List<Map<String, dynamic>> lastItems = [];
@@ -158,9 +161,18 @@ class _FakeVisitClient implements CommerceClient {
 
   @override
   Future<CommerceVisitResult?> getVisitByKey(String idempotencyKey) async {
+    byKeyCalls++;
+    if (byKeyMode == 'generic404') {
+      throw const CommerceApiException(
+        code: 'HTTP_404',
+        messageAr: 'المسار غير متاح',
+        status: 404,
+      );
+    }
     if (lastVisit != null && keys.contains(idempotencyKey)) {
       return CommerceVisitResult(visit: lastVisit!, idempotentReplay: true);
     }
+    // Mimic ApiCommerceClient: only VISIT_NOT_FOUND → null (caller may same-key replay).
     return null;
   }
 
@@ -443,7 +455,85 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('pending_rejected_final')), findsOneWidget);
-    expect(client.visitCalls, callsBefore); // zero new sends
+    expect(find.byKey(const Key('start_new_visit_after_reject')), findsOneWidget);
+    expect(client.visitCalls, callsBefore); // zero new sends on reopen alone
+  });
+
+  testWidgets('(c2) intentional new request after reject = one new POST, reopen alone = zero', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final secrets = MemoryVisitAttemptSecrets();
+    final store = PendingVisitAttemptStore(secrets: secrets);
+    final client = _FakeVisitClient(rejectCode: 'BOOKING_NOT_ENABLED');
+    final pair = [
+      _svc(id: 's042', nameAr: 'تنظيف'),
+      _svc(id: 's043', nameAr: 'ترطيب', durationMin: 30),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: BookingVisitConsecutiveScreen(services: pair, client: client, pendingStore: store),
+      ),
+    );
+    await _fillAndSubmit(tester);
+    expect(client.visitCalls, 1);
+    final rejectedKey = client.keys.single;
+    expect((await store.get('test-user', rejectedKey))?.phase, VisitAttemptPhase.rejectedFinal);
+
+    client.rejectCode = null;
+    final callsAfterReject = client.visitCalls;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: BookingVisitConsecutiveScreen(services: pair, client: client, pendingStore: store),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(client.visitCalls, callsAfterReject); // reopen = zero send
+
+    await tester.tap(find.byKey(const Key('start_new_visit_after_reject')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('pending_rejected_final')), findsNothing);
+    expect(find.byKey(const Key('submit_consecutive_visit')), findsOneWidget);
+
+    await _fillAndSubmit(tester);
+    expect(client.visitCalls, callsAfterReject + 1);
+    expect(client.keys.last, isNot(rejectedKey));
+    // Prior rejected attempt kept for حجوزاتي view — not overwritten.
+    expect((await store.get('test-user', rejectedKey))?.phase, VisitAttemptPhase.rejectedFinal);
+  });
+
+  testWidgets('(c3) generic HTTP 404 on by-key is verification failure — zero auto-resend', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final secrets = MemoryVisitAttemptSecrets();
+    final store = PendingVisitAttemptStore(secrets: secrets);
+    final client = _FakeVisitClient(holdSuccess: true, byKeyMode: 'generic404');
+    final pair = [
+      _svc(id: 's042', nameAr: 'تنظيف'),
+      _svc(id: 's043', nameAr: 'ترطيب', durationMin: 30),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: BookingVisitConsecutiveScreen(services: pair, client: client, pendingStore: store),
+      ),
+    );
+    await _fillAndSubmit(tester);
+    expect(client.visitCalls, 1);
+    final key = client.keys.single;
+    final callsBefore = client.visitCalls;
+
+    await tester.tap(find.byKey(const Key('verify_pending_visit')));
+    await tester.pumpAndSettle();
+
+    expect(client.byKeyCalls, greaterThan(0));
+    expect(client.visitCalls, callsBefore); // no createConsecutiveVisit replay
+    expect(find.byKey(const Key('verify_pending_visit')), findsOneWidget);
+    expect(find.textContaining('لم نتحقق'), findsWidgets);
+    expect((await store.get('test-user', key))?.phase, VisitAttemptPhase.outcomeUnknown);
   });
 
   testWidgets('(d) second pending + other account isolation', (tester) async {

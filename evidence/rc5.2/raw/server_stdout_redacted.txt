@@ -1,0 +1,272 @@
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] AppModule dependencies initialized +14ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] PrismaModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] ConfigHostModule dependencies initialized +6ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] ConfigModule dependencies initialized +3ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] ConfigModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] RedisModule dependencies initialized +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] FashionIntelligenceModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] HealthModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] CommonModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] BeautyExperienceModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] AtelierModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] WebsiteModule dependencies initialized +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] VisionModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] AiModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] ProductionEntitlementModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] PortsModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] UsersModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] ConsultantDiscoveryModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] IntelligenceModule dependencies initialized +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] SubscriptionsModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] FeedbackModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] RecommendationsModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] MarketplaceModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] OutfitAnalysisModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] AdvisorModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] AdminModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] PartnersPortalModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] ConsultationModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] SkinAnalysisModule dependencies initialized +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [InstanceLoader] AiGatewayModule dependencies initialized +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] ProductionEntitlementController {/api/v1/entitlements}: +2ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/entitlements/runtime, GET} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] AiGatewayController {/api/v1/ai}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/skin-analysis, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/skin-analysis-hd-masks, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/outfit-analysis, POST} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/outfit-intelligence, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/outfit-segmentation, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/vision/outfit/analyze, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/vision/outfit/recolor, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/ai/full-mira-analysis, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] SkinAnalysisController {/api/v1/skin-analysis}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/skin-analysis, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/skin-analysis/history, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] UsersController {/api/v1/users}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/users/me, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/users/me/preferences, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/users/me/preferences, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/users/me, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] IntelligenceController {/api/v1/intelligence}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/intelligence/progress, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] MarketplaceController {/api/v1/marketplace}: +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/match, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/catalog-guide, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/taxonomy/lanes, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/taxonomy, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/catalog, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/cities, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/catalog-icons/images/:file, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/beauty-icons/:file, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/catalog/:kind/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/favorites, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/favorites, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/partners, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/partners/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CatalogMediaController {/api/v1/marketplace}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/media/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CatalogReviewAdminController {/api/v1/admin}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-reviews, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/media-abort-probe/:reqId, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-review-media/:id, GET} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-reviews/:kind/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-reviews/:kind/:id/decision, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CatalogAdAdminController {/api/v1/admin}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-ads, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-ads/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-ads/:id/decision, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CatalogAdPublicController {/api/v1/marketplace}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/ads, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/ads/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/ads/:id/link-open, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/view-counts/:kind/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/view-events, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CommerceController {/api/v1/marketplace/commerce}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/cart, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/cart, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/cart, DELETE} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/cart/items, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/cart/items/:id, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/cart/items/:id, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/checkout/quote, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/orders, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/orders, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/orders/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/orders/:id/cancel, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/services/:id/availability, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/bookings, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/bookings/visits, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/bookings/visits/by-key/:key, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/bookings/visits/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/bookings, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/bookings/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/bookings/:id/cancel, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CommerceAdminController {/api/v1/admin/commerce}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/session, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/attention, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/orders, GET} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/orders/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/orders/:id/transition, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/orders/:id/collect-payment, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/orders/:id/waive-payment, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/bookings, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/bookings/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/commerce/bookings/:id/transition, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CommerceAdminController {/api/v1/marketplace/commerce/admin}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/session, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/attention, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/orders, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/orders/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/orders/:id/transition, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/orders/:id/collect-payment, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/orders/:id/waive-payment, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/bookings, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/bookings/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/marketplace/commerce/admin/bookings/:id/transition, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] OutfitAnalysisController {/api/v1/outfit-analysis}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/outfit-analysis, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/outfit-analysis/history, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/outfit-analysis/snapshots, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] RecommendationsController {/api/v1/recommendations}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/recommendations, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/recommendations/history, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] SubscriptionsController {/api/v1/subscriptions}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/subscriptions/me, GET} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/subscriptions/dev/activate-premium, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] SubscriptionsWebhookController {/api/v1/subscriptions}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/subscriptions/webhook, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] HealthController {/api/v1/health}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/health, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] AdvisorController {/api/v1/advisor}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/advisor/chat, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] ConsultationController {/api/v1/consultation}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/limits, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions/:id/messages, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions/:id/messages, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions/:id/messages/stream, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions/:id/context, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions/:id/messages/transcript, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions/:id, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/sessions/:id/attachments, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/attachments/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/attachments/:id/token/:token, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultation/attachments/:id, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] ConsultantDiscoveryController {/api/v1/consultant-discovery}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultant-discovery/status, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/consultant-discovery/turn, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] FeedbackController {/api/v1/feedback}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/feedback, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] WebsiteController {/api/v1/website}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/website/features, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/website/stats, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/website/partners-preview, GET} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/website/leads, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] PartnersPortalController {/api/v1/partners-portal}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/registry, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/editor-drafts, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/editor-drafts/:clientDraftId, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/editor-drafts/:clientDraftId, PUT} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/editor-drafts/:clientDraftId, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/editor-drafts/:clientDraftId/materialize, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches/:batchId, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches/:batchId/cards/:cardId, PUT} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches/:batchId/apply-shared, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches/:batchId/materialize, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches/:batchId/cards, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches/:batchId/cards/:cardId, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/bulk-batches/:batchId/publish-group, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/service-profile, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/service-profile, PUT} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/import-local-template, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/activities/catalog, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/activities/expand, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/activities/me, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/admin/activities/queue, GET} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/admin/activities/decide, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/apply, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/apply/status/:token, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/login, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/track, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/me, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/branches, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/discard-pending-edits, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/admin/applications, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/admin/applications/:id/approve, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/admin/set-password, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/content-policy, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/media, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/media, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/media/order, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/media/order, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/variants/:variantId/media, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/variant-inventory, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/variant-inventory, PUT} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/media/:mediaId/primary, PATCH} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/media/:mediaId/primary, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/media/:mediaId, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/media/:mediaId, DELETE} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/submit-review, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/submit-review, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/products/:id/preview, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/services/:id/preview, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/media/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/import/simulated, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/import/simulated/:externalId/mira-note, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/admin/applications/:id/reject, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CatalogAdPartnerController {/api/v1/partners-portal}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/ads, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/ads, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/ads/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/ads/:id, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/ads/:id/submit-review, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/ads/:id/withdraw, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/ads/:id/stats, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] CommercePartnerController {/api/v1/partners/me/commerce}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/orders, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/orders/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/orders/:id/transition, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/orders/:id/collect-payment, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/bookings, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/bookings/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/bookings/:id/transition, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners/me/commerce/services/:id/availability, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] UploadSessionsController {/api/v1/partners-portal}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions/policy, GET} route +1ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions/:id/parts/:partNumber/sign, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions/:id/complete, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions/:id/retry-finalize, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions/:id/abort, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/partners-portal/upload-sessions/:id/direct-parts/:partNumber, PUT} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RoutesResolver] AdminController {/api/v1/admin}: +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/stats/overview, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/stats/analyses-trend, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/stats/audit-actions, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/users, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/users/:id, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/audit-logs, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/feedback, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/partners, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/partners/:id/status, PATCH} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/partners/applications, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/partners/applications/:id/approve, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/partners/applications/:id/reject, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/leads, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/system/config, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/store-readiness, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/store-readiness/clip-perf, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/store-readiness/evidence/:name, GET} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [RouterExplorer] Mapped {/api/v1/admin/catalog-media/deactivate-orphan-blobs, POST} route +0ms
+[Nest] 44946  - 11/19/2026, 4:45:21 PM     LOG [NestApplication] Nest application successfully started +25ms

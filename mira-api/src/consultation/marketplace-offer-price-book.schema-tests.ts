@@ -34,12 +34,17 @@ assert.match(String(marketplaceOfferLiveAskReply('هل الحجز متاح؟', l
 assert.match(String(marketplaceOfferLiveAskReply('هل فيه موعد؟', live)), /لا أجزم بتوفر ساعة/);
 assert.doesNotMatch(String(marketplaceOfferLiveAskReply('هل فيه موعد؟', live)), /الساعة الخامسة|17:00/);
 
-// RC5.1 — open-offer price gate must not claim alternatives / compare.
+// RC5.1 / RC5.2 — open-offer price gate must not claim alternatives / compare.
 assert.equal(isOpenOfferPriceQuestion('بكم خدمة ثانية؟'), false);
 assert.equal(isOpenOfferPriceQuestion('كم سعر البدائل؟'), false);
+assert.equal(isOpenOfferPriceQuestion('بكم هذه؟'), true);
+assert.equal(isOpenOfferPriceQuestion('بكم البديل؟'), false);
 assert.equal(isOpenOfferLiveAsk('بكم خدمة ثانية؟'), false);
 assert.equal(isAlternativesPriceOrCompareAsk('بكم خدمة ثانية؟'), true);
 assert.equal(isAlternativesOrCompareAsk('قارني سعرها بخدمة الترطيب'), true);
+assert.equal(isAlternativesOrCompareAsk('بكم البديل؟'), true);
+assert.equal(isAlternativesOrCompareAsk('طيب بكم غيرها؟'), true);
+assert.equal(isAlternativesOrCompareAsk('بكم هذه؟'), false);
 
 const altSecond = String(marketplaceAlternativesOrCompareReply('بكم خدمة ثانية؟', live));
 assert.match(altSecond, /بديل|خدمة ثانية/);
@@ -58,6 +63,7 @@ assert.doesNotMatch(compare, /سعر «ترطيب» 150|الترطيب» 150/);
 
 assert.equal(marketplaceOfferLiveAskReply('بكم خدمة ثانية؟', live), null);
 assert.equal(marketplaceOfferLiveAskReply('كم سعر البدائل؟', live), null);
+assert.equal(marketplaceOfferLiveAskReply('بكم البديل؟', live), null);
 
 const withdrawn = [
   {
@@ -99,8 +105,51 @@ assert.doesNotMatch(turnOn!.answerAr, /سعر «تنظيف» 150 ريال/);
 assert.equal(turnOn!.discoveryOffers.length, 1);
 assert.equal(turnOn!.discoveryOffers[0].priceSar, 120);
 assert.equal(turnOn!.discoveryOffers[0].titleAr, 'ترطيب');
+assert.equal(turnOn!.discoveryOffers[0].action, 'book');
 assert.equal(turnOn!.replySource, 'discovery');
 assert.equal(turnOn!.discoveryEnabled, true);
+
+// RC5.2 — «بكم البديل؟» / «بكم غيرها؟» use published alt price, never open 150.
+const turnBadil = buildAlternativesConsultationTurn('بكم البديل؟', live, [hydrateAlt], {
+  discoveryEnabled: true,
+});
+assert.ok(turnBadil);
+assert.match(turnBadil!.answerAr, /ترطيب/);
+assert.match(turnBadil!.answerAr, /120/);
+// May contrast open 150, but must not claim cleaning *is* the alternative price.
+assert.doesNotMatch(turnBadil!.answerAr, /سعر البديل المنشور «تنظيف»/);
+assert.doesNotMatch(turnBadil!.answerAr, /«ترطيب»:\s*150|البديل المنشور «ترطيب»:\s*150/);
+assert.match(turnBadil!.answerAr, /وليس سعر «تنظيف»/);
+assert.equal(turnBadil!.discoveryOffers[0].id, 'svc-hydrate');
+assert.equal(turnBadil!.discoveryOffers[0].priceSar, 120);
+
+const turnGhairaha = buildAlternativesConsultationTurn('طيب بكم غيرها؟', live, [hydrateAlt], {
+  discoveryEnabled: true,
+});
+assert.ok(turnGhairaha);
+assert.match(turnGhairaha!.answerAr, /120/);
+assert.doesNotMatch(turnGhairaha!.answerAr, /سعر «تنظيف» 150 ريال كسعر لبديل/);
+
+// Unknown alternative → ask to identify; never open-offer price as alt.
+const turnUnknownAlt = buildAlternativesConsultationTurn('بكم البديل؟', live, [], {
+  discoveryEnabled: false,
+});
+assert.ok(turnUnknownAlt);
+assert.match(turnUnknownAlt!.answerAr, /أي بديل|حددي/);
+assert.doesNotMatch(turnUnknownAlt!.answerAr, /^سعر «تنظيف» 150|البديل المنشور «تنظيف»/);
+assert.equal(turnUnknownAlt!.discoveryOffers.length, 0);
+
+// Published but booking closed → details only (action view).
+const closedHydrate = { ...hydrateAlt, inStock: false, bookingEnabled: false };
+const turnClosedAlt = buildAlternativesConsultationTurn('بكم البديل؟', live, [closedHydrate], {
+  discoveryEnabled: true,
+});
+assert.ok(turnClosedAlt);
+assert.match(turnClosedAlt!.answerAr, /120/);
+assert.match(turnClosedAlt!.answerAr, /الحجز غير متاح|عرض التفاصيل/);
+assert.equal(turnClosedAlt!.discoveryOffers[0].action, 'view');
+assert.equal(turnClosedAlt!.discoveryOffers[0].inStock, false);
+assert.equal(turnClosedAlt!.discoveryOffers[0].priceSar, 120);
 
 // Discovery OFF after withdraw → clarify, empty cards, no stale 150 as alternative price.
 const turnOffWithdrawn = buildAlternativesConsultationTurn('بكم خدمة ثانية؟', withdrawn, [], {

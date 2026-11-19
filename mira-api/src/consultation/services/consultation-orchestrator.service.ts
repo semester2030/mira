@@ -400,7 +400,7 @@ export class ConsultationOrchestratorService {
       !isAlternativesOrCompareAsk(askText) &&
       isOpenOfferLiveAsk(askText)
     ) {
-      localReply = marketplaceOfferLiveAskReply(askText, loaded.factRegistry) ?? undefined;
+      localReply = marketplaceOfferLiveAskReply(askText, loaded.factRegistry) ?? null;
     }
 
     // Real partner catalog via MarketplaceService.browse — never RC5 fixtures here.
@@ -500,6 +500,9 @@ export class ConsultationOrchestratorService {
         kind: o.kind,
         priceSar: o.priceSar ?? null,
         inStock: o.inStock ?? null,
+        // Derive from card action — ConsultantOfferCard does not expose bookingEnabled.
+        bookingEnabled:
+          o.kind === 'service' ? o.action === 'book' : o.kind === 'product' ? o.action === 'buy' : null,
       }));
       const turn = buildAlternativesConsultationTurn(askText, loaded.factRegistry, published, {
         discoveryEnabled: this.discovery.enabled(),

@@ -541,11 +541,16 @@ function offerLiveStatusLine(
 /**
  * Alternatives / compare asks — must be classified *before* open-offer price/book/includes.
  * Never answer these with the open offer's published price.
+ * Covers: البديل / بدائل / غيرها / الخدمة الأخرى / قارني… — not bare «بكم هذه؟».
  */
 export function isAlternativesOrCompareAsk(message: string): boolean {
   const text = message.trim();
   if (!text) return false;
-  return /بدائل|غير هذه|خدمة ثانية|مركز آخر|صالون آخر|قارن(?:ي|وا)?|بمقارن|سعرها ب|بكم\s+خدمة\s+ثانية|كم\s+سعر\s+البدائل/.test(
+  // Explicit open-offer demonstratives stay out of alternatives.
+  if (/^(?:بكم|كم\s*(?:ال)?سعر|ما\s*(?:ال)?سعر)\s*(?:هذه|هذي|ها)\s*[؟?]?\s*$/i.test(text)) {
+    return false;
+  }
+  return /بدائل|البديل|(?:^|[\s،,])بديل(?:\s|$|[؟?])|غيرها|غير\s*ها|غير هذه|غير\s*هذي|الخدمة الأخرى|خدمة أخرى|خدمة ثانية|مركز آخر|صالون آخر|قارن(?:ي|وا)?|بمقارن|سعرها ب|بكم\s+(?:ال)?بديل|بكم\s+غيرها|كم\s+سعر\s+(?:ال)?بدائل|كم\s+سعر\s+(?:ال)?بديل/.test(
     text,
   );
 }
@@ -581,7 +586,9 @@ export type AlternativesPublishedOffer = {
   titleAr: string;
   kind?: string;
   priceSar?: number | null;
+  /** true = bookable/buyable; false = closed/out-of-stock; null/undefined = unverified. */
   inStock?: boolean | null;
+  bookingEnabled?: boolean | null;
 };
 
 /**
@@ -640,14 +647,42 @@ export function marketplaceAlternativesOrCompareReply(
     return `أعرف سعر «${openName}» المنشور (${openPrice} ريال) لكن لا أجد سعرًا منشورًا لـ«${named}» في هذه الجلسة — لن أنسب سعر «${openName}» لها ولن أخترع رقمًا.`;
   }
 
-  // «بكم خدمة ثانية؟» / «كم سعر البدائل؟»
-  const priced = publishedAlternatives.filter((o) => o.titleAr.trim());
+  // «بكم البديل؟» / «بكم غيرها؟» / «بكم خدمة ثانية؟» / «كم سعر البدائل؟»
+  // Never attribute the open-offer price to an alternative — even when none is published.
+  const priced = publishedAlternatives.filter((o) => {
+    const id = String(o.id ?? '').trim();
+    const titleAr = String(o.titleAr ?? '').trim();
+    if (!id || !titleAr) return false;
+    // Exclude the open offer itself if it leaked into the alternatives list.
+    const openId = title?.id.replace(/^marketplace\.offer\.title\./, '');
+    return !openId || id !== openId;
+  });
+  const singularAltAsk = /(?:ال)?بديل|غيرها|غير\s*ها|الخدمة الأخرى|خدمة أخرى|هذي(?!\s*$)/.test(text);
+  if (priced.length === 1 && singularAltAsk) {
+    const only = priced[0]!;
+    if (only.priceSar == null || !Number.isFinite(only.priceSar)) {
+      return `البديل المنشور «${only.titleAr}» بلا سعر منشور — لن أخترع رقمًا ولن أنسب سعر «${openName}» إليه.`;
+    }
+    const closed =
+      only.bookingEnabled === false || only.inStock === false
+        ? only.kind === 'service'
+          ? ' (الحجز غير متاح — عرض التفاصيل فقط)'
+          : ' (غير متوفر — عرض التفاصيل فقط)'
+        : '';
+    return `سعر البديل المنشور «${only.titleAr}»: ${only.priceSar} ريال${closed} — وليس سعر «${openName}»${openPrice ? ` (${openPrice} ريال)` : ''}.`;
+  }
   if (priced.length) {
     const lines = priced.map((o) => {
       if (o.priceSar == null || !Number.isFinite(o.priceSar)) {
         return `• «${o.titleAr}»: لا سعر منشور`;
       }
-      return `• «${o.titleAr}»: ${o.priceSar} ريال`;
+      const status =
+        o.bookingEnabled === false || o.inStock === false
+          ? o.kind === 'service'
+            ? ' — الحجز غير متاح'
+            : ' — غير متوفر'
+          : '';
+      return `• «${o.titleAr}»: ${o.priceSar} ريال${status}`;
     });
     const prefix =
       live === 'withdrawn'
@@ -688,23 +723,52 @@ export function buildAlternativesConsultationTurn(
   const answerAr = marketplaceAlternativesOrCompareReply(message, facts, publishedAlternatives);
   if (!answerAr) return null;
   const discoveryEnabled = opts?.discoveryEnabled === true;
+  const openOfferId = facts
+    .find((f) => f.id.startsWith('marketplace.offer.title.'))
+    ?.id.replace(/^marketplace\.offer\.title\./, '');
   const discoveryOffers: Array<Record<string, unknown>> = [];
   for (const o of publishedAlternatives) {
     const id = String(o.id ?? '').trim();
     const titleAr = String(o.titleAr ?? '').trim();
     if (!id || !titleAr) continue;
+    // Never present the open offer itself as an «alternative» card.
+    if (openOfferId && id === openOfferId) continue;
     const kind = o.kind === 'service' ? 'service' : 'product';
     const priceSar = o.priceSar != null && Number.isFinite(o.priceSar) ? o.priceSar : null;
+    const available =
+      o.bookingEnabled === false || o.inStock === false
+        ? false
+        : o.inStock === true || o.bookingEnabled === true
+          ? true
+          : null;
+    // Closed / OOS / unverified → details only; never claim book/buy without verification.
+    const action = available === true ? (kind === 'service' ? 'book' : 'buy') : 'view';
+    const actionLabelAr =
+      available === true
+        ? kind === 'service'
+          ? 'احجزي'
+          : 'اطلبي'
+        : available === false
+          ? 'عرض التفاصيل'
+          : 'عرض التفاصيل';
     discoveryOffers.push({
       id,
       kind,
       titleAr,
       priceSar,
       priceLabelAr: priceSar != null ? `${priceSar} ر.س` : 'السعر غير مذكور في الكتالوج',
-      inStock: o.inStock ?? null,
-      action: kind === 'service' ? 'book' : 'buy',
-      actionLabelAr: kind === 'service' ? 'احجزي' : 'اطلبي',
+      inStock: available,
+      action,
+      actionLabelAr,
       openPath: `/${kind}/${id}`,
+      statusLabelAr:
+        available === false
+          ? kind === 'service'
+            ? 'الحجز غير متاح'
+            : 'غير متوفر'
+          : available === null
+            ? 'التوفر غير متحقق'
+            : null,
     });
   }
   return {

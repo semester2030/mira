@@ -342,7 +342,9 @@ class ApiCommerceClient implements CommerceClient {
         idempotentReplay: json['idempotentReplay'] == true,
       );
     } on CommerceApiException catch (e) {
-      if (e.status == 404 || e.code == 'VISIT_NOT_FOUND') return null;
+      // Only an explicit VISIT_NOT_FOUND from this key's API means «no visit» → caller may same-key replay.
+      // Generic HTTP 404 (wrong path / gateway / HTML) is a verification failure — never treat as not-found.
+      if (e.code == 'VISIT_NOT_FOUND') return null;
       rethrow;
     }
   }

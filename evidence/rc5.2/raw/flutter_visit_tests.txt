@@ -1,0 +1,29 @@
+00:01 +0: riyadhClock maps 14:00Z to 17:00 regardless of device local zone                                                                                                                             
+00:01 +1: riyadhClock maps 14:00Z to 17:00 regardless of device local zone                                                                                                                             
+00:01 +1: pending store keeps two accounts and two attempts without overwrite                                                                                                                          
+00:01 +2: pending store keeps two accounts and two attempts without overwrite                                                                                                                          
+00:01 +2: consecutive submits one visit and returns accepted service ids only                                                                                                                          
+00:02 +2: consecutive submits one visit and returns accepted service ids only                                                                                                                          
+00:02 +3: consecutive submits one visit and returns accepted service ids only                                                                                                                          
+00:02 +3: (a) lost success on same screen verifies by key before availability                                                                                                                          
+00:02 +4: (a) lost success on same screen verifies by key before availability                                                                                                                          
+00:02 +4: (b) lost success recovers from حجوزاتي entry without re-picking services                                                                                                                     
+00:02 +5: (b) lost success recovers from حجوزاتي entry without re-picking services                                                                                                                     
+00:02 +5: (c) final reject does not auto-resend on reopen after service re-enabled                                                                                                                     
+00:02 +6: (c) final reject does not auto-resend on reopen after service re-enabled                                                                                                                     
+00:02 +6: (c2) intentional new request after reject = one new POST, reopen alone = zero                                                                                                                
+00:02 +7: (c2) intentional new request after reject = one new POST, reopen alone = zero                                                                                                                
+00:02 +7: (c3) generic HTTP 404 on by-key is verification failure — zero auto-resend                                                                                                                   
+00:03 +7: (c3) generic HTTP 404 on by-key is verification failure — zero auto-resend                                                                                                                   
+00:03 +8: (c3) generic HTTP 404 on by-key is verification failure — zero auto-resend                                                                                                                   
+00:03 +8: (d) second pending + other account isolation                                                                                                                                                 
+00:03 +9: (d) second pending + other account isolation                                                                                                                                                 
+00:03 +9: basket with three services requires explicit pick; marks only accepted ids                                                                                                                   
+00:03 +10: basket with three services requires explicit pick; marks only accepted ids                                                                                                                  
+00:03 +10: separate cancel does not open the next service                                                                                                                                              
+00:03 +11: separate cancel does not open the next service                                                                                                                                              
+00:03 +11: mismatched branches block submit without creating a visit                                                                                                                                   
+00:03 +12: mismatched branches block submit without creating a visit                                                                                                                                   
+00:03 +12: All tests passed!                                                                                                                                                                           
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/booking_visit_consecutive_test.dart                                                              
+00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt-merge-1706/test/features/marketplace/booking_visit_consecutive_test.dart                                                              

@@ -1,0 +1,5 @@
+Analyzing 3 items...                                            
+
+   info • Use the null-aware operator '?.' rather than an explicit 'null' comparison • lib/features/marketplace/presentation/screens/booking_visit_consecutive_screen.dart:537:23 • prefer_null_aware_operators
+
+1 issue found. (ran in 1.4s)
