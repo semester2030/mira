@@ -17,6 +17,30 @@ function claimKeysForSubsystems(
   });
 }
 
+/** Customer-facing chips — never echo internal/clarify reason text. */
+function actionableFollowUps(intent: AdvisorIntent): string[] {
+  switch (intent) {
+    case 'garment':
+      return ['أرسل صورة القطعة', 'اختاري لي تنسيقًا للمناسبة'];
+    case 'outfit':
+      return ['أضيفي صورة الإطلالة', 'قيّمي تناغم هذه الإطلالة'];
+    case 'styling':
+      return ['اقترحي أسلوبًا للمناسبة', 'ما الذي يناسب شكل وجهي؟'];
+    case 'wardrobe':
+      return ['اربطي خزانتي كمرجع', 'ما الذي ينقص إطلالي؟'];
+    case 'face':
+      return ['افتحي تحليل الوجه', 'ما الذي يناسب شكل وجهي؟'];
+    case 'skin':
+      return ['افتحي تحليل البشرة', 'ما روتيني الصباحي؟'];
+    case 'beauty_experience':
+      return ['جرّبي تجربة الجمال', 'ما الخطوة التالية؟'];
+    case 'goals':
+      return ['اعرضي أهدافي المحفوظة', 'كيف أتقدم نحو هدفي؟'];
+    default:
+      return ['أرسلي صورة واضحة', 'اربطي تحليلًا موجودًا'];
+  }
+}
+
 /**
  * Conversation Planner — consumes ONLY Advisor Evidence Envelope.
  * Never inspects frozen subsystem internals.
@@ -87,7 +111,7 @@ export function planConversation(input: {
       selectedClaimKeys: [],
       followUpsAr: [
         'حدّثي التحليل ثم اسألي مجدداً',
-        route.action.reasonAr,
+        ...actionableFollowUps(intent).slice(0, 1),
       ],
       primaryReasonCode: 'expired_evidence',
       answerStrategy: 'clarify',
@@ -119,10 +143,7 @@ export function planConversation(input: {
       intent,
       steps,
       selectedClaimKeys: [],
-      followUpsAr: [
-        route.action.reasonAr,
-        'هل تريدين ربط تحليل موجود؟',
-      ],
+      followUpsAr: actionableFollowUps(intent),
       primaryReasonCode: 'missing_evidence',
       answerStrategy: 'clarify',
     };

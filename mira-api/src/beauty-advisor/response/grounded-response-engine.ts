@@ -16,6 +16,22 @@ export interface GroundedAdvisorResponse {
 export const ADVISOR_DISCLAIMER_AR =
   'نصيحة عناية عامة من ميرا — ليست تشخيصاً طبياً ولا وصفة علاجية. تعتمد الإجابة فقط على أدلة ظرف المستشارة.';
 
+/** Fashion intents: styling guidance only — avoid medical framing. */
+export const ADVISOR_FASHION_DISCLAIMER_AR =
+  'اقتراح تنسيق من ميرا بناءً على الأدلة المتوفرة فقط — ليس حكمًا على الذوق ولا توصية شراء ملزمة.';
+
+function disclaimerForIntent(intent: ConversationPlan['intent']): string {
+  if (
+    intent === 'garment' ||
+    intent === 'outfit' ||
+    intent === 'styling' ||
+    intent === 'wardrobe'
+  ) {
+    return ADVISOR_FASHION_DISCLAIMER_AR;
+  }
+  return ADVISOR_DISCLAIMER_AR;
+}
+
 function computeLaw34Flag(
   envelope: AdvisorEvidenceEnvelope,
   citedClaimKeys: string[],
@@ -66,7 +82,7 @@ export function generateGroundedResponse(input: {
       suggestedQuestionsAr: plan.followUpsAr,
       confidence: 'high',
       blocked: plan.answerStrategy === 'refuse' && plan.intent === 'blocked',
-      disclaimerAr: ADVISOR_DISCLAIMER_AR,
+      disclaimerAr: disclaimerForIntent(plan.intent),
     });
   }
 
@@ -81,7 +97,7 @@ export function generateGroundedResponse(input: {
       suggestedQuestionsAr: plan.followUpsAr,
       confidence: 'low',
       blocked: false,
-      disclaimerAr: ADVISOR_DISCLAIMER_AR,
+      disclaimerAr: disclaimerForIntent(plan.intent),
     });
   }
 
@@ -95,7 +111,7 @@ export function generateGroundedResponse(input: {
       suggestedQuestionsAr: plan.followUpsAr,
       confidence: 'low',
       blocked: false,
-      disclaimerAr: ADVISOR_DISCLAIMER_AR,
+      disclaimerAr: disclaimerForIntent(plan.intent),
     });
   }
 
@@ -126,7 +142,7 @@ export function generateGroundedResponse(input: {
       suggestedQuestionsAr: plan.followUpsAr,
       confidence: 'low',
       blocked: false,
-      disclaimerAr: ADVISOR_DISCLAIMER_AR,
+      disclaimerAr: disclaimerForIntent(plan.intent),
     });
   }
 
@@ -146,6 +162,6 @@ export function generateGroundedResponse(input: {
     suggestedQuestionsAr: plan.followUpsAr,
     confidence: envelope.confidence,
     blocked: false,
-    disclaimerAr: ADVISOR_DISCLAIMER_AR,
+    disclaimerAr: disclaimerForIntent(plan.intent),
   });
 }
