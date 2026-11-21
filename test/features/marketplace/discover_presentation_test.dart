@@ -335,34 +335,31 @@ void main() {
     await tester.tap(find.text('التفاصيل'));
     await tester.pump();
     port.flush();
-    // Product detail uses Mirra logo app bar (not a "تفاصيل المنتج" title).
-    // Wait for the record page to settle on product content or an explicit state.
-    Finder detailSettled() {
-      if (find.textContaining('منتج اختبار بعنوان عربي').evaluate().isNotEmpty) {
-        return find.textContaining('منتج اختبار بعنوان عربي');
-      }
-      if (find.text('جاري تحميل التفاصيل').evaluate().isNotEmpty) {
-        return find.text('جاري تحميل التفاصيل');
-      }
-      if (find.textContaining('تعذر تحميل').evaluate().isNotEmpty) {
-        return find.textContaining('تعذر تحميل');
-      }
-      return find.byType(Scaffold).last;
-    }
-    for (var i = 0; i < 20; i++) {
+    // Product detail uses Mirra logo app bar — identity is the product title, not a generic Scaffold.
+    final productTitle = find.textContaining('منتج اختبار بعنوان عربي');
+    var openedProduct = false;
+    for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.textContaining('منتج اختبار بعنوان عربي').evaluate().isNotEmpty) break;
+      if (productTitle.evaluate().isNotEmpty) {
+        openedProduct = true;
+        break;
+      }
     }
+    expect(
+      openedProduct,
+      isTrue,
+      reason: 'details must open the product record (title), not a generic shell',
+    );
+    expect(productTitle, findsWidgets);
     expect(port.isPlaying, isFalse);
     expect(port.events, contains('pause'));
 
-    Navigator.of(tester.element(detailSettled())).pop();
+    Navigator.of(tester.element(productTitle.first)).pop();
     await tester.pump();
     port.flush();
     await tester.pump();
     expect(port.isPlaying, isTrue);
     expect(port.activeSlot, const PresentationSlot('p-loreal-vitc', 0));
-
   });
 
   testWidgets('opening a service from its video stops that player', (tester) async {
