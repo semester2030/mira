@@ -326,6 +326,19 @@ function testMissingEvidenceClarification(): void {
   });
   assert.equal(turn.plan.primaryReasonCode, 'missing_evidence');
   assert.equal(turn.response.citedClaimKeys.length, 0);
+  // Chips must be actionable — never echo the clarify answer / reasonAr.
+  assert.ok(
+    turn.response.suggestedQuestionsAr.every(
+      (q) => q !== turn.response.answerAr && !q.includes('يلزم'),
+    ),
+    'suggestedQuestions must not echo clarify reason',
+  );
+  assert.ok(
+    turn.response.suggestedQuestionsAr.some((q) =>
+      /صورة|تنسيق|مناسبة|إطلالة|تحليل/.test(q),
+    ),
+    'suggestedQuestions must nudge next customer action',
+  );
   console.log('ok missing_evidence');
 }
 
