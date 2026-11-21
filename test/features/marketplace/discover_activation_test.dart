@@ -12,7 +12,8 @@ import 'package:mirra/features/marketplace/data/discover_catalog_query.dart';
 import 'package:mirra/features/marketplace/data/datasources/marketplace_api_data_source.dart';
 import 'package:mirra/features/marketplace/data/catalog_provenance.dart';
 import 'package:mirra/features/marketplace/data/repositories/marketplace_repository_impl.dart';
-import 'package:mirra/features/marketplace/domain/entities/catalog_product.dart';
+import 'package:mirra/features/marketplace/domain/entities/catalog_product.dart'
+    show CatalogProduct, CatalogPurchaseMode;
 import 'package:mirra/features/marketplace/domain/entities/catalog_service.dart';
 import 'package:mirra/features/marketplace/presentation/marketplace_routes.dart';
 import 'package:mirra/features/marketplace/presentation/widgets/discover_lane_entries.dart';
@@ -119,8 +120,11 @@ void main() {
       expect(missingProduct, isNull);
     } else {
       expect(presentation.page, isA<DiscoverHubScreen>());
-      expect(elegance.page, isA<DiscoverHubScreen>());
-      expect(beauty.page, isA<DiscoverHubScreen>());
+      // Lane arguments intentionally open presentation even when marketplace is off.
+      expect(elegance.page, isA<DiscoverPresentationScreen>());
+      expect((elegance.page as DiscoverPresentationScreen).lane, DiscoverLane.elegance);
+      expect(beauty.page, isA<DiscoverPresentationScreen>());
+      expect((beauty.page as DiscoverPresentationScreen).lane, DiscoverLane.beauty);
       expect(list.page, isA<DiscoverHubScreen>());
       expect((product! as PremiumPageRoute<void>).page, isA<DiscoverHubScreen>());
       expect((missingProduct! as PremiumPageRoute<void>).page, isA<DiscoverHubScreen>());
@@ -192,6 +196,7 @@ CatalogProduct _product() {
     priceLabel: '10 ر.س',
     externalUrl: 'https://example.invalid/product',
     matchScore: 0,
+    purchaseMode: CatalogPurchaseMode.external,
   );
 }
 

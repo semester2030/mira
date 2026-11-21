@@ -1329,9 +1329,13 @@ void main() {
     expect(vBytes, bodies[visible]!.sublist(0, want));
 
     // Neighbor proxy may serve a small prefix only — must not full-GET.
+    // Fresh client: avoid keep-alive reuse against a prior detached socket.
     cache.prefetch(urlFor(neighbor), lowPriority: true);
-    final nReq = await client.getUrl(neighborSource.uri!);
+    final neighborClient = HttpClient();
+    addTearDown(() => neighborClient.close(force: true));
+    final nReq = await neighborClient.getUrl(neighborSource.uri!);
     nReq.headers.set(HttpHeaders.rangeHeader, 'bytes=0-${16 * 1024 - 1}');
+    nReq.headers.set(HttpHeaders.connectionHeader, 'close');
     final nResp = await nReq.close();
     final nBytes = await nResp.fold<List<int>>(<int>[], (a, b) {
       a.addAll(b);
@@ -2176,6 +2180,71 @@ void main() {
     }
     expect(cache.debugActiveProxyWaits, 0,
         reason: 'wait loop must exit on real client abort while origin blocked');
+    expect(release.isCompleted, isFalse);
+    release.complete();
+  });
+
+  test('proxy exits mid-stream growth wait when client aborts after first bytes',
+      () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_abort_mid_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    final bytes = List<int>.generate(2 * 1024 * 1024, (i) => i % 256);
+    final release = Completer<void>();
+    const seed = 256 * 1024;
+    final origin = await _videoOrigin(
+      bytes,
+      releaseTailAfter: release,
+      releaseAfterOffset: seed,
+    );
+    addTearDown(() async {
+      await origin.close(force: true);
+    });
+    const id = 'fabortm1-bbbb-bbbb-bbbb-bbbbaaaabbbb';
+    final url =
+        'http://${origin.address.host}:${origin.port}/api/v1/marketplace/media/$id';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+    // Local prefix lets the proxy start streaming; origin holds the tail.
+    await File('${root.path}/$id.part').writeAsBytes(bytes.sublist(0, seed));
+    final source = await cache.resolvePlaySource(url, claimPriority: true);
+    final client = HttpClient();
+    final req = await client.getUrl(source.uri!);
+    req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
+    final resp = await req.close().timeout(const Duration(seconds: 3));
+    final gotPrefix = Completer<void>();
+    var received = 0;
+    final sub = resp.listen((chunk) {
+      received += chunk.length;
+      if (!gotPrefix.isCompleted && received >= seed ~/ 2) {
+        gotPrefix.complete();
+      }
+    }, onError: (_) {}, cancelOnError: true);
+    await gotPrefix.future.timeout(const Duration(seconds: 3));
+    expect(received, greaterThan(0), reason: 'first bytes must arrive');
+    // After the local prefix is exhausted the handler waits for growth.
+    final waitDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while (cache.debugActiveProxyWaits == 0 &&
+        DateTime.now().isBefore(waitDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(cache.debugActiveProxyWaits, greaterThan(0),
+        reason: 'must be waiting for stalled tail after first bytes');
+    // Swipe-away: abort while the previous clip's tail is still blocked.
+    await sub.cancel();
+    client.close(force: true);
+    final clearDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while (cache.debugActiveProxyWaits > 0 &&
+        DateTime.now().isBefore(clearDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(cache.debugActiveProxyWaits, 0,
+        reason: 'mid-stream growth wait must exit on real client abort');
     expect(release.isCompleted, isFalse);
     release.complete();
   });

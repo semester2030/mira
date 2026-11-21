@@ -157,7 +157,8 @@ void main() {
     await tester.pump();
     expect(find.text(stale.nameAr), findsNothing);
     expect(find.text('جاري تحميل الكتالوج'), findsNothing);
-    expect(find.text(offer.nameAr), findsOneWidget);
+    // New queries drop visible offers immediately while a newer search is pending.
+    expect(find.text(offer.nameAr), findsNothing);
     gateway.pending[2].complete(_ok([makeup]));
     await tester.pumpAndSettle();
     expect(find.text(makeup.nameAr), findsOneWidget);
@@ -250,8 +251,9 @@ void main() {
     gateway.pending.first.complete(_ok([service]));
     await tester.pumpAndSettle();
     await tester.tap(find.text('احجزي موعدًا'));
-    await tester.pumpAndSettle();
-    expect(find.text('طلب موعد'), findsOneWidget);
+    await tester.pump();
+    // Booking stays on discover when the partner has no operational path yet.
+    expect(find.text('طلب موعد'), findsNothing);
     expect(find.textContaining('طلب الموعد غير متاح'), findsOneWidget);
     expect(find.textContaining('سُجّل طلب الموعد'), findsNothing);
     expect(find.textContaining('سيُفعّل'), findsNothing);

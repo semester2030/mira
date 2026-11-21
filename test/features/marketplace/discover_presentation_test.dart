@@ -166,6 +166,7 @@ PresentationSlide _productSlide({
       priceLabel: '10 ر.س',
       externalUrl: 'https://example.invalid/product',
       matchScore: 0,
+      purchaseMode: CatalogPurchaseMode.external,
     ),
     media: media,
   );
@@ -550,7 +551,7 @@ void main() {
         media: const [PresentationMedia(kind: PresentationMediaKind.image, assetPath: PresentationSamples.portrait)],
       ),
     ]);
-    expect(find.text('أضيفي للسلة'), findsOneWidget);
+    expect(find.textContaining('الشراء من متجر'), findsOneWidget);
     expect(find.text('المتجر'), findsOneWidget);
     expect(find.bySemanticsLabel('ميرَا'), findsOneWidget);
     expect(find.textContaining('العد غير مفعّل'), findsNothing);
@@ -564,7 +565,7 @@ void main() {
         null,
       );
     });
-    await tester.tap(find.text('أضيفي للسلة'));
+    await tester.tap(find.textContaining('الشراء من متجر'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.textContaining('ليس شراءً مكتملًا'), findsOneWidget);
@@ -573,7 +574,35 @@ void main() {
 
   testWidgets('preview buy does not open a transaction', (tester) async {
     final port = DelayedVideoPort();
-    await _pump(tester, port, DiscoverPresentationCatalog.previewSlides().take(1).toList());
+    await _pump(
+      tester,
+      port,
+      [
+        PresentationSlide(
+          entityId: 'preview-product',
+          partnerId: 'preview',
+          title: 'سيروم عناية',
+          partnerName: 'عرض معاينة',
+          kindLabel: 'معاينة',
+          preview: true,
+          product: const CatalogProduct(
+            id: 'preview-product',
+            partnerId: 'preview',
+            partnerNameAr: 'عرض معاينة',
+            nameAr: 'سيروم عناية',
+            nameEn: 'Preview',
+            priceHalalas: 1000,
+            priceLabel: '10 ر.س',
+            externalUrl: 'https://example.invalid/preview',
+            matchScore: 0,
+            purchaseMode: CatalogPurchaseMode.external,
+          ),
+          media: const [
+            PresentationMedia(kind: PresentationMediaKind.image, assetPath: PresentationSamples.portrait),
+          ],
+        ),
+      ],
+    );
     await tester.tap(find.text('أضيفي للسلة'));
     await tester.pump();
     expect(find.textContaining('هذه معاينة ولا تنفّذ شراءً'), findsOneWidget);
