@@ -674,7 +674,7 @@ class MarketplaceApiDataSource {
       );
       final views = res.data?['views'];
       if (views is! Map) {
-        return fetchViewCount(targetKind: targetKind, targetId: targetId, generation: generation);
+        return await fetchViewCount(targetKind: targetKind, targetId: targetId, generation: generation);
       }
       final map = Map<String, dynamic>.from(views);
       final stateRaw = map['state'] as String? ?? 'available';
