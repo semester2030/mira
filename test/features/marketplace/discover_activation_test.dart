@@ -137,14 +137,11 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('طلب الموعد'), findsOneWidget);
+    // bookingEnabled=false: CTA disabled with clear unavailable copy — never "تم الحجز".
+    expect(find.text('الحجز غير متاح'), findsOneWidget);
+    expect(find.text(MarketplaceCopy.appointmentUnavailable), findsOneWidget);
     expect(find.textContaining('تم الحجز'), findsNothing);
     expect(find.textContaining('سيُفعّل'), findsNothing);
-
-    await tester.tap(find.text('طلب الموعد'));
-    await tester.pump();
-    expect(find.textContaining('طلب الموعد غير متاح'), findsWidgets);
-    expect(find.textContaining('تم الحجز'), findsNothing);
   });
 
   testWidgets('product detail treats the store link as an external handoff', (tester) async {

@@ -23,14 +23,15 @@ jobs:
       - run: npx prisma generate
       - name: Build
         run: npm run build
+      # schema-tests stay out of nest emit (CommonJS); run sources via tsx
       - name: Phase 0 integrity (blocking)
-        run: node dist/config/phase0-integrity.schema-tests.js
+        run: npx tsx src/config/phase0-integrity.schema-tests.ts
       - name: Phase 1 ports (blocking)
-        run: node dist/ports/phase1-ports.schema-tests.js
+        run: npx tsx src/ports/phase1-ports.schema-tests.ts
       - name: Phase 2 image quality (blocking)
-        run: node dist/ports/phase2-image-quality.schema-tests.js
+        run: npx tsx src/ports/phase2-image-quality.schema-tests.ts
       - name: Phase 2.1 verification (blocking)
-        run: node dist/ports/phase2_1-verification.schema-tests.js
+        run: npx tsx src/ports/phase2_1-verification.schema-tests.ts
       - name: Production config safety sample
         run: |
           NODE_ENV=production \

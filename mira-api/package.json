@@ -53,7 +53,7 @@
     "test:vision-pipeline": "npm run build && node dist/vision/pipeline/vision-pipeline.schema-tests.js",
     "test:vision-conflicts": "npm run build && node dist/vision/pipeline/conflict-confidence.schema-tests.js",
     "test:vision-topology": "npm run build && node dist/vision/pipeline/topology-resolver.schema-tests.js",
-    "test:phase0-integrity": "npm run build && node dist/config/phase0-integrity.schema-tests.js",
+    "test:phase0-integrity": "npx tsx src/config/phase0-integrity.schema-tests.ts",
     "test:phase3b-perfect": "npm run build && node dist/ai/phase3b-perfect-corp-safety.schema-tests.js",
     "test:phase3b-fashion": "npm run build && node dist/ai/phase3b-fashion-provider-safety.schema-tests.js",
     "test:phase3b-blazeface": "npm run build && node dist/ai/face-gate/phase3b-blazeface-runtime.schema-tests.js",

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import '../catalog/fashion_asset_catalog.dart';
-import '../catalog/fashion_catalog_types.dart';
 import 'fashion_embedding_data.dart';
 import 'fashion_intelligence_types.dart';
 

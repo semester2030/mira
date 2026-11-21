@@ -1,6 +1,4 @@
-import '../../../../core/ai/models/mira_occasion.dart';
 import '../catalog/fashion_asset_catalog.dart';
-import '../catalog/fashion_catalog_types.dart';
 import '../catalog/fashion_color_library.dart';
 import '../catalog/fashion_compatibility_engine.dart';
 import '../entities/outfit_analysis.dart';

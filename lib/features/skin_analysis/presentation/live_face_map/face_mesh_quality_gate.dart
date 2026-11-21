@@ -15,18 +15,18 @@ abstract final class FaceMeshQualityGate {
   ];
 
   /// Max drift of face center from guide center (fraction of guide size).
-  static const maxCenterDriftX = 0.11;
-  static const maxCenterDriftY = 0.10;
+  static const maxCenterDriftX = 0.13;
+  static const maxCenterDriftY = 0.11;
 
   /// Face height vs guide height — must fill the oval without clipping.
   static const minFaceHeightRatio = 0.74;
   static const maxFaceHeightRatio = 1.06;
 
-  /// Live pose soft limits — aligned with [CaptureQualityThresholds] (cq-v2.1).
+  /// Live pose hard limits for Skin strict-frontal (warnCombined band promoted).
   /// Used by Skin hold soft-exit; Capture Mirror applies its own readiness policy.
-  static const maxYawDegrees = 35.0;
-  static const maxPitchDegrees = 30.0;
-  static const maxRollDegrees = 28.0;
+  static const maxYawDegrees = 15.0;
+  static const maxPitchDegrees = 15.0;
+  static const maxRollDegrees = 12.0;
 
   static FaceGateResult evaluate(FaceMeshFrame frame, Rect guideRect) {
     if (!frame.hasFace) {

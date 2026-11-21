@@ -3,9 +3,11 @@ import 'dart:ui';
 
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 
+import 'face_mesh_head_pose.dart';
 import 'face_mesh_point_mapper.dart';
 import 'models/face_mesh_models.dart';
 import 'topology/mediapipe_landmark_indices.dart';
+import 'utils/cheek_midline_crossing.dart';
 import 'utils/region_path_utils.dart';
 
 /// Builds validated anatomical polygons from MediaPipe landmark loops.
@@ -18,14 +20,59 @@ class MediapipeRegionBuilder {
   }) {
     final outline = mapper.mapIndices(MediapipeLandmarkIndices.faceOval);
     final viewport = mapper.viewportSize;
+    final midlineAnchors = [
+      for (final i in CheekMidlineCrossing.midlineLandmarkIndices)
+        mapper.mapIndex(i),
+    ];
+    final anatomicalMidlineX =
+        CheekMidlineCrossing.midlineXFromAnchors(midlineAnchors);
+    final leftFace = mapper.mapIndex(MediapipeLandmarkIndices.geometryLeftFace);
+    final rightFace =
+        mapper.mapIndex(MediapipeLandmarkIndices.geometryRightFace);
+    final anatomicalLeftIsLowerX = CheekMidlineCrossing.anatomicalLeftIsLowerX(
+      leftFaceX: leftFace.x,
+      rightFaceX: rightFace.x,
+    );
 
     final regions = <FaceRegionPolygon>[
-      _forehead(mapper, outline, viewport),
-      ..._underEyes(mapper, outline, viewport),
-      _nose(mapper, outline, viewport),
-      ..._cheeks(mapper, outline, viewport),
-      _chin(mapper, outline, viewport),
+      _forehead(
+        mapper,
+        outline,
+        viewport,
+        anatomicalMidlineX,
+        anatomicalLeftIsLowerX,
+      ),
+      ..._underEyes(
+        mapper,
+        outline,
+        viewport,
+        anatomicalMidlineX,
+        anatomicalLeftIsLowerX,
+      ),
+      _nose(
+        mapper,
+        outline,
+        viewport,
+        anatomicalMidlineX,
+        anatomicalLeftIsLowerX,
+      ),
+      ..._cheeks(
+        mapper,
+        outline,
+        viewport,
+        anatomicalMidlineX,
+        anatomicalLeftIsLowerX,
+      ),
+      _chin(
+        mapper,
+        outline,
+        viewport,
+        anatomicalMidlineX,
+        anatomicalLeftIsLowerX,
+      ),
     ].where((r) => r.points.length >= 3).toList();
+
+    final pose = FaceMeshHeadPoseEstimator.fromLandmarks(mesh.landmarks);
 
     return FaceMeshFrame(
       outline: outline,
@@ -34,6 +81,12 @@ class MediapipeRegionBuilder {
       boundingBox: _boundingBox(outline),
       debugLandmarks: mapper.mapAllLandmarks(),
       timestamp: DateTime.now(),
+      yawDegrees: pose?.yawDegrees,
+      pitchDegrees: pose?.pitchDegrees,
+      rollDegrees: pose?.rollDegrees,
+      anatomicalMidlineX: anatomicalMidlineX,
+      midlineAnchors: midlineAnchors,
+      anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
     );
   }
 
@@ -41,6 +94,8 @@ class MediapipeRegionBuilder {
     FaceMeshPointMapper mapper,
     List<FaceMeshPoint> outline,
     Size viewport,
+    double anatomicalMidlineX,
+    bool anatomicalLeftIsLowerX,
   ) {
     final points = mapper.mapIndices(MediapipeLandmarkIndices.forehead);
     if (points.length < 6) {
@@ -52,6 +107,8 @@ class MediapipeRegionBuilder {
       points: points,
       outline: outline,
       viewport: viewport,
+      anatomicalMidlineX: anatomicalMidlineX,
+      anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
     );
   }
 
@@ -59,6 +116,8 @@ class MediapipeRegionBuilder {
     FaceMeshPointMapper mapper,
     List<FaceMeshPoint> outline,
     Size viewport,
+    double anatomicalMidlineX,
+    bool anatomicalLeftIsLowerX,
   ) {
     return [
       _finalizeRegion(
@@ -67,6 +126,8 @@ class MediapipeRegionBuilder {
         outline: outline,
         viewport: viewport,
         isLeft: true,
+        anatomicalMidlineX: anatomicalMidlineX,
+        anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
       ),
       _finalizeRegion(
         id: FaceRegionId.underEye,
@@ -74,6 +135,8 @@ class MediapipeRegionBuilder {
         outline: outline,
         viewport: viewport,
         isLeft: false,
+        anatomicalMidlineX: anatomicalMidlineX,
+        anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
       ),
     ];
   }
@@ -82,12 +145,16 @@ class MediapipeRegionBuilder {
     FaceMeshPointMapper mapper,
     List<FaceMeshPoint> outline,
     Size viewport,
+    double anatomicalMidlineX,
+    bool anatomicalLeftIsLowerX,
   ) {
     return _finalizeRegion(
       id: FaceRegionId.nose,
       points: mapper.mapIndices(MediapipeLandmarkIndices.nose),
       outline: outline,
       viewport: viewport,
+      anatomicalMidlineX: anatomicalMidlineX,
+      anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
     );
   }
 
@@ -95,6 +162,8 @@ class MediapipeRegionBuilder {
     FaceMeshPointMapper mapper,
     List<FaceMeshPoint> outline,
     Size viewport,
+    double anatomicalMidlineX,
+    bool anatomicalLeftIsLowerX,
   ) {
     return [
       _finalizeRegion(
@@ -103,6 +172,8 @@ class MediapipeRegionBuilder {
         outline: outline,
         viewport: viewport,
         isLeft: true,
+        anatomicalMidlineX: anatomicalMidlineX,
+        anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
       ),
       _finalizeRegion(
         id: FaceRegionId.cheek,
@@ -110,6 +181,8 @@ class MediapipeRegionBuilder {
         outline: outline,
         viewport: viewport,
         isLeft: false,
+        anatomicalMidlineX: anatomicalMidlineX,
+        anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
       ),
     ];
   }
@@ -118,6 +191,8 @@ class MediapipeRegionBuilder {
     FaceMeshPointMapper mapper,
     List<FaceMeshPoint> outline,
     Size viewport,
+    double anatomicalMidlineX,
+    bool anatomicalLeftIsLowerX,
   ) {
     final lip = mapper.mapIndices(MediapipeLandmarkIndices.lowerLip);
     final jaw = mapper.mapIndices(MediapipeLandmarkIndices.chinArc);
@@ -149,6 +224,8 @@ class MediapipeRegionBuilder {
       points: [...lip, ...lowerJaw.reversed],
       outline: outline,
       viewport: viewport,
+      anatomicalMidlineX: anatomicalMidlineX,
+      anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
     );
   }
 
@@ -158,6 +235,8 @@ class MediapipeRegionBuilder {
     required List<FaceMeshPoint> outline,
     required Size viewport,
     bool isLeft = false,
+    double? anatomicalMidlineX,
+    bool anatomicalLeftIsLowerX = true,
   }) {
     if (points.length < 3) {
       return FaceRegionPolygon(id: id, points: [], isLeftSide: isLeft);
@@ -169,6 +248,8 @@ class MediapipeRegionBuilder {
       faceOval: outline,
       isLeftSide: isLeft,
       viewportSize: viewport,
+      anatomicalMidlineX: anatomicalMidlineX,
+      anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
     );
 
     return FaceRegionPolygon(

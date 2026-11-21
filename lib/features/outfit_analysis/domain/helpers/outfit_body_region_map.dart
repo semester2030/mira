@@ -68,7 +68,7 @@ class OutfitBodyRegionMap {
     final handsVis = lWrist != null || rWrist != null;
 
     Rect? neckRect;
-    if (neckVis && lShoulder != null && rShoulder != null && nose != null) {
+    if (neckVis) {
       final top = nose.dy;
       final bottom = (lShoulder.dy + rShoulder.dy) / 2;
       final cx = (lShoulder.dx + rShoulder.dx) / 2;

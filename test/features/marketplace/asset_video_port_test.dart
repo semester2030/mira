@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mirra/features/marketplace/presentation/presentation/discover_presentation_catalog.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_models.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_video_port.dart';
 
@@ -50,7 +49,6 @@ void main() {
   });
 
   test('late A then B: finishing A does not play A or change B', () async {
-    final port = _port();
     final a = ControllableVideoController(_clip)..initDelay = const Duration(milliseconds: 400);
     final b = ControllableVideoController(_clip);
     var created = 0;
@@ -148,7 +146,6 @@ void main() {
   });
 
   test('release during init prevents play', () async {
-    final port = _port();
     final controller = ControllableVideoController(_clip)
       ..initGate = Completer<void>();
     final port2 = AssetVideoPort(createController: (_) => controller);

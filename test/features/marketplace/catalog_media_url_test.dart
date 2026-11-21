@@ -5,7 +5,6 @@ import 'package:mirra/core/navigation/mira_route_observer.dart';
 import 'package:mirra/features/marketplace/data/catalog_media_url.dart';
 import 'package:mirra/features/marketplace/data/datasources/marketplace_api_data_source.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/discover_presentation_catalog.dart';
-import 'package:mirra/features/marketplace/presentation/presentation/presentation_models.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_video_port.dart';
 import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';
 import 'package:mirra/shared/theme/theme.dart';

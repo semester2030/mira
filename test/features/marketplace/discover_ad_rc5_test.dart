@@ -199,11 +199,11 @@ void main() {
       confirmAdLink: ({required String adId, required String url}) async => true,
       recordAdLink: ({required String adId, required String eventId, AdLinkAttemptControl? attempt}) async {
         events.add('$adId:$eventId');
-        if (recordError != null) throw recordError!;
+        if (recordError != null) throw recordError;
         return recordResult ? AdLinkRecordOutcome.recorded : AdLinkRecordOutcome.retryable;
       },
       openExternal: (uri) async {
-        if (openError != null) throw openError!;
+        if (openError != null) throw openError;
         opened.add(uri.toString());
         return openResult;
       },

@@ -20,11 +20,11 @@ SkinReport _report() => const SkinReport(
 
 class _FakeRepo implements SkinAnalysisRepository {
   int analyzeCalls = 0;
-  Duration delay;
+  Duration delay = Duration.zero;
   Object? throwError;
   Completer<SkinReport>? hold;
 
-  _FakeRepo({this.delay = Duration.zero, this.throwError, this.hold});
+  _FakeRepo({this.throwError, this.hold});
 
   @override
   Future<SkinReport> analyzeAndSave({

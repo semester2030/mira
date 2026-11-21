@@ -110,6 +110,16 @@ class FaceRegionPolygon {
     path.close();
     return path;
   }
+
+  /// Linear closed polygon — preferred for Skin Report (no bezier bulge).
+  Path toLinearPath() {
+    if (points.length < 3) return Path();
+    return Path()
+      ..addPolygon(
+        points.map((p) => p.toOffset()).toList(growable: false),
+        true,
+      );
+  }
 }
 
 /// Full face mesh frame mapped to the overlay viewport.
@@ -121,6 +131,17 @@ class FaceMeshFrame {
   final List<FaceMeshPoint> debugLandmarks;
   final DateTime timestamp;
 
+  /// Live head pose from MediaPipe 3D landmarks (degrees). Null if unavailable.
+  final double? yawDegrees;
+  final double? pitchDegrees;
+  final double? rollDegrees;
+
+  /// Anatomical midline X in viewport space (nose/brow/chin axis).
+  final double? anatomicalMidlineX;
+  final List<FaceMeshPoint> midlineAnchors;
+  /// Derived from landmarks 234 vs 454 in the same viewport space.
+  final bool anatomicalLeftIsLowerX;
+
   const FaceMeshFrame({
     required this.outline,
     required this.regions,
@@ -128,6 +149,12 @@ class FaceMeshFrame {
     this.boundingBox,
     this.debugLandmarks = const [],
     required this.timestamp,
+    this.yawDegrees,
+    this.pitchDegrees,
+    this.rollDegrees,
+    this.anatomicalMidlineX,
+    this.midlineAnchors = const [],
+    this.anatomicalLeftIsLowerX = true,
   });
 
   static final empty = FaceMeshFrame(
@@ -148,11 +175,21 @@ class FaceMeshFrame {
     if (outline.length < 8 || other.outline.length < 8) return other;
     if (outline.length != other.outline.length) return other;
 
+    final lerpedOutline = [
+      for (var i = 0; i < outline.length; i++)
+        outline[i].lerp(other.outline[i], t),
+    ];
+    final xs = lerpedOutline.map((p) => p.x);
+    final ys = lerpedOutline.map((p) => p.y);
+    final lerpedBox = Rect.fromLTRB(
+      xs.reduce((a, b) => a < b ? a : b),
+      ys.reduce((a, b) => a < b ? a : b),
+      xs.reduce((a, b) => a > b ? a : b),
+      ys.reduce((a, b) => a > b ? a : b),
+    );
+
     return FaceMeshFrame(
-      outline: [
-        for (var i = 0; i < outline.length; i++)
-          outline[i].lerp(other.outline[i], t),
-      ],
+      outline: lerpedOutline,
       regions: [
         for (var i = 0; i < regions.length; i++)
           i < other.regions.length
@@ -160,9 +197,15 @@ class FaceMeshFrame {
               : regions[i],
       ],
       quality: other.quality,
-      boundingBox: other.boundingBox,
+      boundingBox: lerpedBox,
       debugLandmarks: other.debugLandmarks,
       timestamp: other.timestamp,
+      yawDegrees: other.yawDegrees,
+      pitchDegrees: other.pitchDegrees,
+      rollDegrees: other.rollDegrees,
+      anatomicalMidlineX: other.anatomicalMidlineX,
+      midlineAnchors: other.midlineAnchors,
+      anatomicalLeftIsLowerX: other.anatomicalLeftIsLowerX,
     );
   }
 }

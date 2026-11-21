@@ -2,7 +2,6 @@
 // Source: assets/fashion/catalog.json
 
 import '../../../../core/ai/models/mira_occasion.dart';
-import '../entities/suggested_piece_model.dart';
 import 'fashion_asset_catalog.dart';
 import 'fashion_catalog_types.dart';
 

@@ -531,10 +531,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     }
     if (product.isExternalPurchase && _hasPurchaseLink) {
-      return _burgundyButton(
-        label: 'أضيفي للسلة',
-        icon: Icons.shopping_bag_outlined,
-        onPressed: () => _openStore(context),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            MarketplaceCopy.externalLinkNotPurchase,
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          _burgundyButton(
+            label: 'الشراء من متجر ${product.partnerNameAr}',
+            icon: Icons.storefront_outlined,
+            onPressed: () => _openStore(context),
+          ),
+        ],
       );
     }
     if (product.isContactMode && (product.contactPhone ?? '').trim().isNotEmpty) {

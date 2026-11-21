@@ -3,8 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mirra/features/marketplace/domain/entities/catalog_product.dart';
 import 'package:mirra/features/marketplace/domain/entities/catalog_service.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/discover_ad.dart';
-import 'package:mirra/features/marketplace/presentation/presentation/discover_view_count.dart';
-import 'package:mirra/features/marketplace/presentation/presentation/discover_visual_chrome.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_models.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_video_port.dart';
 import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';

@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mirra/features/outfit_analysis/domain/catalog/fashion_catalog_types.dart';
 import 'package:mirra/features/outfit_analysis/domain/catalog/fashion_color_library_data.dart';
 import 'package:mirra/features/outfit_analysis/domain/intelligence/fashion_color_harmony_engine.dart';
 import 'package:mirra/features/outfit_analysis/domain/intelligence/fashion_knowledge_graph.dart';

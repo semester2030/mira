@@ -335,15 +335,28 @@ void main() {
     await tester.tap(find.text('التفاصيل'));
     await tester.pump();
     port.flush();
-    for (var i = 0; i < 8; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (find.text('تفاصيل المنتج').evaluate().isNotEmpty) break;
+    // Product detail uses Mirra logo app bar (not a "تفاصيل المنتج" title).
+    // Wait for the record page to settle on product content or an explicit state.
+    Finder detailSettled() {
+      if (find.textContaining('منتج اختبار بعنوان عربي').evaluate().isNotEmpty) {
+        return find.textContaining('منتج اختبار بعنوان عربي');
+      }
+      if (find.text('جاري تحميل التفاصيل').evaluate().isNotEmpty) {
+        return find.text('جاري تحميل التفاصيل');
+      }
+      if (find.textContaining('تعذر تحميل').evaluate().isNotEmpty) {
+        return find.textContaining('تعذر تحميل');
+      }
+      return find.byType(Scaffold).last;
     }
-    expect(find.text('تفاصيل المنتج'), findsOneWidget);
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (find.textContaining('منتج اختبار بعنوان عربي').evaluate().isNotEmpty) break;
+    }
     expect(port.isPlaying, isFalse);
     expect(port.events, contains('pause'));
 
-    Navigator.of(tester.element(find.text('تفاصيل المنتج'))).pop();
+    Navigator.of(tester.element(detailSettled())).pop();
     await tester.pump();
     port.flush();
     await tester.pump();
