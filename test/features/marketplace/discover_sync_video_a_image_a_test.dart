@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirra/core/navigation/mira_route_observer.dart';
 import 'package:mirra/features/marketplace/domain/entities/catalog_product.dart';
-import 'package:mirra/features/marketplace/presentation/presentation/discover_presentation_catalog.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_models.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_video_port.dart';
 import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';

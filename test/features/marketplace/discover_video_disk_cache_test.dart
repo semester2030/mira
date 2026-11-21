@@ -200,7 +200,6 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 10));
       }
       fail('lastServeStats stayed null');
-      throw StateError('unreachable');
     }
 
     final stats = await waitStats();
@@ -343,7 +342,6 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 10));
       }
       fail('lastServeStats stayed null');
-      throw StateError('unreachable');
     }
 
     final stats = await waitStats();

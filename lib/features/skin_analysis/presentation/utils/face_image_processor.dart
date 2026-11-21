@@ -17,6 +17,7 @@ abstract final class FaceAlignmentLimits {
   static const outputMinShortSide = 1280;
 
   static const jpegQuality = 95;
+  static const alignedNamePrefix = 'mira_face_aligned_';
 
   /// Face bounding-box height as fraction of aligned crop height.
   static const faceHeightFraction = 0.58;
@@ -52,6 +53,13 @@ class FaceImageProcessor {
     final out = File(outPath);
     await out.writeAsBytes(img.encodeJpg(image, quality: 94));
     return out;
+  }
+
+  /// Canonical accepted capture already aligned for provider + report continuity.
+  static bool isCanonicalAlignedCapturePath(String path) {
+    if (path.isEmpty) return false;
+    return path.contains('/${FaceAlignmentLimits.alignedNamePrefix}') ||
+        path.contains('\\${FaceAlignmentLimits.alignedNamePrefix}');
   }
 
   static Future<Size> decodeOrientedSize(File file) async {
@@ -162,7 +170,7 @@ class FaceImageProcessor {
     cropped = _ensureMinShortSide(cropped, FaceAlignmentLimits.outputMinShortSide);
 
     final outPath =
-        '${Directory.systemTemp.path}/mira_face_aligned_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        '${Directory.systemTemp.path}/${FaceAlignmentLimits.alignedNamePrefix}${DateTime.now().millisecondsSinceEpoch}.jpg';
     final out = File(outPath);
     await out.writeAsBytes(
       img.encodeJpg(cropped, quality: FaceAlignmentLimits.jpegQuality),

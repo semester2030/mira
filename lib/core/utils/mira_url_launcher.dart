@@ -28,7 +28,7 @@ abstract final class MiraUrlLauncher {
       // iOS: app-settings: · Android: package settings via same scheme when supported.
       final uri = Uri.parse('app-settings:');
       if (await canLaunchUrl(uri)) {
-        return launchUrl(uri, mode: LaunchMode.externalApplication);
+        return await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (_) {}
     return false;

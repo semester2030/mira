@@ -60,7 +60,7 @@ const ROUTE_TABLE: Record<
       actionId: 'route_garment',
       kind: 'request_garment',
       targetSubsystem: 'garment_intelligence',
-      reasonAr: 'يلزم CanonicalGarment عام كمرجع.',
+      reasonAr: 'يلزم صورة واضحة للقطعة كمرجع قبل إجابة التنسيق.',
     },
   },
   outfit: {
@@ -72,7 +72,7 @@ const ROUTE_TABLE: Record<
       actionId: 'route_outfit',
       kind: 'request_outfit',
       targetSubsystem: 'outfit_intelligence',
-      reasonAr: 'يلزم CanonicalOutfit عام كمرجع.',
+      reasonAr: 'يلزم إطلالة مكتملة كمرجع قبل تقييم التناغم.',
     },
   },
   styling: {
@@ -84,7 +84,7 @@ const ROUTE_TABLE: Record<
       actionId: 'route_styling',
       kind: 'request_styling',
       targetSubsystem: 'styling_intelligence',
-      reasonAr: 'يلزم Canonical Styling Profile عام كمرجع.',
+      reasonAr: 'يلزم ملف تنسيق محفوظ كمرجع قبل اقتراح الأسلوب.',
     },
   },
   beauty_experience: {

@@ -1,5 +1,4 @@
 import '../catalog/fashion_asset_catalog.dart';
-import '../catalog/fashion_catalog_types.dart';
 import 'fashion_intelligence_types.dart';
 
 /// Phase 16 — seasonal + cultural occasion matching.

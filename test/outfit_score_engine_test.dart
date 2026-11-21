@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirra/core/ai/models/mira_occasion.dart';
 import 'package:mirra/core/ai/models/outfit_analysis_result.dart';
-import 'package:mirra/features/outfit_analysis/domain/entities/outfit_score_result.dart';
 import 'package:mirra/features/outfit_analysis/domain/entities/outfit_style_metrics.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/deterministic_outfit_engine.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/outfit_score_engine.dart';

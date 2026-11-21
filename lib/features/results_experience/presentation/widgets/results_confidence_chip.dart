@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../contracts/result_enums.dart';
 import '../../localization/confidence_labels.dart';

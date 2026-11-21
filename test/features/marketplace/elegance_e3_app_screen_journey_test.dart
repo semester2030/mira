@@ -59,7 +59,7 @@ List<String?> _visibleTexts(WidgetTester tester) {
       .byType(Text)
       .evaluate()
       .map((e) => (e.widget as Text).data)
-      .where((t) => t != null && t!.trim().isNotEmpty)
+      .where((t) => t != null && t.trim().isNotEmpty)
       .toList();
 }
 

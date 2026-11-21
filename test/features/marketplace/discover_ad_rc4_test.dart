@@ -211,7 +211,7 @@ void main() {
         return recordResult ? AdLinkRecordOutcome.recorded : AdLinkRecordOutcome.retryable;
       },
       openExternal: (uri) async {
-        if (openError != null) throw openError!;
+        if (openError != null) throw openError;
         opened.add(uri.toString());
         return openResult;
       },

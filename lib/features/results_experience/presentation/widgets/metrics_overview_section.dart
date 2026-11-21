@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
-import '../../contracts/result_enums.dart';
 import '../../contracts/result_presentation_vms.dart';
 import '../../visibility/visibility_policy.dart';
 import '../../semantics/metric_presentation_policy.dart';

@@ -5,7 +5,6 @@ import 'package:mirra/features/face_analysis_experience/advisor_context/advisor_
 import 'package:mirra/features/face_analysis_experience/guidance/guidance.dart';
 import 'package:mirra/features/face_analysis_experience/presentation/result/result_mirror.dart';
 import 'package:mirra/features/face_analysis_experience/projection/projection.dart';
-import 'package:mirra/features/intelligence/domain/entities/face_intelligence_report.dart';
 import 'package:mirra/features/skin_analysis/domain/entities/skin_report.dart';
 import 'package:mirra/core/navigation/route_args.dart';
 

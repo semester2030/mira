@@ -25,7 +25,6 @@ import '../../data/discover_match_scope.dart';
 import '../../data/device_location.dart';
 import '../../data/elegance_taxonomy_source.dart';
 import '../../data/saudi_cities.dart';
-import '../../domain/catalog_offer_media.dart';
 import '../../domain/catalog_product_options.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../presentation/discover_ad.dart';
@@ -43,7 +42,6 @@ import '../presentation/discover_video_session.dart';
 import '../presentation/presentation_video_port.dart';
 import '../widgets/discover_scene_still.dart';
 import '../intro_video_booking.dart';
-import 'booking_request_screen.dart';
 import 'partner_detail_screen.dart';
 
 /// Full-screen Discover presentation. One product or service per page.
@@ -930,15 +928,6 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return allRoot >= 0 ? allRoot : 0;
   }
 
-  String _queryFamily(DiscoverCatalogQuery query) {
-    if (query.lane != null) return query.lane!.assetFamily;
-    return switch (query.partnerType) {
-      'clinic' => 'clinic',
-      'salon' => 'salon',
-      _ => 'product',
-    };
-  }
-
   String _activeFamily() {
     if (widget.lane != null) return widget.lane!.assetFamily;
     return _slides.isEmpty ? 'product' : _familyOf(_slides[_page.clamp(0, _slides.length - 1)]);
@@ -1129,12 +1118,6 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         clearSubcategory: true,
       ),
     );
-  }
-
-  String _familyType(PresentationSlide slide) {
-    final type = slide.service?.partnerType;
-    if (type == 'clinic' || type == 'salon') return type!;
-    return 'brand';
   }
 
   void _tell(BuildContext context, String message) {

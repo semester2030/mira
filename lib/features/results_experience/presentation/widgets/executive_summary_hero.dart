@@ -86,7 +86,7 @@ class ExecutiveSummaryHero extends StatelessWidget {
                 );
                 final badge = showScore
                     ? _VitalityBadge(
-                        value: score!.round(),
+                        value: score.round(),
                         status: status,
                         accessibility: summary.vitality.accessibilityTextAr,
                       )

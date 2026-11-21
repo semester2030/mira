@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import '../models/face_mesh_models.dart';
 import '../painters/smooth_path_builder.dart';
+import 'cheek_midline_crossing.dart';
 
 /// Clipping, validation, and path construction for anatomical regions.
 abstract final class RegionPathUtils {
@@ -64,50 +65,81 @@ abstract final class RegionPathUtils {
     required List<FaceMeshPoint> faceOval,
     required bool isLeftSide,
     required Size viewportSize,
+    double? anatomicalMidlineX,
+    bool? anatomicalLeftIsLowerX,
+  }) =>
+      suppressReason(
+        id: id,
+        points: points,
+        faceOval: faceOval,
+        isLeftSide: isLeftSide,
+        viewportSize: viewportSize,
+        anatomicalMidlineX: anatomicalMidlineX,
+        anatomicalLeftIsLowerX: anatomicalLeftIsLowerX,
+      ) !=
+      null;
+
+  /// DEBUG / diagnostics — null means region is accepted.
+  static String? suppressReason({
+    required FaceRegionId id,
+    required List<FaceMeshPoint> points,
+    required List<FaceMeshPoint> faceOval,
+    required bool isLeftSide,
+    required Size viewportSize,
+    double? anatomicalMidlineX,
+    bool? anatomicalLeftIsLowerX,
   }) {
-    if (points.length < 3 || faceOval.length < 3) return true;
+    if (points.length < 3 || faceOval.length < 3) return 'too_few_points';
 
     final regionArea = polygonArea(points);
     final faceArea = polygonArea(faceOval);
-    if (faceArea <= 1 || regionArea <= 1) return true;
+    if (faceArea <= 1 || regionArea <= 1) return 'area_degenerate';
 
     final ratio = regionArea / faceArea;
-    if (ratio > maxAreaRatio(id) || ratio < minAreaRatio(id)) return true;
+    if (ratio > maxAreaRatio(id)) return 'area_too_large';
+    if (ratio < minAreaRatio(id)) return 'area_too_small';
 
     if (!_pointsMostlyInsideOval(points, faceOval, minInsideRatio: 0.62)) {
-      return true;
+      return 'outside_oval';
     }
 
-    if (!_pointsInsideViewport(points, viewportSize)) return true;
+    if (!_pointsInsideViewport(points, viewportSize)) return 'outside_viewport';
 
-    if (points.length <= 4 && _looksLikeLineOrTriangle(points)) return true;
+    if (points.length <= 4 && _looksLikeLineOrTriangle(points)) {
+      return 'degenerate_shape';
+    }
 
-    final faceCenterX =
-        faceOval.map((p) => p.x).reduce((a, b) => a + b) / faceOval.length;
     final faceWidth = _spread(faceOval.map((p) => p.x));
     final regionCenterX =
         points.map((p) => p.x).reduce((a, b) => a + b) / points.length;
 
+    // Anatomical midline preferred (nose/brow/chin axis in same viewport space).
+    final midlineX = anatomicalMidlineX ??
+        faceOval.map((p) => p.x).reduce((a, b) => a + b) / faceOval.length;
+
     if (id == FaceRegionId.cheek) {
-      // Suppress only when the region clearly crosses the nose midline.
-      if (isLeftSide && regionCenterX > faceCenterX + faceWidth * 0.02) {
-        return true;
-      }
-      if (!isLeftSide && regionCenterX < faceCenterX - faceWidth * 0.02) {
-        return true;
-      }
+      // Side direction from landmarks 234 vs 454 in THIS coordinate space —
+      // never assume screen-left == anatomical-left (mirror can invert X).
+      final leftIsLower = anatomicalLeftIsLowerX ?? true;
+      final report = CheekMidlineCrossing.evaluate(
+        cheekPoints: points,
+        isAnatomicalLeft: isLeftSide,
+        midlineX: midlineX,
+        anatomicalLeftIsLowerX: leftIsLower,
+      );
+      if (report.crossedMidline) return 'cheek_crossed_midline';
     }
 
     if (id == FaceRegionId.nose) {
-      if ((regionCenterX - faceCenterX).abs() > faceWidth * 0.16) {
-        return true;
+      if ((regionCenterX - midlineX).abs() > faceWidth * 0.16) {
+        return 'nose_off_midline';
       }
     }
 
     if (id == FaceRegionId.underEye) {
       final minY = points.map((p) => p.y).reduce(math.min);
       final browBandY = _percentile(faceOval.map((p) => p.y), 0.28);
-      if (minY < browBandY) return true;
+      if (minY < browBandY) return 'undereye_above_brow';
     }
 
     if (id == FaceRegionId.chin) {
@@ -116,11 +148,11 @@ abstract final class RegionPathUtils {
       final faceTop = faceOval.map((p) => p.y).reduce(math.min);
       final faceBottom = faceOval.map((p) => p.y).reduce(math.max);
       final faceHeight = faceBottom - faceTop;
-      if (maxY - minY > faceHeight * 0.30) return true;
-      if (minY < faceTop + faceHeight * 0.52) return true;
+      if (maxY - minY > faceHeight * 0.30) return 'chin_too_tall';
+      if (minY < faceTop + faceHeight * 0.52) return 'chin_too_high';
     }
 
-    return false;
+    return null;
   }
 
   static bool _pointsMostlyInsideOval(

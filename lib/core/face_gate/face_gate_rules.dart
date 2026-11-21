@@ -1,8 +1,40 @@
 import '../../features/skin_analysis/domain/image_quality/capture_quality_thresholds.dart';
 import 'face_gate_result.dart';
 
+/// Explicit limits for [FaceGateRules.evaluate].
+class FaceGateLimits {
+  final double minFaceAreaRatio;
+  final double maxFaceAreaRatio;
+  final double maxYawDegrees;
+  final double maxPitchDegrees;
+  final double maxRollDegrees;
+  final double maxCenterOffsetXRatio;
+  final double maxCenterOffsetYRatio;
+
+  const FaceGateLimits({
+    required this.minFaceAreaRatio,
+    required this.maxFaceAreaRatio,
+    required this.maxYawDegrees,
+    required this.maxPitchDegrees,
+    required this.maxRollDegrees,
+    required this.maxCenterOffsetXRatio,
+    required this.maxCenterOffsetYRatio,
+  });
+
+  /// Legacy cq-thresholds-v2.1 (Face Intelligence / non-Skin paths).
+  static const FaceGateLimits legacyCqV21 = FaceGateLimits(
+    minFaceAreaRatio: CaptureQualityThresholds.minFaceAreaRatio,
+    maxFaceAreaRatio: CaptureQualityThresholds.maxFaceAreaRatio,
+    maxYawDegrees: CaptureQualityThresholds.maxYawDegrees,
+    maxPitchDegrees: CaptureQualityThresholds.maxPitchDegrees,
+    maxRollDegrees: CaptureQualityThresholds.maxRollDegrees,
+    maxCenterOffsetXRatio: FaceGateRules.maxCenterOffsetXRatio,
+    maxCenterOffsetYRatio: FaceGateRules.maxCenterOffsetYRatio,
+  );
+}
+
 /// Pure rules — shared by validator and unit tests.
-/// Pose / area limits come from [CaptureQualityThresholds] (Phase 2.1 unified).
+/// Default limits remain cq-thresholds-v2.1; Skin passes [StrictFrontalCapturePolicy].
 abstract final class FaceGateRules {
   FaceGateRules._();
 
@@ -20,8 +52,6 @@ abstract final class FaceGateRules {
   static const maxCenterOffsetXRatio = 0.13;
   static const maxCenterOffsetYRatio = 0.11;
 
-  /// Manual-capture minimal gate: face presence + area only.
-  /// Pose / centering are guidance — not local hard rejects (avoid re-friction).
   static FaceGateResult evaluatePresenceAndArea({
     required int faceCount,
     required double faceAreaRatio,
@@ -72,55 +102,85 @@ abstract final class FaceGateRules {
     double? headRollDegrees,
     double? centerOffsetXRatio,
     double? centerOffsetYRatio,
+    FaceGateLimits limits = FaceGateLimits.legacyCqV21,
   }) {
-    final presence = evaluatePresenceAndArea(
-      faceCount: faceCount,
-      faceAreaRatio: faceAreaRatio,
-    );
-    if (!presence.isAccepted) return presence;
+    if (faceCount == 0) {
+      return const FaceGateResult.rejected(
+        reasonCode: 'no_face',
+        messageAr: 'أظهري الوجه كاملًا داخل الإطار',
+        messageEn:
+            'No face detected — take a clear selfie and center your face.',
+      );
+    }
+
+    if (faceCount > 1) {
+      return const FaceGateResult.rejected(
+        reasonCode: 'multiple_faces',
+        messageAr: 'وجدنا أكثر من وجه — التقطي صورة لوجه واحد فقط.',
+        messageEn: 'Multiple faces detected — capture one face only.',
+      );
+    }
+
+    if (faceAreaRatio < limits.minFaceAreaRatio) {
+      return const FaceGateResult.rejected(
+        reasonCode: 'face_too_small',
+        messageAr: 'قرّبي الهاتف قليلًا',
+        messageEn: 'Face too far — move closer until it fills the frame.',
+      );
+    }
+
+    if (faceAreaRatio > limits.maxFaceAreaRatio) {
+      return const FaceGateResult.rejected(
+        reasonCode: 'face_too_large',
+        messageAr: 'أبعدي الهاتف قليلًا',
+        messageEn: 'Face too close or cropped — move back slightly.',
+      );
+    }
 
     if (headYawDegrees != null &&
-        headYawDegrees.abs() > maxHeadYawDegrees) {
+        headYawDegrees.abs() > limits.maxYawDegrees) {
       return const FaceGateResult.rejected(
         reasonCode: 'head_turned',
-        messageAr: 'وجّهي وجهك نحو الكاميرا مباشرة — لا التفات جانبي.',
+        messageAr: 'انظري مباشرة إلى الكاميرا',
         messageEn: 'Look straight at the camera — no side turn.',
       );
     }
 
     if (headPitchDegrees != null &&
-        headPitchDegrees.abs() > maxHeadPitchDegrees) {
-      return const FaceGateResult.rejected(
+        headPitchDegrees.abs() > limits.maxPitchDegrees) {
+      final lookUp = headPitchDegrees > 0;
+      return FaceGateResult.rejected(
         reasonCode: 'head_pitch',
-        messageAr: 'عدّلي زاوية الرأس عمودياً — انظري للكاميرا مباشرة.',
-        messageEn: 'Adjust vertical head angle — look straight at the camera.',
+        messageAr: lookUp ? 'اخفضي رأسك قليلًا' : 'ارفعي رأسك قليلًا',
+        messageEn: lookUp
+            ? 'Lower your chin slightly.'
+            : 'Raise your chin slightly.',
       );
     }
 
     if (headRollDegrees != null &&
-        headRollDegrees.abs() > maxHeadRollDegrees) {
+        headRollDegrees.abs() > limits.maxRollDegrees) {
       return const FaceGateResult.rejected(
         reasonCode: 'head_tilted',
-        messageAr: 'عدّلي زاوية الرأس — انظري للكاميرا بشكل مستقيم.',
+        messageAr: 'اجعلي رأسك مستقيمًا',
         messageEn: 'Straighten your head — look directly at the camera.',
       );
     }
 
     if (centerOffsetXRatio != null &&
-        centerOffsetXRatio.abs() > maxCenterOffsetXRatio) {
+        centerOffsetXRatio.abs() > limits.maxCenterOffsetXRatio) {
       return const FaceGateResult.rejected(
         reasonCode: 'face_off_center',
-        messageAr: 'الوجه ليس في المنتصف — ثبّتي وجهك داخل الإطار الذهبي.',
+        messageAr: 'ضعي وجهك في منتصف الإطار',
         messageEn: 'Center your face inside the guide frame.',
       );
     }
 
     if (centerOffsetYRatio != null &&
-        centerOffsetYRatio.abs() > maxCenterOffsetYRatio) {
+        centerOffsetYRatio.abs() > limits.maxCenterOffsetYRatio) {
       return const FaceGateResult.rejected(
         reasonCode: 'face_off_center_vertical',
-        messageAr:
-            'عدّلي موضع الوجه عمودياً — اجعلي الجبهة والذقن داخل الإطار.',
+        messageAr: 'أظهري الوجه كاملًا داخل الإطار',
         messageEn: 'Adjust vertical position — keep forehead and chin in frame.',
       );
     }

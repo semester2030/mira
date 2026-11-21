@@ -32,7 +32,7 @@ class SkinAnalysisRemoteDataSource {
     try {
       final imageBytes = await file.readAsBytes();
       final analysisResult = await AiModule.instance.skinProvider.analyze(imageBytes);
-      return _persistAnalysis(user.uid, analysisResult);
+      return await _persistAnalysis(user.uid, analysisResult);
     } finally {
       await TempImageCleanup.deleteIfExists(imagePath);
     }

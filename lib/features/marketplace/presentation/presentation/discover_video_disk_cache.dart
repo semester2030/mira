@@ -113,7 +113,7 @@ class DiscoverVideoDiskCache {
   Future<Directory> _ensureRoot() async {
     if (_root != null) return _root!;
     if (_rootOverride != null) {
-      _root = _rootOverride!;
+      _root = _rootOverride;
     } else {
       final base = await getTemporaryDirectory();
       _root = Directory('${base.path}/mira_discover_video');
@@ -724,7 +724,7 @@ class DiscoverVideoDiskCache {
     _proxy = server;
     _proxyPort = server.port;
     server.listen(_handleProxyRequest);
-    return server.port!;
+    return server.port;
   }
 
   Future<File> _openBodyFile(String mediaId) async {

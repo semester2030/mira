@@ -208,7 +208,7 @@ void main() {
       outbox: outbox,
       opened: opened,
       openExternal: (uri) async {
-        if (openError != null) throw openError!;
+        if (openError != null) throw openError;
         opened.add(uri.toString());
         return openResult;
       },
