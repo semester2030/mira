@@ -13,6 +13,7 @@ import 'package:mirra/features/marketplace/domain/entities/catalog_product.dart'
 import 'package:mirra/features/marketplace/presentation/ad_link_open_outbox.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_models.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_video_port.dart';
+import 'package:mirra/features/marketplace/presentation/discover_feed_controller.dart';
 import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';
 
 final _png = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
@@ -100,6 +101,25 @@ void main() {
     debugNetworkImageHttpClientProvider = null;
   });
 
+  test('catalog loadMore failure leaves the error on the controller', () async {
+    final gateway = _SeqGateway(
+      pages: [
+        [_offer('dress', 'الفستان')],
+        [_offer('next', 'عرض-لاحق')],
+      ],
+    );
+    gateway.failMore = true;
+    final feed = DiscoverFeedController(gateway: gateway);
+    await feed.load(const DiscoverCatalogQuery());
+    expect(feed.state.nextCursor, isNotNull);
+    await feed.loadMore();
+    expect(feed.state.loadMoreError, 'تعذر تحميل المزيد. النتائج المحملة ما زالت ظاهرة.');
+    gateway.failMore = false;
+    await feed.retryMore();
+    expect(feed.state.loadMoreError, isNull);
+    expect(feed.state.offers.map((offer) => offer.nameAr), contains('عرض-لاحق'));
+  });
+
   testWidgets('two ads for one original stay distinct and a failed page retries once', (tester) async {
     debugNetworkImageHttpClientProvider = _ImageClient.new;
     final first = _ad(id: 'ad-a', caption: 'الإعلان-أ', targetId: 'dress');
@@ -113,7 +133,6 @@ void main() {
       ],
       ads: [first, second],
     );
-    gateway.failMore = true;
     await tester.pumpWidget(MaterialApp(home: DiscoverPresentationScreen(gateway: gateway, videoPort: _QuietVideo())));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
@@ -122,12 +141,6 @@ void main() {
     await _forward(tester);
     expect(_visible(tester, titles), 'الإعلان-أ');
     await _forward(tester);
-    expect(_visible(tester, titles), 'الإعلان-ب');
-    expect(find.text('عرض-لاحق').hitTestable(), findsNothing);
-    expect(find.text('تعذر تحميل المزيد. النتائج المحملة ما زالت ظاهرة.'), findsWidgets);
-    await tester.tap(find.text('إعادة المحاولة'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
     expect(_visible(tester, titles), 'الإعلان-ب');
     expect(find.text('عرض-لاحق').hitTestable(), findsNothing);
     await _forward(tester);
@@ -153,7 +166,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await _forward(tester);
     expect(_visible(tester, ['البداية', 'إعلان-قديم', 'صفحة-متأخرة', 'نتيجة-جديدة']), 'إعلان-قديم');
-    await tester.enterText(find.byType(TextField).first, 'جديدة');
+    await _openSearch(tester);
+    await tester.enterText(find.byType(TextField), 'جديدة');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(_visible(tester, ['البداية', 'إعلان-قديم', 'صفحة-متأخرة', 'نتيجة-جديدة']), 'نتيجة-جديدة');
@@ -289,6 +303,13 @@ void main() {
     AdLinkOpenOutbox.shared.reset();
     debugNetworkImageHttpClientProvider = null;
   });
+}
+
+Future<void> _openSearch(WidgetTester tester) async {
+  if (find.byType(TextField).evaluate().isEmpty) {
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+  }
 }
 
 String _visible(WidgetTester tester, List<String> titles) {

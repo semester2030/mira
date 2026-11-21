@@ -860,4 +860,212 @@ void main() {
     expect(port.audiblePlayingCount, 1);
     await port.release();
   });
+
+  test('A→image→A: stale dropIfStale must not dispose reused live controller', () async {
+    final shared = ControllableVideoController(_clip)..advanceOnPlay = false;
+    final port = AssetVideoPort(createController: (_) => shared);
+    final first = port.attach(_slotA, _clip);
+    final playDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (shared.playCalls == 0 && DateTime.now().isBefore(playDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(shared.playCalls, greaterThan(0));
+
+    // Image swipe: bump generation and park the same controller.
+    await port.detach(_slotA);
+    expect(shared.disposed, isFalse);
+
+    // Return to the same video — new attempt reclaims the parked instance.
+    shared.advanceOnPlay = true;
+    final second = port.attach(_slotA, _clip);
+    await second.timeout(const Duration(seconds: 2));
+    expect(shared.disposed, isFalse);
+    expect(shared.lastVolume, 1);
+    expect(port.audiblePlayingCount, 1);
+    final volumeAfterArm = shared.lastVolume;
+    final disposeAfterArm = shared.disposeCalls;
+
+    // Finish the superseded first attempt after the new one is live.
+    await first.timeout(const Duration(seconds: 2));
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(shared.disposed, isFalse, reason: 'stale drop must not dispose reused controller');
+    expect(shared.disposeCalls, disposeAfterArm);
+    expect(shared.lastVolume, volumeAfterArm);
+    expect(port.isPlaying, isTrue);
+    expect(port.audiblePlayingCount, 1);
+    await port.release();
+  });
+
+  test('stale stall-reopen of A must not replace or dispose live B', () async {
+    final a = ControllableVideoController('$_clip-a')..advanceOnPlay = false;
+    final b = ControllableVideoController('$_clip-b')..advanceOnPlay = true;
+    final reopenInitGate = Completer<void>();
+    ControllableVideoController? reopen;
+    var aOpens = 0;
+    final port = AssetVideoPort(
+      createController: (path) {
+        if (path.contains('-b')) return b;
+        aOpens += 1;
+        if (aOpens == 1) return a;
+        reopen = ControllableVideoController('$_clip-a-reopen')
+          ..initGate = reopenInitGate
+          ..advanceOnPlay = true;
+        return reopen!;
+      },
+    );
+
+    final first = port.attach(_slotA, '$_clip-a');
+    final playDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (a.playCalls == 0 && DateTime.now().isBefore(playDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(a.playCalls, greaterThan(0));
+
+    // Stall reopen creates a fresh controller then awaits initialize (gated).
+    final reopenDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((reopen?.initializeCalls ?? 0) == 0 &&
+        DateTime.now().isBefore(reopenDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(reopen, isNotNull, reason: 'stall reopen must open fresh A');
+    expect(reopen!.initializeCalls, greaterThan(0));
+
+    // B wins while A's reopen initialize is still gated.
+    await port.attach(_slotB, '$_clip-b');
+    expect(port.activeSlot, _slotB);
+    expect(b.lastVolume, 1);
+    expect(b.disposed, isFalse);
+
+    reopenInitGate.complete();
+    await first.timeout(const Duration(seconds: 3));
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+
+    expect(port.activeSlot, _slotB);
+    expect(b.disposed, isFalse);
+    expect(b.lastVolume, 1);
+    expect(port.audiblePlayingCount, 1);
+    expect(port.playback, isNot(PresentationPlayback.failed));
+    await port.release();
+  });
+
+  test('stale stall-reopen completes only after newer attempt is ready', () async {
+    final a = ControllableVideoController('$_clip-a')..advanceOnPlay = false;
+    final b = ControllableVideoController('$_clip-b')..advanceOnPlay = true;
+    final reopenInitGate = Completer<void>();
+    ControllableVideoController? reopen;
+    var aOpens = 0;
+    final port = AssetVideoPort(
+      createController: (path) {
+        if (path.contains('-b')) return b;
+        aOpens += 1;
+        if (aOpens == 1) return a;
+        reopen = ControllableVideoController('$_clip-a-reopen')
+          ..initGate = reopenInitGate
+          ..advanceOnPlay = true;
+        return reopen!;
+      },
+    );
+
+    final first = port.attach(_slotA, '$_clip-a');
+    final playDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (a.playCalls == 0 && DateTime.now().isBefore(playDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+
+    final reopenWait = DateTime.now().add(const Duration(seconds: 3));
+    while ((reopen?.initializeCalls ?? 0) == 0 &&
+        DateTime.now().isBefore(reopenWait)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(reopen, isNotNull);
+
+    final second = port.attach(_slotB, '$_clip-b');
+    await second.timeout(const Duration(seconds: 2));
+    expect(b.lastVolume, 1);
+    expect(port.hasVisibleProgress, isTrue);
+
+    // Complete A only AFTER B is ready — must not regress B.
+    final bVolume = b.lastVolume;
+    final bDispose = b.disposeCalls;
+    reopenInitGate.complete();
+    await first.timeout(const Duration(seconds: 3));
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    expect(port.activeSlot, _slotB);
+    expect(b.lastVolume, bVolume);
+    expect(b.disposeCalls, bDispose);
+    expect(port.audiblePlayingCount, 1);
+    await port.release();
+  });
+
+  test('stall-reopen dispose await must not rewrite B progress ownership', () async {
+    // Gates the stalled controller's pause/dispose during reopen cleanup —
+    // NOT initialize — so B can win while A is mid-_disposeOwnedIfUnused.
+    final a = ControllableVideoController('$_clip-a')
+      ..advanceOnPlay = false
+      ..pauseGate = Completer<void>();
+    final b = ControllableVideoController('$_clip-b')..advanceOnPlay = false;
+    ControllableVideoController? reopen;
+    var aOpens = 0;
+    final port = AssetVideoPort(
+      createController: (path) {
+        if (path.contains('-b')) return b;
+        aOpens += 1;
+        if (aOpens == 1) return a;
+        reopen = ControllableVideoController('$_clip-a-reopen')
+          ..advanceOnPlay = true;
+        return reopen!;
+      },
+    );
+
+    final first = port.attach(_slotA, '$_clip-a');
+    final playDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (a.playCalls == 0 && DateTime.now().isBefore(playDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(a.playCalls, greaterThan(0));
+
+    // Stall reopen swaps to fresh then awaits pause on the old controller.
+    final pauseWait = DateTime.now().add(const Duration(seconds: 3));
+    while (a.pauseCalls == 0 && DateTime.now().isBefore(pauseWait)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(a.pauseCalls, greaterThan(0), reason: 'reopen must be disposing stalled A');
+    expect(reopen, isNotNull);
+    expect(a.pauseGate!.isCompleted, isFalse);
+
+    // B attaches and plays while A's dispose is still gated.
+    final second = port.attach(_slotB, '$_clip-b');
+    final bPlayWait = DateTime.now().add(const Duration(seconds: 2));
+    while (b.playCalls == 0 && DateTime.now().isBefore(bPlayWait)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(b.playCalls, greaterThan(0));
+    expect(port.activeSlot, _slotB);
+    // Unmute arms after progress; keep B muted-primed until we tick position.
+    expect(port.hasVisibleProgress, isFalse);
+
+    final bDisposeBefore = b.disposeCalls;
+    final attemptBefore = port.lastAttachPhases['attemptId'];
+
+    // Finish A cleanup — must not bind progress guard / steal B's attempt.
+    a.pauseGate!.complete();
+    await first.timeout(const Duration(seconds: 3));
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+
+    expect(port.activeSlot, _slotB);
+    expect(b.disposed, isFalse);
+    expect(b.disposeCalls, bDisposeBefore);
+    expect(port.lastAttachPhases['attemptId'], attemptBefore,
+        reason: 'A must not rewrite B attempt progress ownership');
+
+    // B position advance must still count as visible progress + audible arm.
+    b.tickPosition(const Duration(milliseconds: 16));
+    await second.timeout(const Duration(seconds: 2));
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(port.hasVisibleProgress, isTrue);
+    expect(b.lastVolume, 1);
+    expect(port.audiblePlayingCount, 1);
+    expect(port.playback, isNot(PresentationPlayback.failed));
+    await port.release();
+  });
 }

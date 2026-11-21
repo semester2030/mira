@@ -2638,7 +2638,8 @@ class _PresentationPageState extends State<_PresentationPage> {
                   return slide.advertisement!.openLink;
                 }
                 final route = decideBuyRoute(product: slide.product, preview: slide.preview);
-                return route == BuyRoute.inApp ||
+                return route == BuyRoute.preview ||
+                    route == BuyRoute.inApp ||
                     route == BuyRoute.external ||
                     route == BuyRoute.contact ||
                     route == BuyRoute.outOfStock ||

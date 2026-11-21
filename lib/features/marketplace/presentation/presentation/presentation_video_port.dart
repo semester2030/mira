@@ -113,7 +113,7 @@ class AssetVideoPort extends PresentationVideoPort {
   /// App build stamp for device log ↔ source matching (override via --dart-define=MIRA_BUILD=).
   static const String buildStamp = String.fromEnvironment(
     'MIRA_BUILD',
-    defaultValue: '2026111719',
+    defaultValue: '202611211600',
   );
 
   /// Test hook: shorten initialize timeout to hit the real TimeoutException branch.
@@ -324,14 +324,15 @@ class AssetVideoPort extends PresentationVideoPort {
   bool get isPlaying => _controller?.value.isPlaying ?? false;
 
   Future<void> _dropIfStale(VideoPlayerController controller, int token) async {
+    // Still the live attempt for this controller — keep it.
     if (token == _generation && !_released && identical(_controller, controller)) {
       return;
     }
-    // Still retained by a newer attempt or park/warm/prepared pool — keep it.
-    if (identical(_controller, controller)) {
-      _controller = null;
-      _activePath = null;
-    } else if (identical(_warm, controller) ||
+    // A newer attempt (or park/warm/prepared) still holds this object — never
+    // clear slots or dispose. Video→image→video often reuses the same instance;
+    // identity alone must not look like "safe to tear down".
+    if (identical(_controller, controller) ||
+        identical(_warm, controller) ||
         identical(_parked, controller) ||
         _preparedByMediaId.containsValue(controller)) {
       return;
@@ -1135,7 +1136,11 @@ class AssetVideoPort extends PresentationVideoPort {
       }
       _notify();
     } catch (error) {
-      if (_controller == controller) {
+      // Only clear the active pointer when THIS attempt still owns it. A newer
+      // attempt may already have reattached the same controller instance.
+      final stillLiveOwner =
+          !_released && token == _generation && identical(_controller, controller);
+      if (stillLiveOwner) {
         _controller = null;
         _activePath = null;
       }
@@ -1374,26 +1379,61 @@ class AssetVideoPort extends PresentationVideoPort {
           if (token != _generation || _released || _controller != controller) return;
           if (_markProgressIfVisible(controller, token, settleStarted, slot, assetPath)) return;
           if (controller.value.position <= _progressFloor && !controller.value.hasError) {
-            lastAttachPhases['stallReopenMs'] = _msSince(settleStarted);
+            // Capture attempt-local identity BEFORE any await — lastAttachPhases
+            // is shared and may already belong to a newer attach when we resume.
             final path = assetPath;
-            final fresh = await _openResolved(path, waitForDisk: true, phases: lastAttachPhases);
+            final reopenAttemptId = lastAttachPhases['attemptId'];
+            final reopenPhases = lastAttachPhases;
+            reopenPhases['stallReopenMs'] = _msSince(settleStarted);
+            final fresh = await _openResolved(
+              path,
+              waitForDisk: true,
+              phases: reopenPhases,
+            );
+            bool stillReopenOwner() =>
+                !_released &&
+                token == _generation &&
+                identical(_controller, controller) &&
+                (reopenAttemptId == null ||
+                    lastAttachPhases['attemptId'] == reopenAttemptId);
+
+            if (!stillReopenOwner()) {
+              // Newer attempt owns the port (possibly the same controller object).
+              // Never pause/dispose that live instance — only drop unused fresh.
+              await _disposeOwnedIfUnused(fresh);
+              return;
+            }
             if (identical(fresh, controller)) {
-              lastAttachPhases['stallReopenSkipped'] = 1;
-              await controller.play();
-            } else {
-              if (_controller == controller) {
-                _controller = null;
-                _activePath = null;
+              if (identical(lastAttachPhases, reopenPhases)) {
+                reopenPhases['stallReopenSkipped'] = 1;
               }
-              await controller.pause();
-              await controller.dispose();
-              if (token != _generation || _released) {
-                await fresh.dispose();
+              await controller.play();
+              if (!stillReopenOwner()) return;
+            } else {
+              // Install fresh only while we still own the stalled controller.
+              // Swap first, then dispose the old one if nothing else retained it —
+              // never clear/dispose before the ownership re-check (A→image→A race).
+              if (token != _generation ||
+                  _released ||
+                  lastAttachPhases['attemptId'] != reopenAttemptId ||
+                  !identical(_controller, controller)) {
+                await _disposeOwnedIfUnused(fresh);
                 return;
               }
               _controller = fresh;
               _activePath = path;
-              final reopenAttempt = lastAttachPhases['attemptId'] ?? 0;
+              await _disposeOwnedIfUnused(controller);
+              // pause/dispose of the stalled controller can await; a newer
+              // attach may have claimed the port meanwhile. Re-check BEFORE
+              // rewriting progress ownership or touching fresh further.
+              if (_released ||
+                  token != _generation ||
+                  lastAttachPhases['attemptId'] != reopenAttemptId ||
+                  !identical(_controller, fresh)) {
+                await _disposeOwnedIfUnused(fresh);
+                return;
+              }
+              final reopenAttempt = reopenAttemptId ?? 0;
               _bindProgressGuard(
                 attemptId: reopenAttempt,
                 playerId: _playerId(fresh),
@@ -1401,38 +1441,79 @@ class AssetVideoPort extends PresentationVideoPort {
               );
               fresh.addListener(() => _onController(fresh, token));
               await fresh.initialize().timeout(const Duration(seconds: 5));
-              if (token != _generation || _released || _controller != fresh) {
-                await fresh.dispose();
+              if (token != _generation ||
+                  _released ||
+                  !identical(_controller, fresh) ||
+                  lastAttachPhases['attemptId'] != reopenAttemptId) {
+                await _disposeOwnedIfUnused(fresh);
                 return;
               }
               await fresh.setLooping(true);
+              if (token != _generation ||
+                  _released ||
+                  !identical(_controller, fresh) ||
+                  lastAttachPhases['attemptId'] != reopenAttemptId) {
+                await _disposeOwnedIfUnused(fresh);
+                return;
+              }
               await fresh.setVolume(0);
-              // Separate reopen timestamps — do not overwrite the original attempt.
-              lastAttachPhases['reopenInitDone'] = _msSince(settleStarted);
-              lastAttachPhases['reopenPlayStart'] = _msSince(settleStarted);
-              lastAttachPhases['reopened'] = 1;
-              lastAttachPhases['reopenPlayerId'] = _playerId(fresh);
+              if (token != _generation ||
+                  _released ||
+                  !identical(_controller, fresh) ||
+                  lastAttachPhases['attemptId'] != reopenAttemptId) {
+                await _disposeOwnedIfUnused(fresh);
+                return;
+              }
+              // Write reopen stamps only into this attempt's phase map.
+              if (identical(lastAttachPhases, reopenPhases)) {
+                reopenPhases['reopenInitDone'] = _msSince(settleStarted);
+                reopenPhases['reopenPlayStart'] = _msSince(settleStarted);
+                reopenPhases['reopened'] = 1;
+                reopenPhases['reopenPlayerId'] = _playerId(fresh);
+              }
               miraDiscoverLog(
                 'MIRA_DISCOVER_PHASE mediaId=${_mediaIdOf(path)} '
-                'phase=stall_reopen attempt=${lastAttachPhases['attemptId']} '
-                'playerId=${lastAttachPhases['reopenPlayerId']}',
+                'phase=stall_reopen attempt=$reopenAttemptId '
+                'playerId=${_playerId(fresh)}',
               );
               await fresh.play();
+              if (token != _generation ||
+                  _released ||
+                  !identical(_controller, fresh) ||
+                  lastAttachPhases['attemptId'] != reopenAttemptId) {
+                return;
+              }
               _notify();
               _emitPlayback('started', positionMs: 0, offerId: slot.slideId, mediaUrl: path);
               // Short second chance only — do not nest another full deadline.
-              final reopenDeadline = DateTime.now().toUtc().add(const Duration(seconds: 3));
+              final reopenDeadline =
+                  DateTime.now().toUtc().add(const Duration(seconds: 3));
               while (DateTime.now().toUtc().isBefore(reopenDeadline)) {
-                if (token != _generation || _released || _controller != fresh) return;
-                if (_markProgressIfVisible(fresh, token, settleStarted, slot, path)) {
+                if (token != _generation ||
+                    _released ||
+                    !identical(_controller, fresh) ||
+                    lastAttachPhases['attemptId'] != reopenAttemptId) {
+                  return;
+                }
+                if (_markProgressIfVisible(
+                    fresh, token, settleStarted, slot, path)) {
                   return;
                 }
                 await Future<void>.delayed(const Duration(milliseconds: 16));
               }
-              if (!_firstFrameEmitted && !_firstFrameTimedOut && token == _generation && _controller == fresh) {
+              if (!_firstFrameEmitted &&
+                  !_firstFrameTimedOut &&
+                  token == _generation &&
+                  identical(_controller, fresh) &&
+                  lastAttachPhases['attemptId'] == reopenAttemptId) {
                 final ms = _msSince(settleStarted);
                 _firstFrameTimedOut = true;
-                _emitPlayback('first_frame_timeout', positionMs: ms, offerId: slot.slideId, mediaUrl: path);
+                _emitPlayback(
+                  'first_frame_timeout',
+                  positionMs: ms,
+                  offerId: slot.slideId,
+                  mediaUrl: path,
+                );
               }
               return;
             }
