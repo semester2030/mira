@@ -1,7 +1,8 @@
-branch=mira/p5-strict-frontend-recovery-2026-09-14
-sha=09ef97aaf2640e7cb1bf46c38add8b6ab7fd533c
+branch=mira/creator-ads-v1
+impl_commit=5dc38be86db0e195568b4c7bd291e959c0a7aacc
 origin_main=fb56c83701d17ea64d9e13529a16d6a637b8df89
-date=2026-11-24T16:01:01Z
-flutter_ad_tests=8/8 passed (discover_ad_feed + discover_ad_rc7)
-video_duration_schema=ok
-catalog_ad_http_integration=not_run (requires local DB/API)
+date=2026-11-24
+attribution=link_open only
+isolated_http=PASS (3 videos + 1 video/10 images + directory 7 + ownership)
+flutter_celebrities=PASS (orbit + directory layout)
+device_portal_live=deferred to Fayez — see FAYEZ_REPEAT.md
