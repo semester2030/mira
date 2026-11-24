@@ -167,6 +167,7 @@ export class CreatorProfileService {
     if (!partner) throw new NotFoundException('الصورة غير متاحة');
     try {
       const bytes = await this.storage.get(row.avatarKey);
+      if (!bytes) throw new NotFoundException('الصورة غير متاحة');
       return { mimeType: row.avatarMime || 'image/jpeg', bytes };
     } catch {
       throw new NotFoundException('الصورة غير متاحة');

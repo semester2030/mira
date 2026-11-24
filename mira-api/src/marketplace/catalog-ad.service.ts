@@ -466,7 +466,7 @@ export class CatalogAdService {
           ...nameFilter,
         },
         include: { partner: { select: { id: true, nameAr: true } } },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 40,
       });
       for (const row of products) {
@@ -496,7 +496,7 @@ export class CatalogAdService {
           ...nameFilter,
         },
         include: { partner: { select: { id: true, nameAr: true } } },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 40,
       });
       for (const row of services) {

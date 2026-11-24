@@ -1,0 +1,100 @@
+{
+  "ok": true,
+  "impl_commit_expected": "5dc38be",
+  "run": "acc-1795550082532",
+  "api": "http://127.0.0.1:3000/api/v1",
+  "portal": "http://127.0.0.1:3000/login.html",
+  "dashboard": "http://127.0.0.1:3000/dashboard.html",
+  "email": "dev-acc-1795550082532@accept.local",
+  "password": "AcceptTest1!",
+  "token": "accept-token-acc-1795550082532",
+  "developerId": "1ff531a2-d465-414c-b283-65b8c1e0e1f8",
+  "ownProductId": "61d13760-e968-4c85-982a-1cf8dfb5e46f",
+  "ownServiceId": "9861b802-04d0-4bcd-af23-5dc64b97edc3",
+  "productId": "c68b7a89-ec3e-477d-8d88-8806245d6a7c",
+  "serviceId": "c998b424-b950-4bd8-82f9-509532450be3",
+  "merchantMediaId": "63a0db1c-8bcb-447e-a28d-1c0bee0a03a4",
+  "extras": [
+    {
+      "id": "d241cf1f-2378-45b4-8c6b-63bf6f613bac",
+      "name": "مشهورة حمراء acc-1795550082532"
+    },
+    {
+      "id": "7dcd7a99-7b98-4c76-95f0-ffbc6348312d",
+      "name": "مشهورة زرقاء acc-1795550082532"
+    },
+    {
+      "id": "501db699-d93f-4552-a90d-6ebc0a265be0",
+      "name": "مشهورة خضراء acc-1795550082532"
+    },
+    {
+      "id": "889f37bf-d2c1-454d-8551-955866475fe0",
+      "name": "مشهورة صفراء acc-1795550082532"
+    },
+    {
+      "id": "3ade24f0-21a1-48cc-9191-ada176b0740f",
+      "name": "مشهورة بنفسجية acc-1795550082532"
+    },
+    {
+      "id": "a76fc384-6f64-4ac1-96f8-2a5ec1cae3d0",
+      "name": "مشهورة فيروزية acc-1795550082532"
+    }
+  ],
+  "avatarPalette": [
+    {
+      "index": 0,
+      "rgb": [
+        220,
+        40,
+        40
+      ],
+      "label": "حمراء"
+    },
+    {
+      "index": 1,
+      "rgb": [
+        40,
+        120,
+        220
+      ],
+      "label": "زرقاء"
+    },
+    {
+      "index": 2,
+      "rgb": [
+        40,
+        180,
+        80
+      ],
+      "label": "خضراء"
+    },
+    {
+      "index": 3,
+      "rgb": [
+        220,
+        160,
+        40
+      ],
+      "label": "صفراء"
+    },
+    {
+      "index": 4,
+      "rgb": [
+        160,
+        60,
+        200
+      ],
+      "label": "بنفسجية"
+    },
+    {
+      "index": 5,
+      "rgb": [
+        30,
+        180,
+        180
+      ],
+      "label": "فيروزية"
+    }
+  ],
+  "note": "Portal served same-origin; login uses seeded developer. Register celebrity via UI or API."
+}
