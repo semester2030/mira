@@ -141,10 +141,12 @@ export class CreatorProfileService {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Public page circles: only when this partner actually published own catalog offers.
+    // Capability (canSellProducts / partner type) must not invent empty store/services orbs.
     const hasProducts = await this.prisma.product.count({
       where: { partnerId: row.partnerId, active: true, contentStatus: 'published', catalogSource: 'catalog' },
     });
-    const hasServices = await this.prisma.service.count({
+    const hasServicesCount = await this.prisma.service.count({
       where: { partnerId: row.partnerId, active: true, contentStatus: 'published', catalogSource: 'catalog' },
     });
 
@@ -153,8 +155,8 @@ export class CreatorProfileService {
       bioAr: row.bioAr,
       partnerId: row.partnerId,
       partnerType: partner.type,
-      hasStore: hasProducts > 0 || partner.type === 'brand' || partner.canSellProducts,
-      hasServices: hasServices > 0 || partner.type === 'clinic' || partner.type === 'salon',
+      hasStore: hasProducts > 0,
+      hasServices: hasServicesCount > 0,
       publishedAdIds: ads.map((ad) => ad.id),
       emptyAdsMessage: ads.length === 0 ? 'لا توجد إعلانات منشورة بعد' : null,
     };

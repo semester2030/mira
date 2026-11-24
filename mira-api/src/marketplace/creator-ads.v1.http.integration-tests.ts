@@ -136,6 +136,8 @@ async function main() {
   const otherHeaders = { authorization: `Bearer token-${run}-other`, 'content-type': 'application/json' };
 
   const createdIds: string[] = [];
+  let ownProductId: string | null = null;
+  let ownServiceId: string | null = null;
   try {
     // 1) Register celebrity — idempotent upsert
     const reg1 = await json(await fetch(`${base}/api/v1/partners-portal/creator-profile`, {
@@ -302,11 +304,52 @@ async function main() {
     const stream = await fetch(`${base}/api/v1/marketplace/media/${firstMediaId}`);
     assert.equal(stream.status, 200, await stream.text());
 
-    // Profile lists published ads
+    // Profile lists published ads; store/services orbs only when own catalog is published
     const profile = await json(await fetch(`${base}/api/v1/marketplace/creators/${reg1.id}`));
     assert.ok(profile.publishedAdIds.includes(productAd.id));
     assert.ok(profile.publishedAdIds.includes(serviceAd.id));
     assert.equal(profile.emptyAdsMessage, null);
+    // Developer has ads for others + canSellProducts, but no own published product/service yet
+    assert.equal(profile.hasStore, false, 'ads-only developer must not show empty store orb');
+    assert.equal(profile.hasServices, false, 'ads-only developer must not show empty services orb');
+
+    const ownProduct = await prisma.product.create({
+      data: {
+        partnerId: developer.id,
+        nameAr: `منتج المطوّر ${run}`,
+        nameEn: 'Dev product',
+        priceHalalas: 1000,
+        externalUrl: 'https://example.com/dev',
+        concernTags: [],
+        skinTypes: [],
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        active: true,
+      },
+    });
+    ownProductId = ownProduct.id;
+    const afterProduct = await json(await fetch(`${base}/api/v1/marketplace/creators/${reg1.id}`));
+    assert.equal(afterProduct.hasStore, true, 'store orb appears after first own published product');
+    assert.equal(afterProduct.hasServices, false);
+
+    const ownService = await prisma.service.create({
+      data: {
+        partnerId: developer.id,
+        nameAr: `خدمة المطوّر ${run}`,
+        nameEn: 'Dev service',
+        priceHalalas: 2000,
+        durationMin: 30,
+        concernTags: [],
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        active: true,
+        bookingEnabled: true,
+      },
+    });
+    ownServiceId = ownService.id;
+    const afterService = await json(await fetch(`${base}/api/v1/marketplace/creators/${reg1.id}`));
+    assert.equal(afterService.hasStore, true);
+    assert.equal(afterService.hasServices, true, 'services orb appears after first own published service');
 
     console.log(JSON.stringify({
       ok: true,
@@ -315,6 +358,8 @@ async function main() {
       productAdId: productAd.id,
       serviceAdId: serviceAd.id,
       directoryRunProfiles: allRun,
+      hasStoreAfterOwnProduct: afterProduct.hasStore,
+      hasServicesAfterOwnService: afterService.hasServices,
       attribution: 'link_open only; purchase/booking attribution deferred',
     }));
   } finally {
@@ -325,8 +370,12 @@ async function main() {
     await prisma.catalogAdDecision.deleteMany({ where: { adId: { in: adIds } } }).catch(() => undefined);
     await prisma.catalogAd.deleteMany({ where: { id: { in: adIds } } }).catch(() => undefined);
     await prisma.catalogMedia.deleteMany({ where: { id: merchantMedia.id } }).catch(() => undefined);
-    await prisma.product.deleteMany({ where: { id: product.id } }).catch(() => undefined);
-    await prisma.service.deleteMany({ where: { id: service.id } }).catch(() => undefined);
+    await prisma.product
+      .deleteMany({ where: { id: { in: [product.id, ...(ownProductId ? [ownProductId] : [])] } } })
+      .catch(() => undefined);
+    await prisma.service
+      .deleteMany({ where: { id: { in: [service.id, ...(ownServiceId ? [ownServiceId] : [])] } } })
+      .catch(() => undefined);
     await prisma.creatorProfile.deleteMany({ where: { displayNameAr: { contains: run } } }).catch(() => undefined);
     await prisma.partnerUser.deleteMany({ where: { email: { contains: run } } }).catch(() => undefined);
     await prisma.partner.deleteMany({ where: { nameAr: { contains: run } } }).catch(() => undefined);
