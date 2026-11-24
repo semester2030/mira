@@ -326,14 +326,17 @@ export class PartnersPortalService implements OnModuleInit {
     // Never reuse an existing application's tracking token based on email alone,
     // and never auto-activate — admin review is mandatory (PARTNER_AUTO_APPROVE ignored).
     let partnerType = dto.type;
-    let providerKind: 'independent' | 'facility' | null = null;
+    let providerKind: 'independent' | 'facility' | 'creator' | null = null;
     if (dto.activities && this.activities) {
       try {
         const validated = this.activities.validateRequest({
-          identity: dto.activities.identity,
+          identity: dto.activities.identity as never,
           locations: dto.activities.locations || [],
           description: dto.activities.description,
           lines: dto.activities.lines,
+          advertiseForOthers: dto.activities.advertiseForOthers,
+          sellProducts: dto.activities.sellProducts,
+          provideServices: dto.activities.provideServices,
         });
         partnerType = this.activities.primaryPartnerType(validated.identity);
         providerKind = validated.providerKind;
@@ -352,14 +355,17 @@ export class PartnersPortalService implements OnModuleInit {
       });
     }
 
-    // Independent specialists: no commercial register / VAT / facility URL required or stored.
+    // Independent specialists / celebrities: no commercial register / VAT / facility URL required.
     // Phone/email are contact fields only — admin review gates activation (no OTP in this phase).
-    if (providerKind === 'independent') {
+    if (providerKind === 'independent' || providerKind === 'creator') {
       if (dto.crNumber || dto.vatNumber) {
         throw new BadRequestException({
           message: 'INDEPENDENT_NO_COMMERCIAL_REGISTER',
           code: 'INDEPENDENT_NO_COMMERCIAL_REGISTER',
-          messageAr: 'المختصّة المستقلة لا تُسجَّل بسجل تجاري أو رقم ضريبي',
+          messageAr:
+            providerKind === 'creator'
+              ? 'حساب المشهور لا يُسجَّل بسجل تجاري أو رقم ضريبي'
+              : 'المختصّة المستقلة لا تُسجَّل بسجل تجاري أو رقم ضريبي',
         });
       }
     }
@@ -371,14 +377,15 @@ export class PartnersPortalService implements OnModuleInit {
         type: partnerType,
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
-        contactName: providerKind === 'independent' ? dto.nameAr : dto.contactName,
+        contactName:
+          providerKind === 'independent' || providerKind === 'creator' ? dto.nameAr : dto.contactName,
         contactEmail: dto.contactEmail.toLowerCase(),
         contactPhone: dto.contactPhone,
         city: dto.city ?? 'الرياض',
         descriptionAr: dto.descriptionAr || dto.activities?.description || null,
-        storeUrl: providerKind === 'independent' ? null : dto.storeUrl,
-        crNumber: providerKind === 'independent' ? null : dto.crNumber,
-        vatNumber: providerKind === 'independent' ? null : dto.vatNumber,
+        storeUrl: providerKind === 'independent' || providerKind === 'creator' ? null : dto.storeUrl,
+        crNumber: providerKind === 'independent' || providerKind === 'creator' ? null : dto.crNumber,
+        vatNumber: providerKind === 'independent' || providerKind === 'creator' ? null : dto.vatNumber,
         message: dto.message,
         passwordHash,
         statusToken,
@@ -389,10 +396,13 @@ export class PartnersPortalService implements OnModuleInit {
     if (dto.activities && this.activities) {
       try {
         const created = await this.activities.createJoinRequest(application.id, {
-          identity: dto.activities.identity,
+          identity: dto.activities.identity as never,
           locations: dto.activities.locations || [],
           description: dto.activities.description,
           lines: dto.activities.lines,
+          advertiseForOthers: dto.activities.advertiseForOthers,
+          sellProducts: dto.activities.sellProducts,
+          provideServices: dto.activities.provideServices,
         });
         activitiesRequestId = created.requestId;
       } catch (err) {

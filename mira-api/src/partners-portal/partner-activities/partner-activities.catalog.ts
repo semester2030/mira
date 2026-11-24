@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { resolveBeautyIcon } from '../../marketplace/taxonomy/beauty-icon-assets';
 import { resolveCatalogIcon } from '../../marketplace/taxonomy/catalog-icon-assets';
 import { TaxonomyService } from '../../marketplace/taxonomy/taxonomy.service';
 import { resolveJewelryCapabilityActivity } from '../../marketplace/taxonomy/jewelry-material.policy';
@@ -60,7 +61,7 @@ export class PartnerActivitiesCatalog {
           kind,
           selectable: true,
           imageKey,
-          icon: resolveCatalogIcon(imageKey),
+          icon: resolveCatalogIcon(imageKey) || resolveBeautyIcon(imageKey),
           profileId: node.profileId ?? parent?.profileId ?? null,
         });
       }

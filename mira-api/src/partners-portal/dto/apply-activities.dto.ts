@@ -3,6 +3,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsIn,
   IsOptional,
   IsString,
@@ -30,8 +31,8 @@ export class ActivityRequestDto {
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(6)
-  @IsIn(['shop', 'brand', 'salon', 'independent', 'clinic', 'events'], { each: true })
-  identity!: Array<'shop' | 'brand' | 'salon' | 'independent' | 'clinic' | 'events'>;
+  @IsIn(['shop', 'brand', 'salon', 'independent', 'clinic', 'events', 'creator'], { each: true })
+  identity!: Array<'shop' | 'brand' | 'salon' | 'independent' | 'clinic' | 'events' | 'creator'>;
 
   @IsArray()
   @IsOptional()
@@ -45,11 +46,23 @@ export class ActivityRequestDto {
   description!: string;
 
   @IsArray()
-  @ArrayMinSize(1)
+  @ArrayMinSize(0)
   @ArrayMaxSize(150)
   @ValidateNested({ each: true })
   @Type(() => ActivityLineDto)
   lines!: ActivityLineDto[];
+
+  @IsOptional()
+  @IsBoolean()
+  advertiseForOthers?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  sellProducts?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  provideServices?: boolean;
 }
 
 export class DecideActivitiesDto {
