@@ -7,12 +7,14 @@ import {
 
 assert.ok(IDENTITY_KINDS.shop);
 assert.ok(IDENTITY_KINDS.independent);
+assert.ok(IDENTITY_KINDS.creator);
 assert.ok(SERVICE_MODES.client_home);
 assert.ok(SERVICE_MODES.provider_home);
 assert.notEqual(SERVICE_MODES.client_home, SERVICE_MODES.provider_home);
 assert.equal(Object.prototype.hasOwnProperty.call(IDENTITY_KINDS, 'developer'), false);
 assert.equal(providerKindFromIdentity(['independent']), 'independent');
 assert.equal(providerKindFromIdentity(['salon']), 'facility');
+assert.equal(providerKindFromIdentity(['creator']), 'creator');
 assert.ok(String(SERVICE_MODES.venue).includes('المقر') || SERVICE_MODES.venue.length > 0);
 
 console.log('partner-activities.schema-tests: ok');

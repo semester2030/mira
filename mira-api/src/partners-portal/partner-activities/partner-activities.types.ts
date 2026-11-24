@@ -5,6 +5,8 @@ export const IDENTITY_KINDS = {
   independent: 'مختصّة مستقلة',
   clinic: 'عيادة',
   events: 'جهة تنظيم مناسبات',
+  /** Celebrity / creator — may advertise others' offers without owning a store. */
+  creator: 'مشهور',
 } as const;
 
 /** Where the service is delivered — not who owns the account. */
@@ -20,10 +22,13 @@ export const FACILITY_IDENTITY_KINDS = ['salon', 'clinic', 'shop', 'brand', 'eve
 
 export type IdentityKind = keyof typeof IDENTITY_KINDS;
 export type ServiceMode = keyof typeof SERVICE_MODES;
-export type ProviderKind = 'independent' | 'facility';
+export type ProviderKind = 'independent' | 'facility' | 'creator';
 
 /** Account ownership kind derived from registration identity — never inferred from placeMode. */
 export function providerKindFromIdentity(identity: IdentityKind[]): ProviderKind {
+  if (identity.includes('creator') && !identity.includes('independent')) {
+    return 'creator';
+  }
   if (identity.includes('independent') && !identity.some((k) => (FACILITY_IDENTITY_KINDS as readonly string[]).includes(k))) {
     return 'independent';
   }
@@ -57,6 +62,10 @@ export type ActivityRequestInput = {
   locations: ServiceMode[];
   description: string;
   lines: ActivityLineInput[];
+  /** Celebrity may register to advertise others' offers with zero owned taxonomy lines. */
+  advertiseForOthers?: boolean;
+  sellProducts?: boolean;
+  provideServices?: boolean;
 };
 
 export type ActivityActor = {

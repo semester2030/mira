@@ -71,7 +71,7 @@ export class PartnerActivitiesService {
     if (identity.includes('events')) return 'event_planner';
     if (identity.includes('clinic')) return 'clinic';
     if (identity.includes('salon') || identity.includes('independent')) return 'salon';
-    if (identity.includes('brand') || identity.includes('shop')) return 'brand';
+    if (identity.includes('brand') || identity.includes('shop') || identity.includes('creator')) return 'brand';
     return 'brand';
   }
 
@@ -85,17 +85,32 @@ export class PartnerActivitiesService {
     description: string;
     lines: Array<{ activity: string; scope: 'category' | 'one'; item_name: string }>;
     providerKind: ProviderKind;
+    advertiseForOthers: boolean;
+    sellProducts: boolean;
+    provideServices: boolean;
   } {
     if (!data || typeof data !== 'object') throw new PolicyError(400, 'INVALID_APPLICATION');
     const identity = codes(data.identity, IDENTITY_KINDS, true);
     // Independent path is exclusive: cannot combine with facility identities on one account.
     const hasIndependent = identity.includes('independent');
+    const hasCreator = identity.includes('creator');
     const hasFacility = identity.some((k) => (FACILITY_IDENTITY_KINDS as readonly string[]).includes(k));
     if (hasIndependent && hasFacility) {
       throw new PolicyError(400, 'IDENTITY_PATH_CONFLICT');
     }
+    if (hasIndependent && hasCreator) {
+      throw new PolicyError(400, 'IDENTITY_PATH_CONFLICT');
+    }
     const locations = codes(data.locations || [], SERVICE_MODES, false);
-    if (!str(data.description, 800) || !Array.isArray(data.lines) || !data.lines.length || data.lines.length > 150) {
+    const advertiseOnly =
+      !!data.advertiseForOthers &&
+      hasCreator &&
+      !data.sellProducts &&
+      !data.provideServices;
+    if (!str(data.description, 800) || !Array.isArray(data.lines) || data.lines.length > 150) {
+      throw new PolicyError(400, 'INVALID_APPLICATION');
+    }
+    if (!advertiseOnly && !data.lines.length) {
       throw new PolicyError(400, 'INVALID_APPLICATION');
     }
     // Independents must not claim facility premises as their only mode without a studio mode.
@@ -103,25 +118,38 @@ export class PartnerActivitiesService {
       throw new PolicyError(400, 'INDEPENDENT_VENUE_REQUIRES_STUDIO_OR_CLIENT');
     }
     const cat = this.catalogMap();
+    const wantProducts = advertiseOnly ? false : data.sellProducts !== false;
+    const wantServices = advertiseOnly ? false : data.provideServices !== false;
+    // When flags are explicit, drop mismatched kinds; when omitted (legacy), keep all lines.
+    const filterByFlags = data.sellProducts != null || data.provideServices != null || advertiseOnly;
     const seen = new Set<string>();
-    const lines = data.lines.map((v) => {
-      if (!v || typeof v !== 'object') throw new PolicyError(400, 'UNKNOWN_ACTIVITY');
-      const def = cat.get(v.activity);
-      if (!def || def.selectable !== true || !['category', 'one'].includes(v.scope)) {
-        throw new PolicyError(400, 'UNKNOWN_ACTIVITY');
-      }
-      if (v.scope === 'one' && (def.kind !== 'product' || !str(v.itemName, 120))) {
-        throw new PolicyError(400, 'INVALID_SINGLE_ITEM');
-      }
-      if (v.scope === 'category' && v.itemName != null && v.itemName !== '') {
-        throw new PolicyError(400, 'INVALID_SCOPE');
-      }
-      const it = v.scope === 'one' ? normalize(String(v.itemName)) : '';
-      const key = JSON.stringify([v.activity, v.scope, it]);
-      if (seen.has(key)) throw new PolicyError(400, 'DUPLICATE_LINE');
-      seen.add(key);
-      return { activity: v.activity, scope: v.scope as 'category' | 'one', item_name: it };
-    });
+    const lines = data.lines
+      .map((v) => {
+        if (!v || typeof v !== 'object') throw new PolicyError(400, 'UNKNOWN_ACTIVITY');
+        const def = cat.get(v.activity);
+        if (!def || def.selectable !== true || !['category', 'one'].includes(v.scope)) {
+          throw new PolicyError(400, 'UNKNOWN_ACTIVITY');
+        }
+        if (filterByFlags) {
+          if (def.kind === 'product' && !wantProducts) return null;
+          if (def.kind === 'service' && !wantServices) return null;
+        }
+        if (v.scope === 'one' && (def.kind !== 'product' || !str(v.itemName, 120))) {
+          throw new PolicyError(400, 'INVALID_SINGLE_ITEM');
+        }
+        if (v.scope === 'category' && v.itemName != null && v.itemName !== '') {
+          throw new PolicyError(400, 'INVALID_SCOPE');
+        }
+        const it = v.scope === 'one' ? normalize(String(v.itemName)) : '';
+        const key = JSON.stringify([v.activity, v.scope, it]);
+        if (seen.has(key)) throw new PolicyError(400, 'DUPLICATE_LINE');
+        seen.add(key);
+        return { activity: v.activity, scope: v.scope as 'category' | 'one', item_name: it };
+      })
+      .filter((x): x is { activity: string; scope: 'category' | 'one'; item_name: string } => x != null);
+    if (!advertiseOnly && !lines.length) {
+      throw new PolicyError(400, 'INVALID_APPLICATION');
+    }
     if (lines.some((l) => cat.get(l.activity)?.kind === 'service') && !locations.length) {
       throw new PolicyError(400, 'SERVICE_LOCATION_REQUIRED');
     }
@@ -140,6 +168,9 @@ export class PartnerActivitiesService {
       description: normalize(data.description),
       lines,
       providerKind: providerKindFromIdentity(identity),
+      advertiseForOthers: !!data.advertiseForOthers,
+      sellProducts: !!data.sellProducts,
+      provideServices: !!data.provideServices,
     };
   }
 
@@ -155,7 +186,13 @@ export class PartnerActivitiesService {
           kind: 'join',
           state: 'pending',
           description: d.description,
-          meta: { identity: d.identity, locations: d.locations },
+          meta: {
+            identity: d.identity,
+            locations: d.locations,
+            advertiseForOthers: d.advertiseForOthers,
+            sellProducts: d.sellProducts,
+            provideServices: d.provideServices,
+          },
         },
       });
       for (const l of d.lines) {
