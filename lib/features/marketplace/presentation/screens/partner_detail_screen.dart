@@ -14,18 +14,31 @@ import '../../domain/catalog_offer_media.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../../domain/entities/partner_detail.dart';
 import '../../domain/entities/partner_summary.dart';
+import '../../domain/catalog_attribute_display.dart';
 import '../booking_basket.dart';
 import '../widgets/catalog_detail_media_section.dart';
 import '../widgets/marketplace_data_banner.dart';
 import '../widgets/matched_product_tile.dart';
 import 'booking_basket_screen.dart';
+import 'partner_catalog_surface.dart';
 
 class PartnerDetailScreen extends StatefulWidget {
   final PartnerSummary partner;
   final CatalogLoad<PartnerDetail>? initial;
   final Future<CatalogLoad<PartnerDetail>?> Function(String id)? loadDetail;
 
-  const PartnerDetailScreen({super.key, required this.partner, this.initial, this.loadDetail});
+  /// From a product ad / «المتجر» use [PartnerCatalogSurface.store].
+  /// From a service ad / «مقدّم الخدمة» use [PartnerCatalogSurface.provider].
+  /// When null, infer from partner type only (never from “has any services”).
+  final PartnerCatalogSurface? surface;
+
+  const PartnerDetailScreen({
+    super.key,
+    required this.partner,
+    this.initial,
+    this.loadDetail,
+    this.surface,
+  });
 
   @override
   State<PartnerDetailScreen> createState() => _PartnerDetailScreenState();
@@ -55,13 +68,24 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
     super.dispose();
   }
 
+  PartnerCatalogSurface _resolveSurface(PartnerDetail detail) {
+    final explicit = widget.surface;
+    if (explicit != null) return explicit;
+    final partner = detail.summary;
+    // Hybrid developer accounts must not flip to services just because services exist.
+    if (partner.isClinic || partner.isSalon) return PartnerCatalogSurface.provider;
+    if (partner.isBrand) return PartnerCatalogSurface.store;
+    if (detail.products.isNotEmpty && detail.services.isEmpty) {
+      return PartnerCatalogSurface.store;
+    }
+    return PartnerCatalogSurface.provider;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<CatalogLoad<PartnerDetail>?>(
       future: _future,
       builder: (context, snapshot) {
-        final isVenue = widget.partner.isClinic || widget.partner.isSalon || (snapshot.data?.value.services.isNotEmpty ?? false);
-
         return Scaffold(
           backgroundColor: AppColors.surface,
           appBar: AppBar(
@@ -106,7 +130,7 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
                 );
               }
               final partner = detail.summary;
-              if (!isVenue && detail.services.isEmpty) {
+              if (_resolveSurface(detail) == PartnerCatalogSurface.store) {
                 return _brandBody(load, partner, detail);
               }
               return _venueBody(load, partner, detail);
@@ -148,10 +172,19 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
             padding: const EdgeInsets.only(top: 12),
             child: Text(MarketplaceCopy.noExternalStore, textAlign: TextAlign.center),
           ),
-        if (detail.products.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Text('المنتجات', style: AppTypography.titleMedium.copyWith(color: AppColors.brandBurgundy), textAlign: TextAlign.right),
-          const SizedBox(height: 12),
+        const SizedBox(height: 24),
+        Text('المنتجات', style: AppTypography.titleMedium.copyWith(color: AppColors.brandBurgundy), textAlign: TextAlign.right),
+        const SizedBox(height: 12),
+        if (detail.products.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              'لا توجد منتجات منشورة حاليًا',
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          )
+        else
           for (final product in detail.products)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -170,7 +203,6 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
                 ),
               ),
             ),
-        ],
       ],
     );
   }
@@ -180,13 +212,23 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
     final media = <CatalogMediaLink>[
       for (final s in services) ...CatalogOfferMedia.mainSlides(s.media, kind: s.mainOfferKind),
     ];
-    final categories = <String>{
-      for (final s in services)
-        if ((s.category ?? '').trim().isNotEmpty) s.category!.trim(),
-    }.toList();
+    // Dedupe by Arabic label so skin + beauty.skin_centers do not both appear.
+    final categoryByLabel = <String, String>{};
+    for (final s in services) {
+      final raw = (s.category ?? '').trim();
+      if (raw.isEmpty) continue;
+      final label = CatalogAttributeDisplay.serviceCategoryLabelAr(raw);
+      if (label.isEmpty) continue;
+      categoryByLabel.putIfAbsent(label, () => raw);
+    }
+    final categoryEntries = categoryByLabel.entries.toList();
     final q = _search.text.trim();
     final filtered = services.where((s) {
-      if (_categoryFilter != null && (s.category ?? '') != _categoryFilter) return false;
+      if (_categoryFilter != null) {
+        final label = CatalogAttributeDisplay.serviceCategoryLabelAr(s.category);
+        final selectedLabel = CatalogAttributeDisplay.serviceCategoryLabelAr(_categoryFilter);
+        if (label != selectedLabel) return false;
+      }
       if (q.isEmpty) return true;
       return s.nameAr.contains(q) || (s.descriptionAr ?? '').contains(q);
     }).toList();
@@ -267,7 +309,7 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
                 child: TabBarView(
                   controller: _tabs,
                   children: [
-                    _servicesTab(filtered, categories, services.length),
+                    _servicesTab(filtered, categoryEntries, services.length),
                     _galleryTab(media),
                     _aboutTab(partner),
                   ],
@@ -330,7 +372,11 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
     );
   }
 
-  Widget _servicesTab(List<CatalogService> filtered, List<String> categories, int totalCount) {
+  Widget _servicesTab(
+    List<CatalogService> filtered,
+    List<MapEntry<String, String>> categoryEntries,
+    int totalCount,
+  ) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
@@ -353,13 +399,14 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> with SingleTi
           child: Row(
             children: [
               _filterChip(label: 'الكل $totalCount', selected: _categoryFilter == null, onTap: () => setState(() => _categoryFilter = null)),
-              for (final c in categories)
+              for (final e in categoryEntries)
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: _filterChip(
-                    label: c,
-                    selected: _categoryFilter == c,
-                    onTap: () => setState(() => _categoryFilter = c),
+                    label: e.key,
+                    selected: _categoryFilter != null &&
+                        CatalogAttributeDisplay.serviceCategoryLabelAr(_categoryFilter) == e.key,
+                    onTap: () => setState(() => _categoryFilter = e.value),
                   ),
                 ),
             ],

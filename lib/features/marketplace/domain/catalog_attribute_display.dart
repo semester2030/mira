@@ -46,6 +46,55 @@ abstract final class CatalogAttributeDisplay {
     }
   }
 
+  /// Service / provider filter chips — never show raw wire ids to the customer.
+  static String serviceCategoryLabelAr(String? category) {
+    final raw = (category ?? '').trim();
+    if (raw.isEmpty) return '';
+    final key = raw.toLowerCase();
+    switch (key) {
+      case 'skin':
+      case 'face':
+      case 'beauty.face_care':
+      case 'beauty.skin_centers':
+      case 'beauty.clinic.derm':
+        return 'البشرة';
+      case 'hair':
+      case 'beauty.hair':
+      case 'beauty.salons':
+        return 'الشعر';
+      case 'makeup':
+      case 'beauty.makeup':
+        return 'المكياج';
+      case 'nails':
+      case 'beauty.nails':
+        return 'الأظافر';
+      case 'care':
+      case 'beauty.spa':
+      case 'spa':
+        return 'العناية';
+      case 'laser':
+        return 'الليزر';
+      case 'teeth':
+        return 'الأسنان';
+      case 'beauty.experts':
+        return 'الخبيرات';
+      case 'beauty.home_visit':
+        return 'زيارة منزلية';
+      case 'beauty.bridal_prep':
+        return 'تجهيز العروس';
+      default:
+        final productish = categoryLabelAr(raw);
+        if (productish.isNotEmpty) return productish;
+        // Dotted taxonomy leftover — last segment only if already Arabic-looking.
+        if (raw.contains('.')) {
+          final tail = raw.split('.').last;
+          if (RegExp(r'^[\u0600-\u06FF]').hasMatch(tail)) return tail;
+        }
+        if (RegExp(r'^[\u0600-\u06FF]').hasMatch(raw)) return raw;
+        return '';
+    }
+  }
+
   /// Ordered customer rows from traits / attributes. Skips internal keys.
   static List<({String labelAr, String valueAr})> rows(Map<String, String> traits) {
     final preferred = <String>[

@@ -14,9 +14,12 @@ import '../../domain/catalog_attribute_display.dart';
 import '../../domain/catalog_detail_family.dart';
 import '../../domain/commerce_models.dart' show CommerceLabels;
 import '../../domain/entities/catalog_product.dart';
+import '../../data/repositories/marketplace_repository_impl.dart';
 import '../commerce_cart_actions.dart';
 import '../widgets/catalog_detail_media_section.dart';
 import '../widgets/product_option_selector.dart';
+import 'partner_catalog_surface.dart';
+import 'partner_detail_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final CatalogProduct product;
@@ -282,6 +285,35 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  Future<void> _openPartnerStore(BuildContext context) async {
+    final id = product.partnerId.trim();
+    if (id.isEmpty) return;
+    try {
+      final load = await MarketplaceRepositoryImpl().partnerDetailLoad(id);
+      if (!context.mounted) return;
+      if (load == null || load.value.summary.id != id) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('هذه الجهة غير متاحة أو لم تعد منشورة')),
+        );
+        return;
+      }
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PartnerDetailScreen(
+            partner: load.value.summary,
+            initial: load,
+            surface: PartnerCatalogSurface.store,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر فتح متجر البائع')),
+      );
+    }
+  }
+
   Widget _partnerRow() {
     final partner = product.partnerNameAr.trim();
     final letter = partner.isEmpty ? 'م' : String.fromCharCode(partner.runes.first);
@@ -289,9 +321,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       color: AppColors.surface,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // Partner navigation is optional; keep row tappable without crashing.
-        },
+        onTap: () => _openPartnerStore(context),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Row(

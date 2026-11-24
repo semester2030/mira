@@ -29,8 +29,8 @@ void main() {
     expect(find.text('جديد'), findsWidgets);
     expect(find.text('قديم'), findsNothing);
     expect(find.text('050'), findsNothing);
-    expect(find.text('لا توجد وسيلة تواصل منشورة'), findsOneWidget);
     expect(find.text('زيارة المتجر'), findsOneWidget);
+    expect(find.text('لا توجد منتجات منشورة حاليًا'), findsOneWidget);
   });
 
   testWidgets('a failed store load can be retried', (tester) async {

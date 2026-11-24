@@ -42,6 +42,7 @@ import '../presentation/discover_video_session.dart';
 import '../presentation/presentation_video_port.dart';
 import '../widgets/discover_scene_still.dart';
 import '../intro_video_booking.dart';
+import 'partner_catalog_surface.dart';
 import 'partner_detail_screen.dart';
 
 /// Full-screen Discover presentation. One product or service per page.
@@ -1881,9 +1882,17 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         _tell(context, 'هذه الجهة غير متاحة أو لم تعد منشورة');
         return;
       }
+      // kind of the open ad + partnerId — product → store, service → provider.
+      final surface = slide.product != null
+          ? PartnerCatalogSurface.store
+          : PartnerCatalogSurface.provider;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => PartnerDetailScreen(partner: load.value.summary, initial: load),
+          builder: (_) => PartnerDetailScreen(
+            partner: load.value.summary,
+            initial: load,
+            surface: surface,
+          ),
         ),
       );
     } on CatalogSourceException {
