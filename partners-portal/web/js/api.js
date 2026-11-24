@@ -126,6 +126,42 @@
     return data;
   }
 
+  /** Multipart upload — do not set Content-Type; the browser supplies the boundary. */
+  async function requestMultipart(method, path, formData, opts) {
+    if (labeledPreview() && !labeledAllowlist(method, path)) {
+      throw ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة');
+    }
+    const signal = opts && opts.signal;
+    const tokenAtStart = localStorage.getItem('mira_partner_token');
+    const authGenAtStart = authGeneration;
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        Accept: 'application/json',
+        ...authHeaders(),
+      },
+      body: formData,
+      signal: signal || undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (
+      localStorage.getItem('mira_partner_token') !== tokenAtStart ||
+      authGeneration !== authGenAtStart
+    ) {
+      throw ApiError('تبديل جلسة أثناء الطلب — تُجاهل الاستجابة', { code: 'AUTH_CHANGED' });
+    }
+    if (!res.ok) {
+      const msg = data.message || data.error || `HTTP ${res.status}`;
+      throw ApiError(Array.isArray(msg) ? msg.join(' ') : msg, {
+        status: res.status,
+        code: data.code || null,
+        fieldErrors: data.fieldErrors || null,
+        body: data,
+      });
+    }
+    return data;
+  }
+
   function requestProgress(method, path, body, hooks) {
     if (labeledPreview() && !labeledAllowlist(method, path)) {
       return Promise.reject(ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة'));
@@ -639,8 +675,16 @@
       request('DELETE', `/partners-portal/ads/${id}/media/${mediaId}`),
     creatorProfile: () => request('GET', '/partners-portal/creator-profile'),
     upsertCreatorProfile: (payload) => request('PUT', '/partners-portal/creator-profile', payload),
+    /** Legacy JSON base64 path — prefer setCreatorAvatarFile under Safari Lockdown. */
     setCreatorAvatar: (mimeType, dataBase64) =>
       request('POST', '/partners-portal/creator-profile/avatar', { mimeType, dataBase64 }),
+    /** Multipart file upload — no FileReader / Base64 in the browser. */
+    setCreatorAvatarFile: (file, opts) => {
+      const form = new FormData();
+      const name = (file && file.name) || 'avatar.png';
+      form.append('file', file, name);
+      return requestMultipart('POST', '/partners-portal/creator-profile/avatar', form, opts);
+    },
     commerceOrders: (query) =>
       request('GET', `/partners/me/commerce/orders${query ? '?' + query : ''}`),
     commerceOrder: (id) => request('GET', `/partners/me/commerce/orders/${id}`),

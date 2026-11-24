@@ -64,11 +64,20 @@ export class CreatorProfileService {
   }
 
   async setAvatar(partnerId: string, input: { mimeType: string; dataBase64: string }) {
+    const bytes = Buffer.from(input.dataBase64 || '', 'base64');
+    return this.setAvatarBytes(partnerId, {
+      mimeType: input.mimeType,
+      bytes,
+    });
+  }
+
+  /** Prefer multipart bytes from the browser file input (Safari Lockdown has no FileReader). */
+  async setAvatarBytes(partnerId: string, input: { mimeType: string; bytes: Buffer }) {
     const profile = await this.prisma.creatorProfile.findUnique({ where: { partnerId } });
     if (!profile) throw new NotFoundException('سجّلي كمشهورة أولًا');
     const mime = typeof input.mimeType === 'string' ? input.mimeType.trim().toLowerCase() : '';
     if (!IMAGE_MIME.has(mime)) throw new BadRequestException('صيغة صورة الملف غير مقبولة');
-    const bytes = Buffer.from(input.dataBase64 || '', 'base64');
+    const bytes = Buffer.isBuffer(input.bytes) ? input.bytes : Buffer.alloc(0);
     if (!bytes.length || bytes.length > IMAGE_MAX_BYTES) {
       throw new BadRequestException('حجم صورة الملف خارج الحد');
     }

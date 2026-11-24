@@ -161,6 +161,18 @@ async function main() {
     }));
     assert.equal(avatar.hasAvatar, true);
 
+    // Multipart path (Safari Lockdown — no FileReader / Base64 in the browser)
+    const pngBytes = Buffer.from(PNG, 'base64');
+    const form = new FormData();
+    form.append('file', new Blob([pngBytes], { type: 'image/png' }), 'lockdown-avatar.png');
+    const avatarMp = await json(await fetch(`${base}/api/v1/partners-portal/creator-profile/avatar`, {
+      method: 'POST',
+      headers: { Authorization: devHeaders.Authorization },
+      body: form,
+    }));
+    assert.equal(avatarMp.hasAvatar, true);
+    assert.equal(avatarMp.id, reg1.id, 'multipart avatar updates same celebrity profile');
+
     const mine = await json(await fetch(`${base}/api/v1/partners-portal/creator-profile`, { headers: devHeaders }));
     assert.equal(mine.registered, true);
     assert.equal(mine.profile.id, reg1.id);
