@@ -1,42 +1,53 @@
-# قبول مشاهدير v1 — نتائج التشغيل الحي
+# Celebrities v1 acceptance results
 
-**SHA التنفيذ:** `5dc38be` (فرع `mira/creator-ads-v1`، طرف الوثائق `6802b5e`)  
-**تشغيل:** `acc-1795550082532`  
-**API/بوابة:** `http://127.0.0.1:3000` (خادم قبول معزول + بوابة static نفس الأصل)  
-**قاعدة:** `mira_creator_ads_v1_test`
+- Tested SHA: `d1b0bf4956e179061d3731f2432497d967835d95` (`d1b0bf49`)
+- Base: `5dc38be`
+- Run: `acc-1795552714839`
+- API: `http://127.0.0.1:3000/api/v1` (portal + Flutter harness)
+- Date: 2026-11-24T21:26:00Z
 
-## نتيجة كل خطوة
+## Git checks
 
-| # | المطلب | النتيجة | الدليل |
-|---|---|---|---|
-| 1a | دخول مطوّر | **PASS** — login 201، type=developer | `STEPS_API.json` · بوابة `login.html` |
-| 1b | تسجيل مشهور باسم/صورة مميزين | **PASS** — `فايز قبول acc-…` + avatar برتقالي | `STEPS_API.json` · `shots/02-…` · `avatars/` |
-| 1c | ظهور في الدليل قبل أي إعلان | **PASS** — `developerVisible: true` قبل نشر الإعلانات | `STEPS_API.json` → `directoryBeforeAds` |
-| 1d | خروج/دخول → ملف واحد + منتجات/خدمات | **PASS (API+بوابة)** — نفس profile id؛ `/me` يعيد منتج المطوّر وخدمة المطوّر؛ القائمة الجانبية تعرض منتجاتي/خدماتي/حساب المشهور | `STEPS_API.json` · لقطة القائمة |
-| 2a | دائرة فوق «اكتشفي عالم ميرا» | **PASS (اختبار Flutter سابق)** | `../flutter-celebrities-verify.txt` |
-| 2b | ٦ في صفين ثم ٧ بالتمرير + أسماء/صور مختلفة | **PASS (API+صور)** — page1=6، nextCursor، صفحة٢ تبدأ بالسابع؛ ٧ صور RGB مختلفة محفوظة | `STEPS_API.json` · `shots/03-directory-distinct-avatars.png` · `avatars/` |
-| 2c | فتح السابع + حفظ موضع التمرير في التطبيق | **متعذّر على الجهاز في هذه الجلسة** — انظر «Flutter» أدناه؛ Layout widget test يغطي التمرير إلى السابع | `../` layout tests |
-| 3a | إعلان منتج ٣ فيديوهات عبر مسار النشر | **PASS** — published، media=3 video؛ ظاهر في بوابة إعلاناتي | `STEPS_API.json` · `shots/04-portal-published-ads.png` |
-| 3b | إعلان خدمة فيديو+١٠ صور | **PASS** — نُشر بـ 11 ثم بعد حذف صورة تجريبية بقي بث الفيديو سليمًا؛ البطاقة تعرض وسائط=10 | `STEPS_API.json` · بوابة |
-| 3c | تشغيل الوسائط (بث) | **PASS (HTTP stream)** — `video/mp4` 200 لأول وسيط في الإعلانين | سجلات هذا الملف |
-| 3d | فتح تفاصيل العرض الأصلي من التطبيق | **متعذّر (تطبيق)** — الهدف مربوط (`targetId` منتج/خدمة) في الـ API العام | `IDS.json` |
-| 3e | حذف وسيط إعلان لا يمس وسائط التاجر | **PASS** — `merchantStill: true` | `STEPS_API.json` |
-| 4 | تسجيل شاشة / لقطات | **جزئي** — لقطات بوابة + montage دليل + reel MP4 من اللقطات؛ لا تسجيل محاكي لتطبيق Flutter | `shots/` · `portal-acceptance-reel.mp4` |
+- Product/service offer ordering by `createdAt` is on the tested tip (`catalog-ad.service.ts`, `creator-profile.service.ts`).
+- Public `hasStore` / `hasServices` use published offer counts only (`hasProducts > 0` / `hasServicesCount > 0`) in `creator-profile.service.ts` — tip commit: `fix(marketplace): gate celebrity store/services on published offers`.
 
-## Flutter / المحاكي — سبب التعذّر
+## Portal (usual partners login)
 
-1. امتلاء القرص (`No space left on device`) أثناء تجميع dill.  
-2. بعد تفريغ ~6GiB: `pod install` فشل على MiraRC2 (CocoaPods).  
-لذلك **لم يُشغَّل التطبيق على المحاكي** لمشاهدة الوسائط داخل UI Flutter في هذه الجلسة.
+| Step | Result |
+|---|---|
+| Login developer test account via `/login.html` | PASS |
+| Celebrity profile + published ads | PASS (product media=3 videos, service media=11) |
+| Ad editor media list | PASS — `shots/portal-ad-editor-media-11.png` (وسائط محفوظة: 11) |
+| Add first product/service CTAs | PASS (أزرار إضافة منتج / إضافة خدمة) |
 
-ما يغطي الفجوة جزئيًا: اختبارات orbit/directory layout السابقة + دليل عام API بصور مختلفة + بث الوسائط HTTP 200.
+## Public flags
 
-## بيئة القبول المحلية
+| Case | Result |
+|---|---|
+| Developer with own published product+service | `hasStore=true`, `hasServices=true` |
+| Ads-only then first own offer | Covered earlier in `STEPS_HASSTORE` + HTTP integration (false until first own product/service) |
 
-- خادم: `mira-api/src/marketplace/creator-ads.v1.acceptance-server.ts`  
-- بيانات الدخول: انظر `CREDS.txt` (حساب اختبار محلي فقط)  
-- إصلاح جانبي أثناء التشغيل: `orderBy: createdAt` لعروض الإعلان (Product/Service بلا `updatedAt`)
+## App journey
 
-## إسناد البيع/الحجز
+Harness: `lib/acceptance_celebrities_main.dart` on Chrome against the same API. Physical iPhone Ld failed after Xcode (disk/gRPC) — see below.
 
-غير مشمول في v1 — `link_open` فقط.
+| Step | Result | Evidence |
+|---|---|---|
+| Home orb above «اكتشفي عالم ميرا» | PASS | `shots/j01-home.png`, `shots/v01-home.png` |
+| Directory first 6 names | PASS | `shots/app-01-celebrities-directory.png` |
+| Scroll / 7th + back | PARTIAL UI + PASS API (page2 starts with مشهورة حمراء) | `shots/v04-directory-scrolled.png` |
+| Fayez profile + متجر/خدمات orbs | PASS | profile shots with both orbs |
+| Product ad 3 videos (1/3) | PASS | `shots/v10-product-video-3.png` |
+| Service ad 11 media (1/11…3/11) | PASS | `shots/v13-service-media-2.png`, `shots/f14-service-detail.png` |
+| Details CTA عرض المنتج / عرض الخدمة | PASS | `shots/f11-product-detail.png`, `shots/f14-service-detail.png`; routes `#/product-detail` / `#/service-detail` |
+| Screen recording | PASS (real UI frames) | `recording/celebrities-acceptance-journey.mp4` |
+
+## CocoaPods / iPhone
+
+- Corrupt truncated JSON: sandbox cache `.../gRPC-Core/1.69.0/gRPC-Core.podspec.json` (47173 bytes, unterminated string). Fixed by removing sandbox cocoapods cache and `pod install` with `CP_HOME_DIR=$HOME/.cocoapods` (real trunk 1.69.0 = 227945 bytes). Podfile.lock versions kept (`gRPC-Core 1.69.0`).
+- Wired iPhone: Xcode build finished (~219s) then `Ld` failed; disk dropped to ~1.6Gi during gRPC-Core object rename (`No such file or directory`). Full-app simulator still blocked by MediaPipe/TFLiteC device-vs-simulator link.
+
+## Delivery hygiene
+
+- `CREDS.txt` and `_portal_inject.json` excluded from the delivery ZIP.
+- Do not redistribute acceptance passwords.

@@ -1,4 +1,0 @@
-email=dev-acc-1795550082532@accept.local
-password=AcceptTest1!
-portal=http://127.0.0.1:3000/login.html
-api=http://127.0.0.1:3000/api/v1

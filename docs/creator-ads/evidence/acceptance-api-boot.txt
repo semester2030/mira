@@ -1,0 +1,43 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM     LOG [InjectorLogger] Nest encountered an undefined dependency. This may be due to a circular import or a missing dependency declaration.
+[Nest] 43425  - 11/24/2026, 10:50:49 PM   ERROR [ExceptionHandler] UndefinedDependencyException [Error]: Nest can't resolve dependencies of the SkinAnalysisOrchestrator (?, +, +, Symbol(ANALYSIS_TELEMETRY_PORT)). Please make sure that the argument at index [0] is available in the current module.
+
+Potential solutions:
+- The dependency at index [0] appears to be undefined at runtime
+- This commonly occurs when using 'import type' instead of 'import' for injectable classes
+- Check your imports and change:
+  ❌ import type { SomeService } from './some.service';
+  ✅ import { SomeService } from './some.service';
+- Ensure the imported class is decorated with @Injectable() or is a valid provider
+- If using dynamic imports, ensure the class is available at runtime, not just for type checking
+
+For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+    at Injector.resolveSingleParam (/Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/injector.js:233:19)
+    at resolveParam (/Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/injector.js:149:49)
+    at Array.map (<anonymous>)
+    at Injector.resolveConstructorParams (/Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/injector.js:178:58)
+    at Injector.loadInstance (/Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/injector.js:77:24)
+    at Injector.loadProvider (/Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/injector.js:111:20)
+    at /Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/instance-loader.js:56:33
+    at Array.map (<anonymous>)
+    at InstanceLoader.createInstancesOfProviders (/Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/instance-loader.js:55:36)
+    at /Users/fayez/Desktop/mira/mira-api/node_modules/@nestjs/core/injector/instance-loader.js:40:24

@@ -1,0 +1,31 @@
+{
+  "tested_sha": "d1b0bf49",
+  "impl_base": "5dc38be",
+  "run": "acc-1795552714839",
+  "beforeAds": {
+    "hasStore": false,
+    "hasServices": false,
+    "name": "فايز قبول acc-1795552714839"
+  },
+  "adsOnlyPublic": {
+    "hasStore": false,
+    "hasServices": false,
+    "adCount": 2
+  },
+  "afterOwnProduct": {
+    "hasStore": true,
+    "hasServices": false
+  },
+  "afterOwnService": {
+    "hasStore": true,
+    "hasServices": true
+  },
+  "portalMe": {
+    "products": [
+      "منتج المطوّر acc-1795552714839"
+    ],
+    "services": [
+      "خدمة المطوّر acc-1795552714839"
+    ]
+  }
+}
