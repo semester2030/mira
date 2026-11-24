@@ -15,3 +15,6 @@ tests (re-verified 2026-11-24 after commit):
 device_portal_live_journey: NOT run end-to-end in this verify session (needs Fayez developer login + signed iOS/portal against same API)
 shots: composed evidence + orb source — see shots/README.txt
 fayez_steps: evidence/FAYEZ_REPEAT.md
+
+zip: /Users/fayez/Desktop/MIRA-Creator-Ads-v1-5dc38be-20261124.zip
+zip_sha256: 897705430a39d55963ad7aa7869cbd70206c5328d35c063b1a88a5c3aaf317d4
