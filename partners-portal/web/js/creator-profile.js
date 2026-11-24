@@ -1,5 +1,6 @@
 /**
  * حساب المشهور — register/upsert on the logged-in partner; no duplicate profiles.
+ * Avatar upload uses multipart FormData (no FileReader) so Safari Lockdown Mode works.
  */
 (function (global) {
   'use strict';
@@ -22,19 +23,6 @@
     return node;
   }
 
-  function fileToBase64(file) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () {
-        var result = String(reader.result || '');
-        var comma = result.indexOf(',');
-        resolve(comma >= 0 ? result.slice(comma + 1) : result);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
   function apiBase() {
     if (window.PartnersApi && typeof PartnersApi.resolveUrl === 'function') {
       try {
@@ -42,6 +30,15 @@
       } catch (_) {}
     }
     return '';
+  }
+
+  function previewObjectUrl(file) {
+    try {
+      if (file && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+        return URL.createObjectURL(file);
+      }
+    } catch (_) {}
+    return null;
   }
 
   async function loadCreatorProfile() {
@@ -71,51 +68,109 @@
     }
   }
 
-  function renderRegisterForm(body, existing) {
+  function renderRegisterForm(body, existing, draft) {
     body.replaceChildren();
     var status = el('p', {
       text: existing
         ? 'عدّلي ملفك العام. الحفظ لا ينشئ مشهورًا مكررًا.'
         : 'التسجيل كمشهور يربط الملف بحسابك الحالي. يمكنك الإعلان عن عروض الغير دون متجر.',
     });
-    var name = el('input', { name: 'displayNameAr', value: (existing && existing.displayNameAr) || '' });
+    if (draft && draft.statusHint) status.textContent = draft.statusHint;
+
+    var name = el('input', { name: 'displayNameAr', value: (draft && draft.displayNameAr) || (existing && existing.displayNameAr) || '' });
     var bio = el('textarea', { name: 'bioAr' });
-    bio.value = (existing && existing.bioAr) || '';
+    bio.value = (draft && draft.bioAr != null) ? draft.bioAr : ((existing && existing.bioAr) || '');
     var publicActive = el('input', { type: 'checkbox', name: 'publicActive' });
-    publicActive.checked = !existing || existing.publicActive !== false;
-    var avatarInput = el('input', { type: 'file', accept: 'image/*' });
-    var save = el('button', { type: 'button', className: 'btn btn-primary', text: existing ? 'حفظ التعديلات' : 'التسجيل كمشهور' });
+    if (draft && typeof draft.publicActive === 'boolean') publicActive.checked = draft.publicActive;
+    else publicActive.checked = !existing || existing.publicActive !== false;
+
+    var avatarInput = el('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/*', name: 'avatar' });
+    var localPreview = el('img', {
+      alt: '',
+      width: '72',
+      height: '72',
+      style: 'display:none;border-radius:50%;object-fit:cover;margin-top:8px',
+    });
+    var objectUrl = null;
+    avatarInput.addEventListener('change', function () {
+      if (objectUrl) {
+        try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+        objectUrl = null;
+      }
+      var file = avatarInput.files && avatarInput.files[0];
+      var url = previewObjectUrl(file);
+      if (url) {
+        objectUrl = url;
+        localPreview.src = url;
+        localPreview.style.display = 'block';
+      } else {
+        localPreview.removeAttribute('src');
+        localPreview.style.display = 'none';
+      }
+    });
+
+    var save = el('button', {
+      type: 'button',
+      className: 'btn btn-primary',
+      text: existing ? 'حفظ التعديلات' : 'التسجيل كمشهور',
+    });
+
     body.append(
       status,
       el('div', null, [el('label', { text: 'اسم العرض' }), name]),
       el('div', null, [el('label', { text: 'نبذة قصيرة' }), bio]),
-      el('div', null, [el('label', { text: 'صورة الملف' }), avatarInput]),
+      el('div', null, [el('label', { text: 'صورة الملف' }), avatarInput, localPreview]),
       el('div', null, [el('label', { text: 'ظاهر في الدليل العام' }), publicActive]),
       save,
     );
+
     save.onclick = async function () {
       if (save.dataset.busy === '1') return;
       save.dataset.busy = '1';
       save.disabled = true;
+      var kept = {
+        displayNameAr: name.value.trim(),
+        bioAr: bio.value.trim(),
+        publicActive: publicActive.checked,
+      };
+      var profile = null;
       try {
-        var profile = await PartnersApi.upsertCreatorProfile({
-          displayNameAr: name.value.trim(),
-          bioAr: bio.value.trim(),
-          publicActive: publicActive.checked,
+        profile = await PartnersApi.upsertCreatorProfile({
+          displayNameAr: kept.displayNameAr,
+          bioAr: kept.bioAr,
+          publicActive: kept.publicActive,
         });
-        if (avatarInput.files && avatarInput.files[0]) {
-          var file = avatarInput.files[0];
-          var b64 = await fileToBase64(file);
-          profile = await PartnersApi.setCreatorAvatar(file.type || 'image/jpeg', b64);
-        }
-        status.textContent = 'حُفظ الملف.';
-        renderRegistered(body, profile);
-        if (typeof load === 'function') load();
       } catch (error) {
         status.textContent = error.message || 'تعذر الحفظ';
         save.disabled = false;
         save.dataset.busy = '';
+        return;
       }
+
+      var file = avatarInput.files && avatarInput.files[0];
+      if (file) {
+        try {
+          if (typeof PartnersApi.setCreatorAvatarFile === 'function') {
+            profile = await PartnersApi.setCreatorAvatarFile(file);
+          } else {
+            throw new Error('واجهة رفع الصورة غير متاحة. حدّثي الصفحة ثم أعيدي المحاولة.');
+          }
+        } catch (error) {
+          var hint =
+            (error && error.message ? error.message + ' — ' : '') +
+            'حُفظت بيانات الملف، وتعذّر رفع الصورة. أعيدي اختيار الصورة ثم احفظي من الملف نفسه.';
+          renderRegisterForm(body, profile, Object.assign({}, kept, { statusHint: hint }));
+          return;
+        }
+      }
+
+      status.textContent = 'حُفظ الملف.';
+      if (objectUrl) {
+        try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+        objectUrl = null;
+      }
+      renderRegistered(body, profile);
+      if (typeof load === 'function') load();
     };
   }
 
@@ -125,7 +180,13 @@
     var avatarUrl = preview.avatarUrl ? apiBase().replace(/\/$/, '') + preview.avatarUrl : null;
     var head = el('div', { className: 'creator-preview' });
     if (avatarUrl) {
-      head.appendChild(el('img', { src: avatarUrl, alt: preview.displayNameAr || '', width: '96', height: '96', style: 'border-radius:50%;object-fit:cover' }));
+      head.appendChild(el('img', {
+        src: avatarUrl + (avatarUrl.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now(),
+        alt: preview.displayNameAr || '',
+        width: '96',
+        height: '96',
+        style: 'border-radius:50%;object-fit:cover',
+      }));
     }
     head.appendChild(el('h3', { text: preview.displayNameAr || profile.displayNameAr || '' }));
     if (preview.bioAr || profile.bioAr) head.appendChild(el('p', { text: preview.bioAr || profile.bioAr }));
