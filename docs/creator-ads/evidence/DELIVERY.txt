@@ -1,15 +1,17 @@
 branch: mira/creator-ads-v1
 base_sha: fb56c83701d17ea64d9e13529a16d6a637b8df89
+impl_commit: 5dc38be86db0e195568b4c7bd291e959c0a7aacc
 worktree: /Users/fayez/Desktop/mira-wt-creator-ads
-impl_commit: (filled after git commit)
 attribution: link_open only; purchase/booking attribution not wired
 
-tests:
+tests (re-verified 2026-11-24 after commit):
   isolated_http: PASS — creator-ads.v1.http.integration-tests.ts
     productAd 3 videos; serviceAd 1 video + 10 images; directoryRunProfiles=7; other partner cannot mutate
+    run=ca-1795549339152
   flutter_orbit: PASS — celebrities_home_orbit_test.dart
   flutter_directory_layout: PASS — celebrities_directory_layout_test.dart (3 cols + scroll to 7th)
   flutter_toImage_shots: SKIPPED/hangs in this environment — composed PNGs under shots/
 
 device_portal_live_journey: NOT run end-to-end in this verify session (needs Fayez developer login + signed iOS/portal against same API)
 shots: composed evidence + orb source — see shots/README.txt
+fayez_steps: evidence/FAYEZ_REPEAT.md

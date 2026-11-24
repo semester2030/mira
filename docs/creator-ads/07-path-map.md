@@ -1,6 +1,6 @@
 # خريطة المسارات الفعلية — مشاهير v1
 
-فرع التنفيذ: `mira/creator-ads-v1` (worktree `mira-wt-creator-ads`).
+فرع التنفيذ: `mira/creator-ads-v1` @ `5dc38be` (worktree `mira-wt-creator-ads`).
 
 ## باك اند (`mira-api`)
 

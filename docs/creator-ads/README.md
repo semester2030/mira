@@ -2,7 +2,7 @@
 
 **تاريخ الدراسة:** 2026-11-24  
 **نطاق الفحص الأصلي:** `origin/main` @ `fb56c83`.  
-**تنفيذ v1:** فرع `mira/creator-ads-v1` — انظر [07-path-map.md](./07-path-map.md).
+**تنفيذ v1:** فرع `mira/creator-ads-v1` @ `5dc38be` — انظر [07-path-map.md](./07-path-map.md) · [evidence/DELIVERY.txt](./evidence/DELIVERY.txt).
 
 ## الفهرس
 
