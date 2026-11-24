@@ -8,6 +8,7 @@ import '../../data/catalog_provenance.dart';
 import '../../data/repositories/marketplace_repository_impl.dart';
 import '../../domain/entities/partner_summary.dart';
 import '../widgets/marketplace_data_banner.dart';
+import 'partner_catalog_surface.dart';
 import 'partner_detail_screen.dart';
 
 class PartnerListScreen extends StatefulWidget {
@@ -51,10 +52,13 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
   }
 
   void _openDetail(PartnerSummary partner) {
+    final surface = partner.isClinic || partner.isSalon
+        ? PartnerCatalogSurface.provider
+        : PartnerCatalogSurface.store;
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => PartnerDetailScreen(partner: partner),
+        builder: (_) => PartnerDetailScreen(partner: partner, surface: surface),
       ),
     );
   }
