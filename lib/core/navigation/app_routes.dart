@@ -40,6 +40,8 @@ abstract final class AppRoutes {
   static const notificationsSettings = '/settings-notifications';
   static const help = '/help';
   static const about = '/about';
+  static const celebritiesDirectory = '/celebrities';
+  static const celebrityProfile = '/celebrities/profile';
   static const discover = '/discover';
   static const discoverPresentation = '/discover-presentation';
   static const discoverList = '/discover-list';

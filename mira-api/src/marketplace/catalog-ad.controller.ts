@@ -1,7 +1,19 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Req } from '@nestjs/common';
 import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
 import { PartnerRequest, PartnerTokenGuard } from '../partners-portal/guards/partner-token.guard';
+import { CatalogAdMediaService } from './catalog-ad-media.service';
 import { CatalogAdService } from './catalog-ad.service';
 import { QualifiedViewRequest } from './catalog-view.policy';
 
@@ -12,12 +24,25 @@ function record(body: unknown): Record<string, unknown> {
 
 @Controller('partners-portal')
 export class CatalogAdPartnerController {
-  constructor(@Inject(CatalogAdService) private readonly ads: CatalogAdService) {}
+  constructor(
+    @Inject(CatalogAdService) private readonly ads: CatalogAdService,
+    @Inject(CatalogAdMediaService) private readonly adMedia: CatalogAdMediaService,
+  ) {}
 
   @Get('ads')
   @UseGuards(PartnerTokenGuard)
   list(@Req() request: PartnerRequest) {
     return this.ads.listForAdvertiser(request.partnerUser.partnerId);
+  }
+
+  @Get('ad-offer-targets')
+  @UseGuards(PartnerTokenGuard)
+  offerTargets(
+    @Req() request: PartnerRequest,
+    @Query('kind') kind?: string,
+    @Query('q') q?: string,
+  ) {
+    return this.ads.listOfferTargets(request.partnerUser.partnerId, { kind, q });
   }
 
   @Post('ads')
@@ -54,6 +79,44 @@ export class CatalogAdPartnerController {
   @UseGuards(PartnerTokenGuard)
   stats(@Req() request: PartnerRequest, @Param('id') id: string) {
     return this.ads.stats(request.partnerUser.partnerId, id);
+  }
+
+  @Get('ads/:id/media')
+  @UseGuards(PartnerTokenGuard)
+  listMedia(@Req() request: PartnerRequest, @Param('id') id: string) {
+    return this.adMedia.listMedia(request.partnerUser.partnerId, id);
+  }
+
+  @Post('ads/:id/media')
+  @UseGuards(PartnerTokenGuard)
+  addMedia(@Req() request: PartnerRequest, @Param('id') id: string, @Body() body: unknown) {
+    const data = record(body);
+    return this.adMedia.addMedia(request.partnerUser.partnerId, id, {
+      mimeType: typeof data.mimeType === 'string' ? data.mimeType : '',
+      dataBase64: typeof data.dataBase64 === 'string' ? data.dataBase64 : '',
+      placement: typeof data.placement === 'string' ? data.placement : undefined,
+      sourceMediaKey: typeof data.sourceMediaKey === 'string' ? data.sourceMediaKey : undefined,
+    });
+  }
+
+  @Patch('ads/:id/media/order')
+  @UseGuards(PartnerTokenGuard)
+  reorderMedia(@Req() request: PartnerRequest, @Param('id') id: string, @Body() body: unknown) {
+    const data = record(body);
+    const ids = Array.isArray(data.ids) ? data.ids.filter((v): v is string => typeof v === 'string') : [];
+    return this.adMedia.reorder(request.partnerUser.partnerId, id, ids);
+  }
+
+  @Patch('ads/:id/media/:mediaId/primary')
+  @UseGuards(PartnerTokenGuard)
+  setPrimary(@Req() request: PartnerRequest, @Param('id') id: string, @Param('mediaId') mediaId: string) {
+    return this.adMedia.setPrimary(request.partnerUser.partnerId, id, mediaId);
+  }
+
+  @Delete('ads/:id/media/:mediaId')
+  @UseGuards(PartnerTokenGuard)
+  removeMedia(@Req() request: PartnerRequest, @Param('id') id: string, @Param('mediaId') mediaId: string) {
+    return this.adMedia.removeMedia(request.partnerUser.partnerId, id, mediaId);
   }
 }
 

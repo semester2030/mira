@@ -13,6 +13,7 @@
     bookings: { sectionIds: ['commerceSection'], nav: 'bookings', title: 'الحجوزات', commerceTab: 'bookings' },
     settings: { sectionIds: ['partnerSettingsSection'], nav: 'settings', title: 'الإعدادات' },
     ads: { sectionIds: ['adsSection'], nav: 'ads', title: 'إعلانات المشاهير' },
+    creator: { sectionIds: ['creatorSection'], nav: 'creator', title: 'حساب المشهور' },
     bulk: { sectionIds: ['bulkSection'], nav: 'bulk', title: 'إضافة مجموعة' },
   };
 
@@ -277,15 +278,18 @@
     addLink('orders', 'الطلبات');
     addLink('bookings', 'الحجوزات');
     addLink('settings', 'الإعدادات');
+    addLink('creator', 'حساب المشهور');
     // Salon/clinic/developer (manages venues): Discover main ad is separate from «خدماتي».
     // Developer keeps this as «إعلاني الرئيسي» so center ads are not only under celebrity copy.
     var mainAdLabel =
       partnerType === 'salon' || partnerType === 'clinic' || partnerType === 'developer' || partnerType === 'spa'
         ? 'إعلاني الرئيسي'
-        : 'إعلانات المشاهير';
+        : 'إعلاناتي';
     addLink('ads', mainAdLabel);
     if (mainAdLabel === 'إعلاني الرئيسي') {
       VIEWS.ads.title = 'إعلاني الرئيسي';
+    } else {
+      VIEWS.ads.title = 'إعلاناتي';
     }
 
     var stage = document.createElement('div');

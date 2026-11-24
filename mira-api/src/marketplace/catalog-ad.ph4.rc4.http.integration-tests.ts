@@ -13,6 +13,7 @@ import { PartnerTokenGuard } from '../partners-portal/guards/partner-token.guard
 import { PartnersPortalController } from '../partners-portal/partners-portal.controller';
 import { PartnersPortalService } from '../partners-portal/partners-portal.service';
 import { CatalogAdAdminController, CatalogAdPartnerController, CatalogAdPublicController } from './catalog-ad.controller';
+import { CatalogAdMediaService } from './catalog-ad-media.service';
 import { CatalogAdService } from './catalog-ad.service';
 import { CatalogContentService } from './catalog-content.service';
 import { CatalogMediaController } from './catalog-media.controller';
@@ -46,6 +47,7 @@ class ScriptedIdTokenVerifier extends FirebaseIdTokenVerifier {
     PartnerTokenGuard,
     AdminApiKeyGuard,
     CatalogContentService,
+    CatalogAdMediaService,
     CatalogAdService,
     FirebaseAuthGuard,
     { provide: CatalogMediaStorage, useClass: MemoryCatalogMediaStorage },

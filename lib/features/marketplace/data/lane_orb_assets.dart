@@ -7,6 +7,8 @@ abstract final class LaneOrbAssets {
   /// Home «اكتشفي عالم ميرا» row only: hanging clothes for أناقتك.
   /// Other screens keep [byImageKey] elegance_lane.png unchanged.
   static const String eleganceHomeOrbit = 'assets/marketplace/discover/home_orbit/elegance_home.png';
+  static const String celebritiesHomeOrbit =
+      'assets/marketplace/discover/home_orbit/celebrities_home.jpg';
 
   /// Home row / subcategory masters keyed by taxonomy imageKey.
   static const Map<String, String> byImageKey = {

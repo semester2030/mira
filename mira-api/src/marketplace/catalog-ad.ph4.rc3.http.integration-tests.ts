@@ -8,12 +8,20 @@ import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PartnerTokenGuard } from '../partners-portal/guards/partner-token.guard';
 import { CatalogAdAdminController, CatalogAdPartnerController, CatalogAdPublicController } from './catalog-ad.controller';
+import { CatalogAdMediaService } from './catalog-ad-media.service';
 import { CatalogAdService } from './catalog-ad.service';
+import { CatalogMediaStorage, MemoryCatalogMediaStorage } from './catalog-media.storage';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), PrismaModule],
   controllers: [CatalogAdPartnerController, CatalogAdAdminController, CatalogAdPublicController],
-  providers: [CatalogAdService, PartnerTokenGuard, AdminApiKeyGuard],
+  providers: [
+    CatalogAdMediaService,
+    CatalogAdService,
+    PartnerTokenGuard,
+    AdminApiKeyGuard,
+    { provide: CatalogMediaStorage, useClass: MemoryCatalogMediaStorage },
+  ],
 })
 class Ph4Rc3AdTestModule {}
 

@@ -36,6 +36,7 @@ abstract final class MiraApiEndpoints {
   /// Public elegance taxonomy projection (E3 circles / filters ids).
   static const marketplaceTaxonomy = '/marketplace/taxonomy';
   static const marketplaceAds = '/marketplace/ads';
+  static const marketplaceCreators = '/marketplace/creators';
   static const marketplaceFavorites = '/marketplace/favorites';
   /// Qualified Discover view counts (server-gated).
   static String marketplaceViewCount(String kind, String id) =>

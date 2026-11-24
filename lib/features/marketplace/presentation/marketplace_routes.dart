@@ -7,6 +7,8 @@ import '../data/catalog_record_scope.dart';
 import '../domain/entities/catalog_product.dart';
 import '../domain/entities/catalog_service.dart';
 import '../data/discover_catalog_query.dart';
+import 'screens/celebrities_directory_screen.dart';
+import 'screens/celebrity_profile_screen.dart';
 import 'screens/booking_request_screen.dart';
 import 'screens/bookings_list_screen.dart';
 import 'screens/cart_screen.dart';
@@ -26,7 +28,9 @@ abstract final class MarketplaceRoutes {
   MarketplaceRoutes._();
 
   static bool handles(String? name) {
-    return name == AppRoutes.discover ||
+    return name == AppRoutes.celebritiesDirectory ||
+        name == AppRoutes.celebrityProfile ||
+        name == AppRoutes.discover ||
         name == AppRoutes.discoverPresentation ||
         name == AppRoutes.discoverList ||
         name == AppRoutes.productDetail ||
@@ -70,6 +74,21 @@ abstract final class MarketplaceRoutes {
       );
     }
     switch (settings.name) {
+      case AppRoutes.celebritiesDirectory:
+        if (!MiraFeatures.marketplaceEnabled) {
+          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+        }
+        return PremiumPageRoute(page: const CelebritiesDirectoryScreen(), settings: settings);
+      case AppRoutes.celebrityProfile:
+        if (!MiraFeatures.marketplaceEnabled) {
+          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+        }
+        final creatorId = settings.arguments;
+        if (creatorId is! String || creatorId.isEmpty) return null;
+        return PremiumPageRoute(
+          page: CelebrityProfileScreen(creatorId: creatorId),
+          settings: settings,
+        );
       case AppRoutes.discover:
         return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
       case AppRoutes.discoverPresentation:

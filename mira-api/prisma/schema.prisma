@@ -182,9 +182,29 @@ model Partner {
   uploadSessions   PartnerUploadSession[]
   /// Approved identity kinds + service delivery modes from activities review (JSON).
   activitiesMeta   Json?    @map("activities_meta")
+  /// Optional public celebrity profile for this partner account (1:1).
+  creatorProfile   CreatorProfile?
 
   @@index([type, status])
   @@map("partners")
+}
+
+/// Public celebrity profile bound to an existing partner login. Not a second account.
+model CreatorProfile {
+  id            String   @id @default(uuid())
+  partnerId     String   @unique @map("partner_id")
+  partner       Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  displayNameAr String   @map("display_name_ar")
+  bioAr         String?  @map("bio_ar")
+  /// S3/object key for the avatar image. Served via marketplace media read helpers.
+  avatarKey     String?  @map("avatar_key")
+  avatarMime    String?  @map("avatar_mime")
+  publicActive  Boolean  @default(true) @map("public_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([publicActive, createdAt(sort: Desc)])
+  @@map("creator_profiles")
 }
 
 /// P4/P7 — physical branch for in-person services (resource ≠ branch).

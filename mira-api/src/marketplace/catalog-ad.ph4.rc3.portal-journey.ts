@@ -9,7 +9,9 @@ import { PartnerRequest, PartnerTokenGuard } from '../partners-portal/guards/par
 import { PartnersPortalService } from '../partners-portal/partners-portal.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CatalogAdAdminController, CatalogAdPartnerController, CatalogAdPublicController } from './catalog-ad.controller';
+import { CatalogAdMediaService } from './catalog-ad-media.service';
 import { CatalogAdService } from './catalog-ad.service';
+import { CatalogMediaStorage, MemoryCatalogMediaStorage } from './catalog-media.storage';
 
 @Controller('admin')
 @UseGuards(AdminApiKeyGuard)
@@ -45,7 +47,14 @@ class JourneyPartnerSessionController {
     CatalogAdAdminController,
     CatalogAdPublicController,
   ],
-  providers: [CatalogAdService, PartnersPortalService, PartnerTokenGuard, AdminApiKeyGuard],
+  providers: [
+    CatalogAdMediaService,
+    CatalogAdService,
+    PartnersPortalService,
+    PartnerTokenGuard,
+    AdminApiKeyGuard,
+    { provide: CatalogMediaStorage, useClass: MemoryCatalogMediaStorage },
+  ],
 })
 class JourneyModule {}
 

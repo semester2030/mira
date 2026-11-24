@@ -9,6 +9,7 @@ import '../../domain/catalog_offer_media.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../../domain/entities/marketplace_match.dart';
+import '../../domain/entities/creator_profile.dart';
 import '../../domain/entities/partner_detail.dart';
 import '../../domain/entities/partner_summary.dart';
 import '../discover_catalog_facets.dart';
@@ -491,6 +492,88 @@ class MarketplaceApiDataSource {
   }
 
   DiscoverOffer parseCatalogItem(Map<String, dynamic> json) => _offer(json);
+
+  Future<CreatorDirectoryPage> listCreators({String? cursor, int limit = 6}) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        MiraApiEndpoints.marketplaceCreators,
+        queryParameters: {
+          if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+          'limit': limit,
+        },
+      );
+      final data = response.data ?? const <String, dynamic>{};
+      final raw = data['items'] as List<dynamic>? ?? const [];
+      return CreatorDirectoryPage(
+        items: [
+          for (final item in raw)
+            if (item is Map<String, dynamic>) _parseCreatorCard(item),
+        ],
+        nextCursor: data['nextCursor'] as String?,
+      );
+    } on DioException {
+      return const CreatorDirectoryPage(failed: true, items: []);
+    }
+  }
+
+  Future<CreatorPublicProfile?> getCreatorProfile(String id) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '${MiraApiEndpoints.marketplaceCreators}/$id',
+      );
+      final data = response.data;
+      if (data == null) return null;
+      return _parseCreatorProfile(data);
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) return null;
+      throw const CatalogSourceException();
+    }
+  }
+
+  Future<DiscoverPublishedAd?> getPublicAd(String adId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '${MiraApiEndpoints.marketplaceAds}/$adId',
+      );
+      return DiscoverPublishedAd.tryParse(
+        _withResolvedMedia(Map<String, dynamic>.from(response.data ?? {})),
+      );
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) return null;
+      throw const CatalogSourceException();
+    }
+  }
+
+  CreatorDirectoryCard _parseCreatorCard(Map<String, dynamic> json) {
+    final avatar = json['avatarUrl'] as String?;
+    return CreatorDirectoryCard(
+      id: json['id'] as String,
+      partnerId: json['partnerId'] as String? ?? '',
+      displayNameAr: json['displayNameAr'] as String? ?? '',
+      avatarUrl: avatar != null && avatar.isNotEmpty
+          ? resolveCatalogMediaUrl(avatar, _dio.options.baseUrl)
+          : null,
+    );
+  }
+
+  CreatorPublicProfile _parseCreatorProfile(Map<String, dynamic> json) {
+    final card = _parseCreatorCard(json);
+    final adIds = (json['publishedAdIds'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString())
+        .toList();
+    return CreatorPublicProfile(
+      id: card.id,
+      partnerId: card.partnerId,
+      displayNameAr: card.displayNameAr,
+      avatarUrl: card.avatarUrl,
+      bioAr: json['bioAr'] as String?,
+      hasStore: json['hasStore'] == true,
+      hasServices: json['hasServices'] == true,
+      publishedAdIds: adIds,
+      emptyAdsMessage: json['emptyAdsMessage'] as String?,
+      partnerType: json['partnerType'] as String?,
+    );
+  }
 
   Future<DiscoverAdFeed> publishedAds() async {
     late final Response<Map<String, dynamic>> response;
