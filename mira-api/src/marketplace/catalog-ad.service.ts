@@ -9,8 +9,7 @@ import {
 } from '@nestjs/common';
 import { CatalogAd, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { publishedCatalogMediaWhere } from './catalog-published-media';
-import { filterPlayableCatalogMedia } from './catalog-media-playable';
+import { CatalogAdMediaService } from './catalog-ad-media.service';
 import {
   availableViewCount,
   disabledViewCount,
@@ -27,7 +26,10 @@ const ADMIN_ACTOR = 'admin-api-key';
 
 @Injectable()
 export class CatalogAdService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CatalogAdMediaService) private readonly adMedia: CatalogAdMediaService,
+  ) {}
 
   async create(advertiserPartnerId: string, input: Record<string, unknown>) {
     this.rejectPrice(input);
@@ -80,10 +82,10 @@ export class CatalogAdService {
   }
 
   async submit(advertiserPartnerId: string, id: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const ad = await this.lockOwned(tx, id, advertiserPartnerId);
       if (ad.status === 'in_review' && ad.submittedRevision === ad.reviewRevision) {
-        return { ...this.partnerView(ad), alreadyApplied: true };
+        return { ...this.partnerView(ad), alreadyApplied: true, publishedNow: false };
       }
       if (ad.status !== 'draft' && ad.status !== 'rejected') {
         throw new ConflictException('إعادة التقديم تكون من المسودة أو بعد الرفض فقط');
@@ -103,8 +105,11 @@ export class CatalogAdService {
       });
       if (changed.count !== 1) throw new ConflictException('تغيّرت النسخة قبل إرسالها');
       const next = await tx.catalogAd.findUniqueOrThrow({ where: { id } });
-      return { ...this.partnerView(next), alreadyApplied: false };
+      return { ...this.partnerView(next), alreadyApplied: false, publishedNow: developer };
     });
+    if (result.publishedNow) await this.adMedia.publishAllForAd(id);
+    const { publishedNow: _publishedNow, ...view } = result;
+    return view;
   }
 
   async withdraw(advertiserPartnerId: string, id: string) {
@@ -169,16 +174,16 @@ export class CatalogAdService {
     const note = decision === 'reject' ? this.requiredText(input.note, 'سبب الرفض') : this.optionalText(input.note, 'الملاحظة');
     const exists = await this.prisma.catalogAd.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException('الإعلان غير موجود');
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const ad = await this.lock(tx, id);
       if (decision === 'approve' && ad.status === 'published' && ad.submittedRevision === revision && ad.reviewRevision === revision) {
-        return { id, status: 'published', alreadyApplied: true, revision };
+        return { id, status: 'published', alreadyApplied: true, revision, publishMedia: false };
       }
       if (decision === 'reject' && ad.status === 'rejected' && ad.reviewRevision === revision) {
-        return { id, status: 'rejected', alreadyApplied: true, revision };
+        return { id, status: 'rejected', alreadyApplied: true, revision, publishMedia: false };
       }
       if (decision === 'withdraw' && ad.status === 'withdrawn') {
-        return { id, status: 'withdrawn', alreadyApplied: true, revision: ad.reviewRevision };
+        return { id, status: 'withdrawn', alreadyApplied: true, revision: ad.reviewRevision, publishMedia: false };
       }
       if (ad.status === 'withdrawn') throw new ConflictException('الإعلان المسحوب لا يعود للنشر بقرار اعتماد قديم');
       if (decision === 'withdraw') {
@@ -189,7 +194,7 @@ export class CatalogAdService {
         });
         if (changed.count !== 1) throw new ConflictException('النسخة القديمة لا تُعتمد');
         await tx.catalogAdDecision.create({ data: { adId: id, revision, decision, actor: ADMIN_ACTOR, note: note ?? null } });
-        return { id, status: 'withdrawn', alreadyApplied: false, revision };
+        return { id, status: 'withdrawn', alreadyApplied: false, revision, publishMedia: false };
       }
       if (ad.status !== 'in_review' || ad.submittedRevision !== revision || ad.reviewRevision !== revision) {
         throw new ConflictException('النسخة القديمة لا تُعتمد');
@@ -201,7 +206,7 @@ export class CatalogAdService {
         });
         if (changed.count !== 1) throw new ConflictException('النسخة القديمة لا تُعتمد');
         await tx.catalogAdDecision.create({ data: { adId: id, revision, decision, actor: ADMIN_ACTOR, note } });
-        return { id, status: 'rejected', alreadyApplied: false, revision };
+        return { id, status: 'rejected', alreadyApplied: false, revision, publishMedia: false };
       }
       if (!(await this.publicPartiesEligible(ad))) throw new ConflictException('الهدف أو أحد الأطراف غير مؤهل للظهور');
       if (process.env.MIRA_AD_FAIL_DECIDE === '1') {
@@ -217,8 +222,11 @@ export class CatalogAdService {
       });
       if (changed.count !== 1) throw new ConflictException('النسخة القديمة لا تُعتمد');
       await tx.catalogAdDecision.create({ data: { adId: id, revision, decision: 'approve', actor: ADMIN_ACTOR, note: note ?? null } });
-      return { id, status: 'published', alreadyApplied: false, revision };
+      return { id, status: 'published', alreadyApplied: false, revision, publishMedia: true };
     });
+    if (result.publishMedia) await this.adMedia.publishAllForAd(id);
+    const { publishMedia: _publishMedia, ...view } = result;
+    return view;
   }
 
   async listPublic() {
@@ -265,7 +273,8 @@ export class CatalogAdService {
         externalUrl,
         durationMin: 'durationMin' in target ? target.durationMin : undefined,
       },
-      media: await this.publishedMedia(ad.targetKind as Kind, target.id),
+      media: await this.adMedia.publicMediaForAd(ad.id, ad.targetKind as Kind, target.id),
+      creator: await this.creatorPublicCard(ad.advertiserPartnerId),
       actions: {
         openLink: this.validUrl(externalUrl),
         purchaseCompleted: false,
@@ -274,6 +283,21 @@ export class CatalogAdService {
         appointmentConfirmed: false,
       },
       views: await this.viewCount(ad.targetKind, ad.targetId),
+    };
+  }
+
+  private async creatorPublicCard(partnerId: string) {
+    const profile = await this.prisma.creatorProfile.findUnique({
+      where: { partnerId },
+      select: { id: true, displayNameAr: true, avatarKey: true, publicActive: true },
+    });
+    if (!profile || !profile.publicActive) return null;
+    const partner = await this.prisma.partner.findFirst({ where: { id: partnerId, status: 'active' } });
+    if (!partner) return null;
+    return {
+      id: profile.id,
+      displayNameAr: profile.displayNameAr,
+      avatarUrl: profile.avatarKey ? `/api/v1/marketplace/creators/${profile.id}/avatar` : null,
     };
   }
 
@@ -348,9 +372,10 @@ export class CatalogAdService {
 
   private async partnerCard(ad: CatalogAd) {
     const live = await this.liveTargetFor(ad.advertiserPartnerId, ad.targetKind as Kind, ad.targetId, false);
-    const [advertiser, publisher] = await Promise.all([
+    const [advertiser, publisher, media] = await Promise.all([
       this.prisma.partner.findUnique({ where: { id: ad.advertiserPartnerId } }),
       this.prisma.partner.findUnique({ where: { id: ad.publisherPartnerId } }),
+      this.adMedia.listMedia(ad.advertiserPartnerId, ad.id),
     ]);
     return {
       id: ad.id,
@@ -365,6 +390,7 @@ export class CatalogAdService {
       publisher: publisher ? { id: publisher.id, nameAr: publisher.nameAr } : null,
       seller: live?.seller ?? null,
       liveTarget: live?.target ?? null,
+      media: media.items,
       views: await this.viewCount(ad.targetKind, ad.targetId),
     };
   }
@@ -414,14 +440,83 @@ export class CatalogAdService {
     };
   }
 
-  private async publishedMedia(kind: Kind, id: string) {
-    const rows = filterPlayableCatalogMedia(
-      await this.prisma.catalogMedia.findMany({
-        where: publishedCatalogMediaWhere(kind, id),
-        orderBy: { sortOrder: 'asc' },
-      }),
-    );
-    return rows.map((row) => ({ id: row.id, kind: row.kind, url: `/api/v1/marketplace/media/${row.id}` }));
+  /** Catalog offers the advertiser may bind (own drafts/published + others' published). */
+  async listOfferTargets(advertiserPartnerId: string, query: { kind?: string; q?: string }) {
+    await this.requireActivePartner(advertiserPartnerId, 'المعلن غير مؤهل');
+    const kindFilter = query.kind === 'product' || query.kind === 'service' ? query.kind : null;
+    const needle = typeof query.q === 'string' ? query.q.trim().slice(0, 80) : '';
+    const nameFilter = needle ? { nameAr: { contains: needle, mode: 'insensitive' as const } } : {};
+    const items: Array<{
+      kind: Kind;
+      id: string;
+      nameAr: string;
+      ownerNameAr: string;
+      ownerPartnerId: string;
+      coverUrl: string | null;
+      mine: boolean;
+    }> = [];
+
+    if (!kindFilter || kindFilter === 'product') {
+      const products = await this.prisma.product.findMany({
+        where: {
+          OR: [
+            { partnerId: advertiserPartnerId, catalogSource: 'catalog' },
+            { ...ELIGIBLE },
+          ],
+          ...nameFilter,
+        },
+        include: { partner: { select: { id: true, nameAr: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 40,
+      });
+      for (const row of products) {
+        const cover = await this.prisma.catalogMedia.findFirst({
+          where: { ownerKind: 'product', ownerId: row.id, pendingRemoval: false },
+          orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
+        });
+        items.push({
+          kind: 'product',
+          id: row.id,
+          nameAr: row.nameAr,
+          ownerNameAr: row.partner.nameAr,
+          ownerPartnerId: row.partner.id,
+          coverUrl: cover ? `/api/v1/marketplace/media/${cover.id}` : null,
+          mine: row.partnerId === advertiserPartnerId,
+        });
+      }
+    }
+
+    if (!kindFilter || kindFilter === 'service') {
+      const services = await this.prisma.service.findMany({
+        where: {
+          OR: [
+            { partnerId: advertiserPartnerId, catalogSource: 'catalog' },
+            { ...ELIGIBLE },
+          ],
+          ...nameFilter,
+        },
+        include: { partner: { select: { id: true, nameAr: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 40,
+      });
+      for (const row of services) {
+        const cover = await this.prisma.catalogMedia.findFirst({
+          where: { ownerKind: 'service', ownerId: row.id, pendingRemoval: false },
+          orderBy: [{ isPrimary: 'desc' }, { sortOrder: 'asc' }],
+        });
+        items.push({
+          kind: 'service',
+          id: row.id,
+          nameAr: row.nameAr,
+          ownerNameAr: row.partner.nameAr,
+          ownerPartnerId: row.partner.id,
+          coverUrl: cover ? `/api/v1/marketplace/media/${cover.id}` : null,
+          mine: row.partnerId === advertiserPartnerId,
+        });
+      }
+    }
+
+    return { items };
   }
 
   private rejectPrice(input: Record<string, unknown>) {

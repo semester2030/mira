@@ -12,6 +12,9 @@ class DiscoverAdLink {
     required this.priceHalalas,
     required this.openLink,
     required this.appointmentOperational,
+    this.creatorId,
+    this.creatorDisplayName,
+    this.sellerPartnerId,
   });
 
   final String id;
@@ -25,6 +28,9 @@ class DiscoverAdLink {
   final int priceHalalas;
   final bool openLink;
   final bool appointmentOperational;
+  final String? creatorId;
+  final String? creatorDisplayName;
+  final String? sellerPartnerId;
 
   String get disclosureLine => '$disclosure · المعلن: $advertiserName · الجهة: $sellerName · الناشر: $publisherName';
 
@@ -38,6 +44,7 @@ class DiscoverAdLink {
     final advertiser = Map<String, dynamic>.from(json['advertiser'] as Map);
     final publisher = Map<String, dynamic>.from(json['publisher'] as Map);
     final seller = Map<String, dynamic>.from(json['seller'] as Map);
+    final creator = json['creator'] is Map ? Map<String, dynamic>.from(json['creator'] as Map) : null;
     final url = target['externalUrl'] as String?;
     final validLink = url != null && _validUrl(url);
     return DiscoverAdLink(
@@ -52,6 +59,9 @@ class DiscoverAdLink {
       priceHalalas: target['priceHalalas'] as int,
       openLink: actions['openLink'] == true && validLink && actions['purchaseCompleted'] != true,
       appointmentOperational: actions['appointmentOperational'] == true && actions['appointmentConfirmed'] != true,
+      creatorId: creator?['id'] as String?,
+      creatorDisplayName: creator?['displayNameAr'] as String?,
+      sellerPartnerId: seller['id'] as String?,
     );
   }
 }

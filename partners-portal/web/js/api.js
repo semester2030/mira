@@ -620,6 +620,27 @@
     submitAd: (id) => request('POST', `/partners-portal/ads/${id}/submit-review`, {}),
     withdrawAd: (id) => request('POST', `/partners-portal/ads/${id}/withdraw`, {}),
     adStats: (id) => request('GET', `/partners-portal/ads/${id}/stats`),
+    adOfferTargets: (query) => {
+      const q = [];
+      if (query && query.kind) q.push(`kind=${encodeURIComponent(query.kind)}`);
+      if (query && query.q) q.push(`q=${encodeURIComponent(query.q)}`);
+      return request('GET', `/partners-portal/ad-offer-targets${q.length ? '?' + q.join('&') : ''}`);
+    },
+    adMedia: (id) => request('GET', `/partners-portal/ads/${id}/media`),
+    addAdMedia: (id, mimeType, dataBase64, placement) =>
+      request('POST', `/partners-portal/ads/${id}/media`, { mimeType, dataBase64, placement: placement || 'main' }),
+    addAdMediaProgress: (id, mimeType, dataBase64, hooks) =>
+      requestProgress('POST', `/partners-portal/ads/${id}/media`, { mimeType, dataBase64, placement: (hooks && hooks.placement) || 'main' }, hooks),
+    reorderAdMedia: (id, ids) =>
+      request('PATCH', `/partners-portal/ads/${id}/media/order`, { ids }),
+    setAdMediaPrimary: (id, mediaId) =>
+      request('PATCH', `/partners-portal/ads/${id}/media/${mediaId}/primary`, {}),
+    removeAdMedia: (id, mediaId) =>
+      request('DELETE', `/partners-portal/ads/${id}/media/${mediaId}`),
+    creatorProfile: () => request('GET', '/partners-portal/creator-profile'),
+    upsertCreatorProfile: (payload) => request('PUT', '/partners-portal/creator-profile', payload),
+    setCreatorAvatar: (mimeType, dataBase64) =>
+      request('POST', '/partners-portal/creator-profile/avatar', { mimeType, dataBase64 }),
     commerceOrders: (query) =>
       request('GET', `/partners/me/commerce/orders${query ? '?' + query : ''}`),
     commerceOrder: (id) => request('GET', `/partners/me/commerce/orders/${id}`),

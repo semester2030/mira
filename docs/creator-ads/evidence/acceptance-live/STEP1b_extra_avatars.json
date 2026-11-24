@@ -1,0 +1,38 @@
+[
+  {
+    "id": "37f14a8a-bcec-4454-a97d-4b541ef66248",
+    "name": "مشهورة حمراء acc-1795550007427",
+    "status": 201,
+    "hasAvatar": true
+  },
+  {
+    "id": "39905594-e122-447d-ae30-8f1ecec1c455",
+    "name": "مشهورة زرقاء acc-1795550007427",
+    "status": 201,
+    "hasAvatar": true
+  },
+  {
+    "id": "b35fb20e-7cd0-4164-a08b-eacc5ff3b909",
+    "name": "مشهورة خضراء acc-1795550007427",
+    "status": 201,
+    "hasAvatar": true
+  },
+  {
+    "id": "f394620e-3e0c-45a6-acae-39d1dfcaba49",
+    "name": "مشهورة صفراء acc-1795550007427",
+    "status": 201,
+    "hasAvatar": true
+  },
+  {
+    "id": "e4dea676-545d-42e5-bd8a-b6538dd53f85",
+    "name": "مشهورة بنفسجية acc-1795550007427",
+    "status": 201,
+    "hasAvatar": true
+  },
+  {
+    "id": "7ed61ee8-0c67-4de0-baf2-d940225fbcc1",
+    "name": "مشهورة فيروزية acc-1795550007427",
+    "status": 201,
+    "hasAvatar": true
+  }
+]

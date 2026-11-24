@@ -151,12 +151,19 @@
         <p class="lead">لتسجيل الخروج استخدمي الرابط في أعلى الصفحة.</p>
       </div>
 
+      <div class="card" id="creatorSection">
+        <h2>حساب المشهور</h2>
+        <p class="lead">اربطي ملفك العام بنفس حساب الشريك الحالي. التسجيل المتكرر يعيد فتح الملف نفسه.</p>
+        <div id="creatorProfileBody"></div>
+      </div>
+
       <div class="card" id="adsSection">
-        <h2>إعلانات المشاهير</h2>
+        <h2>إعلاناتي</h2>
         <p class="lead" id="adsNotice"></p>
         <div id="adsList"></div>
         <h2>مسودة إعلان</h2>
         <form id="adsForm"></form>
+        <div id="adMediaEditor" class="hidden" style="margin-top:1.25rem"></div>
       </div>
     </div>
   </main>
@@ -165,7 +172,8 @@
   <script src="js/branch-location.js?v=branch-loc1"></script>
   <script src="js/motion.js?v=mobile-editor1"></script>
   <script src="js/motion-fixture.js?v=mobile-editor1"></script>
-  <script src="js/ads.js?v=mobile-editor1"></script>
+  <script src="js/creator-profile.js?v=creator-ads1"></script>
+  <script src="js/ads.js?v=creator-ads1"></script>
   <script src="js/service-templates.js?v=mobile-editor1"></script>
   <script src="js/catalog-options-core.js?v=mobile-editor1"></script>
   <script src="js/product-commerce-fields.js?v=mobile-editor1"></script>
@@ -737,6 +745,13 @@
           renderAds([], null);
           const notice = document.getElementById('adsNotice');
           if (notice) notice.textContent = adsError.message;
+        }
+        if (typeof loadCreatorProfile === 'function') {
+          try {
+            await loadCreatorProfile();
+          } catch (_) {
+            /* creator section paints its own error */
+          }
         }
       } catch (err) {
         document.getElementById('loading').textContent = '';

@@ -22,6 +22,7 @@ const _lanes = <(String titleAr, DiscoverLane lane, String imageKey)>[
 
 const _gap = 12.0;
 const _diameterFraction = 0.40;
+const _celebrityDiameterFraction = 0.48;
 
 class MiraWorldOrbitDiscover extends StatefulWidget {
   const MiraWorldOrbitDiscover({super.key, this.onLaneOpened});
@@ -41,6 +42,21 @@ class _MiraWorldOrbitDiscoverState extends State<MiraWorldOrbitDiscover> {
   void dispose() {
     _scroll.dispose();
     super.dispose();
+  }
+
+  Future<void> _openCelebrities() async {
+    if (_opening) return;
+    _opening = true;
+    try {
+      final reduced = MediaQuery.disableAnimationsOf(context);
+      if (!reduced) {
+        await Future<void>.delayed(const Duration(milliseconds: 135));
+      }
+      if (!mounted || ModalRoute.of(context)?.isCurrent == false) return;
+      await Navigator.of(context).pushNamed(AppRoutes.celebritiesDirectory);
+    } finally {
+      _opening = false;
+    }
   }
 
   Future<void> _open(int i) async {
@@ -68,6 +84,33 @@ class _MiraWorldOrbitDiscoverState extends State<MiraWorldOrbitDiscover> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        LayoutBuilder(
+          builder: (context, c) {
+            final w = c.maxWidth;
+            final d = (w * _celebrityDiameterFraction).clamp(128.0, 184.0);
+            final font = (w * 0.041).clamp(14.0, 18.0).toDouble();
+            final labelH = math.max(
+              24.0,
+              MediaQuery.textScalerOf(context).scale(font) * 1.55,
+            );
+            return Center(
+              child: SizedBox(
+                width: d,
+                child: _Petal(
+                  key: const ValueKey('home-orb-celebrities'),
+                  title: 'المشاهير',
+                  asset: LaneOrbAssets.celebritiesHomeOrbit,
+                  diameter: d,
+                  font: font,
+                  labelH: labelH,
+                  imageAlignment: const Alignment(0, -0.05),
+                  open: _openCelebrities,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 20),
         Text(
           'اكتشفي عالم ميرا',
           textAlign: TextAlign.center,
@@ -189,6 +232,7 @@ class _Petal extends StatefulWidget {
     required this.font,
     required this.labelH,
     required this.open,
+    this.imageAlignment = Alignment.center,
   });
 
   final String title;
@@ -197,6 +241,7 @@ class _Petal extends StatefulWidget {
   final double font;
   final double labelH;
   final Future<void> Function() open;
+  final Alignment imageAlignment;
 
   @override
   State<_Petal> createState() => _PetalState();
@@ -264,7 +309,7 @@ class _PetalState extends State<_Petal> {
                   child: Image.asset(
                     widget.asset,
                     fit: BoxFit.cover,
-                    alignment: Alignment.center,
+                    alignment: widget.imageAlignment,
                     width: widget.diameter,
                     height: widget.diameter,
                     excludeFromSemantics: true,

@@ -41,20 +41,27 @@ export class CatalogMediaController {
       where: { id, active: true, publication: 'published' },
     });
     if (!row?.storageKey) throw new NotFoundException('الوسيط غير منشور');
-    const ownerWhere = {
-      id: row.ownerId,
-      active: true,
-      contentStatus: 'published',
-      catalogSource: 'catalog',
-      partner: { status: 'active' },
-    };
-    const owner =
-      row.ownerKind === 'product'
-        ? await this.prisma.product.findFirst({ where: ownerWhere })
-        : row.ownerKind === 'service'
-          ? await this.prisma.service.findFirst({ where: ownerWhere })
-          : null;
-    if (!owner) throw new NotFoundException('الوسيط غير منشور');
+    if (row.ownerKind === 'ad') {
+      const ad = await this.prisma.catalogAd.findFirst({
+        where: { id: row.ownerId, status: 'published' },
+      });
+      if (!ad) throw new NotFoundException('الوسيط غير منشور');
+    } else {
+      const ownerWhere = {
+        id: row.ownerId,
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        partner: { status: 'active' },
+      };
+      const owner =
+        row.ownerKind === 'product'
+          ? await this.prisma.product.findFirst({ where: ownerWhere })
+          : row.ownerKind === 'service'
+            ? await this.prisma.service.findFirst({ where: ownerWhere })
+            : null;
+      if (!owner) throw new NotFoundException('الوسيط غير منشور');
+    }
 
     const keyHint = row.storageKey.slice(0, 12);
     // Abort only when the response connection drops before completion.

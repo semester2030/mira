@@ -1,0 +1,28 @@
+{
+  "login": {
+    "status": 500,
+    "email": null,
+    "partnerType": null
+  },
+  "register": {
+    "status": 200,
+    "id": "48ce5312-75df-40d4-99c9-df4356987c9e",
+    "name": "فايز قبول acc-1795550007427"
+  },
+  "avatar": {
+    "status": 201,
+    "hasAvatar": true
+  },
+  "me_before_logout": {
+    "status": 500,
+    "products": [],
+    "services": []
+  },
+  "directory_before_ads": {
+    "status": 200,
+    "totalReturned": 7,
+    "developerVisible": true,
+    "developerName": "فايز قبول acc-1795550007427",
+    "developerHasAvatarUrl": true
+  }
+}

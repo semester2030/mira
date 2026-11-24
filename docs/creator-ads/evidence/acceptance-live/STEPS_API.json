@@ -1,0 +1,172 @@
+{
+  "run": "acc-1795550082532",
+  "impl": "5dc38be",
+  "login": {
+    "status": 201,
+    "type": "developer",
+    "email": "dev-acc-1795550082532@accept.local"
+  },
+  "relogin": {
+    "status": 201,
+    "sameToken": true
+  },
+  "register": {
+    "status": 200,
+    "id": "9628eb0f-0ddc-4669-bbc5-f50b3eca777d",
+    "name": "فايز قبول acc-1795550082532",
+    "idempotent": true
+  },
+  "avatar": {
+    "status": 201,
+    "hasAvatar": true
+  },
+  "me": {
+    "status": 200,
+    "products": [
+      "منتج المطوّر acc-1795550082532"
+    ],
+    "services": [
+      "خدمة المطوّر acc-1795550082532"
+    ]
+  },
+  "mineAfterRelogin": {
+    "status": 200,
+    "registered": true,
+    "id": "9628eb0f-0ddc-4669-bbc5-f50b3eca777d",
+    "sameAsRegister": true
+  },
+  "directoryBeforeAds": {
+    "status": 200,
+    "count": 14,
+    "developerVisible": true,
+    "names": [
+      "فايز قبول acc-1795550082532",
+      "مشهورة فيروزية acc-1795550082532",
+      "مشهورة بنفسجية acc-1795550082532",
+      "مشهورة صفراء acc-1795550082532",
+      "مشهورة خضراء acc-1795550082532",
+      "مشهورة زرقاء acc-1795550082532",
+      "مشهورة حمراء acc-1795550082532",
+      "فايز قبول acc-1795550007427",
+      "مشهورة فيروزية acc-1795550007427",
+      "مشهورة بنفسجية acc-1795550007427",
+      "مشهورة صفراء acc-1795550007427",
+      "مشهورة خضراء acc-1795550007427",
+      "مشهورة زرقاء acc-1795550007427",
+      "مشهورة حمراء acc-1795550007427"
+    ]
+  },
+  "extraAvatars": [
+    {
+      "id": "d241cf1f-2378-45b4-8c6b-63bf6f613bac",
+      "name": "مشهورة حمراء acc-1795550082532",
+      "status": 201,
+      "hasAvatar": true
+    },
+    {
+      "id": "7dcd7a99-7b98-4c76-95f0-ffbc6348312d",
+      "name": "مشهورة زرقاء acc-1795550082532",
+      "status": 201,
+      "hasAvatar": true
+    },
+    {
+      "id": "501db699-d93f-4552-a90d-6ebc0a265be0",
+      "name": "مشهورة خضراء acc-1795550082532",
+      "status": 201,
+      "hasAvatar": true
+    },
+    {
+      "id": "889f37bf-d2c1-454d-8551-955866475fe0",
+      "name": "مشهورة صفراء acc-1795550082532",
+      "status": 201,
+      "hasAvatar": true
+    },
+    {
+      "id": "3ade24f0-21a1-48cc-9191-ada176b0740f",
+      "name": "مشهورة بنفسجية acc-1795550082532",
+      "status": 201,
+      "hasAvatar": true
+    },
+    {
+      "id": "a76fc384-6f64-4ac1-96f8-2a5ec1cae3d0",
+      "name": "مشهورة فيروزية acc-1795550082532",
+      "status": 201,
+      "hasAvatar": true
+    }
+  ],
+  "productAd": {
+    "id": "570c9a5e-f6a3-4d68-92f9-d10ebd42cd2f",
+    "create": 201,
+    "mediaStatuses": [
+      201,
+      201,
+      201
+    ],
+    "submit": 201,
+    "publicMedia": 3,
+    "kinds": [
+      "video",
+      "video",
+      "video"
+    ]
+  },
+  "serviceAd": {
+    "id": "c7f79cb2-da54-44b5-8bac-5603192c5a88",
+    "create": 201,
+    "mediaStatuses": [
+      201,
+      201,
+      201,
+      201,
+      201,
+      201,
+      201,
+      201,
+      201,
+      201,
+      201
+    ],
+    "submit": 201,
+    "publicMedia": 11,
+    "kinds": {
+      "video": 1,
+      "image": 10
+    }
+  },
+  "deleteAdMedia": {
+    "deletedStatus": 200,
+    "merchantStill": true
+  },
+  "publicProfile": {
+    "status": 200,
+    "name": "فايز قبول acc-1795550082532",
+    "adIds": [
+      "c7f79cb2-da54-44b5-8bac-5603192c5a88",
+      "570c9a5e-f6a3-4d68-92f9-d10ebd42cd2f"
+    ],
+    "hasProductAd": true,
+    "hasServiceAd": true
+  },
+  "directoryPaging": {
+    "page1Count": 6,
+    "page1Names": [
+      "فايز قبول acc-1795550082532",
+      "مشهورة فيروزية acc-1795550082532",
+      "مشهورة بنفسجية acc-1795550082532",
+      "مشهورة صفراء acc-1795550082532",
+      "مشهورة خضراء acc-1795550082532",
+      "مشهورة زرقاء acc-1795550082532"
+    ],
+    "nextCursor": true,
+    "page2Count": 6,
+    "page2Names": [
+      "مشهورة حمراء acc-1795550082532",
+      "فايز قبول acc-1795550007427",
+      "مشهورة فيروزية acc-1795550007427",
+      "مشهورة بنفسجية acc-1795550007427",
+      "مشهورة صفراء acc-1795550007427",
+      "مشهورة خضراء acc-1795550007427"
+    ],
+    "totalUnique": 12
+  }
+}

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
 import { MarketplaceModule } from '../marketplace/marketplace.module';
 import { CatalogAdPartnerController } from '../marketplace/catalog-ad.controller';
+import { CreatorProfilePartnerController } from '../marketplace/creator-profile.controller';
 import { CommercePartnerController } from '../marketplace/commerce-partner.controller';
 import { BulkBatchesService } from './bulk-batches/bulk-batches.service';
 import { EditorDraftsService } from './editor-drafts/editor-drafts.service';
@@ -25,6 +26,7 @@ import { VariantInventoryService } from './variant-inventory.service';
   controllers: [
     PartnersPortalController,
     CatalogAdPartnerController,
+    CreatorProfilePartnerController,
     CommercePartnerController,
     UploadSessionsController,
   ],

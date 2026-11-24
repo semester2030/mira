@@ -4,6 +4,7 @@ import '../../domain/entities/catalog_service.dart';
 import '../../domain/entities/marketplace_match.dart';
 import '../../domain/entities/partner_summary.dart';
 import '../../domain/repositories/marketplace_repository.dart';
+import '../../domain/entities/creator_profile.dart';
 import '../../domain/entities/partner_detail.dart';
 import '../ad_link_record.dart';
 import '../catalog_provenance.dart';
@@ -254,6 +255,37 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
       return const DiscoverBrowseResponse(failed: true);
     } catch (_) {
       return const DiscoverBrowseResponse(failed: true);
+    }
+  }
+
+  Future<CreatorDirectoryPage> listCreators({String? cursor, int limit = 6}) async {
+    if (_api == null) return CreatorDirectoryPage.empty;
+    try {
+      return await _api.listCreators(cursor: cursor, limit: limit);
+    } catch (_) {
+      return const CreatorDirectoryPage(failed: true, items: []);
+    }
+  }
+
+  Future<CreatorPublicProfile?> getCreatorProfile(String id) async {
+    if (_api == null) return null;
+    try {
+      return await _api.getCreatorProfile(id);
+    } on CatalogSourceException {
+      rethrow;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<DiscoverPublishedAd?> getPublicAd(String adId) async {
+    if (_api == null) return null;
+    try {
+      return await _api.getPublicAd(adId);
+    } on CatalogSourceException {
+      rethrow;
+    } catch (_) {
+      return null;
     }
   }
 

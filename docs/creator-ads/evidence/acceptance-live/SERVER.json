@@ -1,0 +1,97 @@
+{
+  "ok": true,
+  "impl_commit_expected": "5dc38be",
+  "run": "acc-1795552714839",
+  "api": "http://127.0.0.1:3000/api/v1",
+  "portal": "http://127.0.0.1:3000/login.html",
+  "dashboard": "http://127.0.0.1:3000/dashboard.html",
+  "developerId": "d65a32d3-6230-4e90-8092-0838ce00b215",
+  "ownProductId": "733ecd10-91c7-490c-9661-5c65a61a2901",
+  "ownServiceId": "03012069-8c95-444f-be99-b63ff2c717c4",
+  "productId": "7f28d74e-b1ec-4062-9557-98e8505072f8",
+  "serviceId": "712b6d9e-df9f-41d3-8a08-2f51bcca51f8",
+  "merchantMediaId": "c946958d-e890-4abf-8e8c-809199e2649a",
+  "extras": [
+    {
+      "id": "8c4660e3-b4fe-4a54-aa2a-739059201719",
+      "name": "مشهورة حمراء acc-1795552714839"
+    },
+    {
+      "id": "2429a919-30ae-4c1b-87c0-82730b7c9bf2",
+      "name": "مشهورة زرقاء acc-1795552714839"
+    },
+    {
+      "id": "a1ab940f-afa5-4c8b-a8e9-34b38407163b",
+      "name": "مشهورة خضراء acc-1795552714839"
+    },
+    {
+      "id": "5a8ea1ee-8781-4e17-8834-4148b6e5a06b",
+      "name": "مشهورة صفراء acc-1795552714839"
+    },
+    {
+      "id": "3dda799e-bbd2-484d-94ca-d1573d46321f",
+      "name": "مشهورة بنفسجية acc-1795552714839"
+    },
+    {
+      "id": "f3bbf466-ef1d-4e23-8a4e-4ebc9acc31da",
+      "name": "مشهورة فيروزية acc-1795552714839"
+    }
+  ],
+  "avatarPalette": [
+    {
+      "index": 0,
+      "rgb": [
+        220,
+        40,
+        40
+      ],
+      "label": "حمراء"
+    },
+    {
+      "index": 1,
+      "rgb": [
+        40,
+        120,
+        220
+      ],
+      "label": "زرقاء"
+    },
+    {
+      "index": 2,
+      "rgb": [
+        40,
+        180,
+        80
+      ],
+      "label": "خضراء"
+    },
+    {
+      "index": 3,
+      "rgb": [
+        220,
+        160,
+        40
+      ],
+      "label": "صفراء"
+    },
+    {
+      "index": 4,
+      "rgb": [
+        160,
+        60,
+        200
+      ],
+      "label": "بنفسجية"
+    },
+    {
+      "index": 5,
+      "rgb": [
+        30,
+        180,
+        180
+      ],
+      "label": "فيروزية"
+    }
+  ],
+  "note": "Portal served same-origin; login uses seeded developer. Register celebrity via UI or API. | secrets stripped for git"
+}
